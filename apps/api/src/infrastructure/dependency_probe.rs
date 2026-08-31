@@ -1,39 +1,46 @@
-use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
+use std::time::Duration;
+
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, Statement};
 use tokio::net::TcpStream;
 
 use crate::domain::{DomainError, ReadinessProbe, ReadinessReport};
 
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
+
 #[derive(Clone)]
 pub struct DependencyProbe {
-    connection: Option<DatabaseConnection>,
+    database_url: String,
     storage_endpoint: String,
 }
 
 impl DependencyProbe {
-    pub const fn new(connection: DatabaseConnection, storage_endpoint: String) -> Self {
+    pub const fn new(database_url: String, storage_endpoint: String) -> Self {
         Self {
-            connection: Some(connection),
-            storage_endpoint,
-        }
-    }
-
-    pub const fn unreachable(storage_endpoint: String) -> Self {
-        Self {
-            connection: None,
+            database_url,
             storage_endpoint,
         }
     }
 
     async fn database_reachable(&self) -> bool {
-        let Some(connection) = &self.connection else {
+        let mut options = ConnectOptions::new(self.database_url.clone());
+        options
+            .max_connections(1)
+            .connect_timeout(CONNECT_TIMEOUT)
+            .sqlx_logging(false);
+
+        let Ok(connection) = Database::connect(options)
+            .await
+            .map_err(|error| tracing::warn!(%error, "database connection failed"))
+        else {
             return false;
         };
+
         let statement =
             Statement::from_string(connection.get_database_backend(), "SELECT 1".to_owned());
         connection
             .execute(statement)
             .await
-            .map_err(|error| tracing::warn!(%error, "database readiness check failed"))
+            .map_err(|error| tracing::warn!(%error, "database readiness query failed"))
             .is_ok()
     }
 
