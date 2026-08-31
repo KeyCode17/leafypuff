@@ -1,0 +1,21 @@
+[package]
+name = "core-migration"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+publish = false
+
+[lib]
+name = "core_migration"
+path = "src/lib.rs"
+
+# The binary is what `sea-orm-cli migrate up|down` shells into; the library is what
+# apps/core links. Deleting main.rs would take the CLI down with it.
+[[bin]]
+name = "core-migration"
+path = "src/main.rs"
+
+[dependencies]
+async-trait = "0.1"
+sea-orm-migration = { workspace = true }
+tokio = { workspace = true }

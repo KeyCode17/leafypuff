@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/core", "apps/api"]
+members = ["apps/core", "apps/core/migration", "apps/api"]
 
 [workspace.package]
 version = "0.3.0"
@@ -16,4 +16,6 @@ uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock", "serde"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres", "sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = { version = "1.1", default-features = false, features = ["cli", "sqlx-sqlite", "runtime-tokio-rustls"] }
+tempfile = "3"
