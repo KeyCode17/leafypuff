@@ -1,5 +1,5 @@
-use axum::Extension;
 use axum::Json;
+use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
@@ -14,7 +14,7 @@ pub async fn liveness() -> Response {
     (StatusCode::OK, Json(Envelope::new("Service is live", ()))).into_response()
 }
 
-pub async fn readiness(Extension(state): Extension<AppState>) -> Response {
+pub async fn readiness(State(state): State<AppState>) -> Response {
     match CheckReadiness::new(state.readiness).execute().await {
         Ok(report) => (
             StatusCode::OK,

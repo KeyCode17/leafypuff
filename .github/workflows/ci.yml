@@ -8,15 +8,55 @@ on:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    # The repository tests talk to a real PostgreSQL. A mocked connection would assert
+    # nothing about citext, the partial unique indexes or the timestamp round trip, which
+    # is the whole reason those tests exist.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: leafypuff
+          POSTGRES_PASSWORD: leafypuff
+          POSTGRES_DB: leafypuff
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://leafypuff:leafypuff@127.0.0.1:5432/leafypuff
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      # The repository tests skip themselves when this is unset, which is right on a laptop
+      # with no cluster running and wrong in CI. Fail before the suite rather than pass green.
+      - name: the database url reaches the suite
+        run: test -n "$TEST_DATABASE_URL"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      # apps/core builds without its sqlite feature inside the android .so. Running only the
+      # all-features gate once hid a missing cfg attribute, so each shape is built on its own.
+      - run: cargo build -p leafypuff-core
       - run: cargo test --workspace
+      - name: secrets never reach a log
+        run: |
+          if grep -rnE "tracing::(info|warn|error|debug|trace)!\([^)]*\b(password|plain|otp_pepper|pepper|refresh_secret|access_token|api_key|resend_api_key)\b" apps/api/src apps/core/src; then
+            echo "A log statement names secret material. Log an identifier, never the value."
+            exit 1
+          fi
+          if grep -A1 -E "derive\([^)]*Debug" apps/api/src/infrastructure/config.rs apps/api/src/application/iam/mint_session.rs | grep -E "pub struct (Config|Session)\b"; then
+            echo "Config and Session carry secrets. A Debug derive on them is a log."
+            exit 1
+          fi
+          if git grep -nE "re_[A-Za-z0-9]{8}_[A-Za-z0-9]{20,}" -- . ':!.github'; then
+            echo "A Resend API key is committed. Rotate it and move it into sops."
+            exit 1
+          fi
 
   web:
     runs-on: ubuntu-latest
@@ -53,7 +93,12 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
+      # packages: '' skips the action's default install list. That list pulls the emulator,
+      # which this job never boots and whose download has failed mid-archive on the runner;
+      # the next step installs the one package the cross-build actually needs.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - name: install the ndk the cross-build needs
         run: |
           sdkmanager "ndk;$ANDROID_NDK_VERSION"

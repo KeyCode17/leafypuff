@@ -1,0 +1,19 @@
+[package]
+name = "api-testing"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+publish = false
+
+# Dev-only. The fakes live in a crate rather than a tests/support module because two test
+# binaries include them, and an unused item in an included module is dead code in whichever
+# binary does not touch it. A library crate has no such rule, so no allow attribute is needed.
+[lib]
+name = "api_testing"
+path = "src/lib.rs"
+
+[dependencies]
+leafypuff-api = { path = ".." }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }

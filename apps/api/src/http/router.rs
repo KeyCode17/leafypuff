@@ -1,12 +1,20 @@
 use axum::routing::get;
-use axum::{Extension, Router};
+use axum::{Router, middleware};
 
-use super::health;
+use super::rate_limit::{RateLimiter, guard};
 use super::state::AppState;
+use super::{health, iam};
 
 pub fn build_router(state: AppState) -> Router {
+    let limiter = RateLimiter::new();
+    let auth = iam::router().layer(middleware::from_fn(move |request, next| {
+        let limiter = limiter.clone();
+        async move { guard(limiter, request, next).await }
+    }));
+
     Router::new()
         .route("/healthz", get(health::liveness))
         .route("/ready", get(health::readiness))
-        .layer(Extension(state))
+        .nest("/v1/auth", auth)
+        .with_state(state)
 }

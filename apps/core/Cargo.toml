@@ -22,8 +22,8 @@ required-features = ["ffi-bindgen"]
 [dev-dependencies]
 core-migration = { path = "migration" }
 proptest = { workspace = true }
-sea-orm = { workspace = true }
-sea-orm-migration = { workspace = true }
+sea-orm = { workspace = true, features = ["sqlx-sqlite"] }
+sea-orm-migration = { workspace = true, features = ["sqlx-sqlite"] }
 tempfile = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
@@ -38,8 +38,8 @@ hkdf = { workspace = true }
 image = { workspace = true }
 kamadak-exif = { workspace = true }
 rand = { workspace = true }
-sea-orm = { workspace = true, optional = true }
-sea-orm-migration = { workspace = true, optional = true }
+sea-orm = { workspace = true, features = ["sqlx-sqlite"], optional = true }
+sea-orm-migration = { workspace = true, features = ["sqlx-sqlite"], optional = true }
 serde = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
