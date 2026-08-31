@@ -1,0 +1,26 @@
+[package]
+name = "api-migration"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+publish = false
+
+[lib]
+name = "api_migration"
+path = "src/lib.rs"
+
+# required-features keeps clap and sea-orm-cli out of the api binary, which links
+# the library and never the binary.
+[[bin]]
+name = "api-migration"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+cli = ["sea-orm-migration/cli"]
+
+[dependencies]
+async-trait = "0.1"
+sea-orm-migration = { workspace = true }
+tokio = { workspace = true }

@@ -1,4 +1,5 @@
 pub mod error;
+pub mod iam;
 pub mod ports;
 pub mod readiness;
 
