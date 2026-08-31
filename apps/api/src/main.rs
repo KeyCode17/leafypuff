@@ -1,29 +1,26 @@
-mod application;
-mod domain;
-mod http;
-mod infrastructure;
-
 use std::net::SocketAddr;
 
-use domain::ReadinessReport;
-use http::{AppState, build_router};
-use infrastructure::StaticReadinessProbe;
+use leafypuff_api::http::{AppState, build_router};
+use leafypuff_api::infrastructure::{Config, DependencyProbe};
+use sea_orm::Database;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().with_target(false).init();
 
-    let probe = StaticReadinessProbe::new(ReadinessReport {
-        database: true,
-        object_storage: true,
-    });
-    let app = build_router(AppState::new(probe));
+    let config =
+        Config::from_env(&|key| std::env::var(key).ok()).expect("configuration is incomplete");
 
-    let port: u16 = std::env::var("PORT")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(8080);
-    let address = SocketAddr::from(([0, 0, 0, 0], port));
+    let probe = match Database::connect(&config.database_url).await {
+        Ok(connection) => DependencyProbe::new(connection, config.minio_endpoint.clone()),
+        Err(error) => {
+            tracing::error!(%error, "database unreachable at startup");
+            DependencyProbe::unreachable(config.minio_endpoint.clone())
+        }
+    };
+
+    let app = build_router(AppState::new(probe));
+    let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)
         .await
