@@ -1,11 +1,11 @@
 use crate::domain::{ContentSealer, CoreError};
 
-/// The pass-through sealer the device runs on until the crypto slice lands.
+/// The pass-through sealer the device runs on until a vault is unlocked.
 ///
-/// Photo bytes and the cover thumbnail are meant to be encrypted at rest, and
-/// [`ContentSealer`] is the single place they meet the filesystem. Swapping
-/// this adapter for an XChaCha20-Poly1305 one is a constructor change; no call
-/// site above it knows whether the blob it handed over was sealed.
+/// Photo bytes and the cover thumbnail are encrypted at rest by
+/// [`super::XChaChaSealer`], which this is swapped for in the constructor once a
+/// content key exists; no call site above it knows whether the blob it handed
+/// over was sealed.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct PlaintextSealer;
 

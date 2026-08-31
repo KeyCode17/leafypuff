@@ -1,3 +1,5 @@
+use super::crypto::CryptoError;
+
 pub const ERR_ENTRY_NOT_FOUND: &str = "Entry not found";
 pub const ERR_ENTRY_ID_INVALID: &str = "Entry id is not a uuid";
 pub const ERR_ENTRY_EMPTY: &str = "An entry needs a title or a body";
@@ -32,4 +34,10 @@ pub enum CoreError {
     Crypto(String),
     #[error("Invalid input: {0}")]
     Invalid(String),
+}
+
+impl From<CryptoError> for CoreError {
+    fn from(cause: CryptoError) -> Self {
+        Self::Crypto(cause.to_string())
+    }
 }
