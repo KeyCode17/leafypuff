@@ -1,15 +1,13 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use api_migration::{Migrator, MigratorTrait};
 use leafypuff_api::application::iam::IamServices;
 use leafypuff_api::http::{AppState, build_router};
 use leafypuff_api::infrastructure::iam::{
     Argon2Hasher, Blake3Otp, JwtTokenIssuer, PgAccountRepository, PgOtpRepository,
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
 };
-use leafypuff_api::infrastructure::{Config, DependencyProbe};
-use sea_orm::Database;
+use leafypuff_api::infrastructure::{Config, DependencyProbe, connect_and_migrate};
 
 #[tokio::main]
 async fn main() {
@@ -18,12 +16,9 @@ async fn main() {
     let config =
         Config::from_env(&|key| std::env::var(key).ok()).expect("configuration is incomplete");
 
-    let connection = Database::connect(config.database_url.clone())
+    let connection = connect_and_migrate(&config.database_url)
         .await
-        .expect("the database must accept a connection");
-    Migrator::up(&connection, None)
-        .await
-        .expect("the migrations must apply");
+        .expect("the database must accept a connection and apply its migrations");
 
     let iam = IamServices {
         accounts: Arc::new(PgAccountRepository::new(connection.clone())),
