@@ -22,8 +22,27 @@ sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres"
 sea-orm-migration = { version = "1.1", default-features = false, features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 tempfile = "3"
 uniffi = { version = "0.32.0", features = ["tokio"] }
+# argon2's "password-hash" default feature is the PHC-string API; this module uses
+# hash_password_into and does not need it. "zeroize" wipes each crate's internal state on drop.
+argon2 = { version = "0.6", default-features = false, features = ["alloc", "zeroize"] }
+chacha20poly1305 = { version = "0.11", default-features = false, features = ["alloc", "zeroize"] }
+hkdf = "0.13"
+sha2 = "0.11"
+# "sys_rng" is the operating system entropy source. Key material never comes from a userspace PRNG.
+rand = { version = "0.10", default-features = false, features = ["std", "sys_rng"] }
+zeroize = { version = "1", features = ["zeroize_derive"] }
+data-encoding = "2"
+proptest = "1"
 
 [profile.release]
 strip = "symbols"
 lto = true
 codegen-units = 1
+
+# argon2 at m=64MiB is unusably slow when built unoptimised; the test gate runs it eleven times.
+# blake2 is argon2's inner compression function and carries the same cost.
+[profile.dev.package.argon2]
+opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3

@@ -15,6 +15,7 @@ pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
 mod sqlite_hydrate;
 pub mod thumbnailer;
+pub mod xchacha_sealer;
 
 pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
@@ -25,3 +26,4 @@ pub use sealer::PlaintextSealer;
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
 pub use thumbnailer::ImageThumbnailer;
+pub use xchacha_sealer::XChaChaSealer;
