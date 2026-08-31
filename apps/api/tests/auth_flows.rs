@@ -5,7 +5,7 @@ use leafypuff_api::application::iam::{
     CompleteSignInInput, RefreshInput, RegisterInput, StartSignInInput, VerifyEmailInput,
 };
 use leafypuff_api::domain::iam::policy::OTP_TTL_SECONDS;
-use leafypuff_api::domain::iam::{IamError, OtpPurpose};
+use leafypuff_api::domain::iam::{IamError, OtpCode, OtpPurpose};
 
 const EMAIL: &str = "Person@Example.test";
 const NORMALISED: &str = "person@example.test";
@@ -73,23 +73,82 @@ async fn registration_normalises_the_address_and_mails_a_code() {
 }
 
 #[tokio::test]
-async fn a_second_registration_of_the_same_address_is_rejected_and_mails_nothing() {
+async fn registering_again_before_verifying_mails_a_fresh_code() {
     let world = World::default();
     world.generator.queue("123456");
+    world.generator.queue("654321");
     world
         .register()
         .execute(registration())
         .await
         .expect("the first registration succeeds");
 
+    world
+        .register()
+        .execute(registration())
+        .await
+        .expect("an unverified address may ask for another code");
+
+    assert_eq!(world.accounts.snapshot().len(), 1);
+    assert_eq!(world.mailer.sent().len(), 2);
+    assert_eq!(world.mailer.last_code(), "654321");
+}
+
+#[tokio::test]
+async fn registering_a_verified_address_is_rejected_and_mails_nothing() {
+    let world = verified_world().await;
+
     let conflict = world
         .register()
         .execute(registration())
         .await
-        .expect_err("the second registration must be rejected");
+        .expect_err("a verified address must be rejected");
 
     assert!(matches!(conflict, IamError::EmailAlreadyRegistered));
     assert_eq!(world.mailer.sent().len(), 1);
+}
+
+#[tokio::test]
+async fn the_attempt_ceiling_closes_the_challenge() {
+    let world = World::default();
+    world.generator.queue("123456");
+    world
+        .register()
+        .execute(registration())
+        .await
+        .expect("registration succeeds");
+
+    for _ in 1..OtpCode::MAX_ATTEMPTS {
+        let refused = world
+            .verify_email()
+            .execute(VerifyEmailInput {
+                email: EMAIL.to_owned(),
+                code: "000000".to_owned(),
+            })
+            .await
+            .expect_err("a wrong code must be refused");
+        assert!(matches!(refused, IamError::InvalidCode));
+    }
+
+    let exhausted = world
+        .verify_email()
+        .execute(VerifyEmailInput {
+            email: EMAIL.to_owned(),
+            code: "000000".to_owned(),
+        })
+        .await
+        .expect_err("the ceiling must be reported");
+    assert!(matches!(exhausted, IamError::TooManyAttempts));
+
+    let closed = world
+        .verify_email()
+        .execute(VerifyEmailInput {
+            email: EMAIL.to_owned(),
+            code: "123456".to_owned(),
+        })
+        .await
+        .expect_err("the challenge is closed even for the right code");
+    assert!(matches!(closed, IamError::ChallengeUnusable));
 }
 
 #[tokio::test]

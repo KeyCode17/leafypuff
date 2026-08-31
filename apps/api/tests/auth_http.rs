@@ -54,7 +54,27 @@ async fn a_duplicate_registration_is_indistinguishable_from_a_new_one() {
     assert_eq!(second_status, StatusCode::ACCEPTED);
     assert_eq!(first_body, second_body);
     assert_eq!(world.accounts.snapshot().len(), 1);
-    assert_eq!(world.mailer.sent().len(), 1);
+    assert_eq!(world.mailer.sent().len(), 2);
+}
+
+#[tokio::test]
+async fn registering_a_verified_address_answers_the_same_bytes_and_mails_nothing() {
+    let world = World::default();
+    world.generator.queue("123456");
+    let (_, fresh_body) = post(router(&world), "/v1/auth/register", registration()).await;
+    post(
+        router(&world),
+        "/v1/auth/verify-email",
+        json!({ "email": EMAIL, "code": "123456" }),
+    )
+    .await;
+    let mailed = world.mailer.sent().len();
+
+    let (status, body) = post(router(&world), "/v1/auth/register", registration()).await;
+
+    assert_eq!(status, StatusCode::ACCEPTED);
+    assert_eq!(body, fresh_body);
+    assert_eq!(world.mailer.sent().len(), mailed);
 }
 
 #[tokio::test]
