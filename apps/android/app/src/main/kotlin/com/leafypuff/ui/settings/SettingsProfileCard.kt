@@ -27,6 +27,7 @@ import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 import kotlinx.datetime.LocalDate
+import com.leafypuff.ui.common.formatMonthYear
 
 private val AvatarSize = 56.dp
 private val AvatarBunnySize = 44.dp
@@ -34,13 +35,7 @@ private val NameColumnGap = 4.dp
 private val EditGlyphSize = 20.dp
 private val NameFontSize = 18.sp
 private val SinceFontSize = 12.sp
-private val MonthNames = listOf(
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-)
-
-internal fun formatWritingSince(date: LocalDate): String =
-    "Writing since ${MonthNames[date.monthNumber - 1]} ${date.year}"
+internal fun formatWritingSince(date: LocalDate): String = "Writing since ${formatMonthYear(date)}"
 
 @Composable
 internal fun SettingsProfileCard(

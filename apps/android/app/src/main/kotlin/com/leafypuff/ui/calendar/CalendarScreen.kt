@@ -16,7 +16,7 @@ import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.diary.EntryCard
-import com.leafypuff.ui.diary.formatEntryDate
+import com.leafypuff.ui.common.formatEntryDate
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

@@ -27,7 +27,7 @@ import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
-import com.leafypuff.ui.diary.formatEntryDate
+import com.leafypuff.ui.common.formatEntryDate
 import kotlinx.datetime.LocalDate
 
 private const val GridColumns = 3

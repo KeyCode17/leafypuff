@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
-import com.leafypuff.ui.diary.formatMonthYear
+import com.leafypuff.ui.common.formatMonthYear
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
