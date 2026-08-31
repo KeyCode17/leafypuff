@@ -3,6 +3,7 @@ use crate::domain::CoreError;
 /// The error every exported method returns. Kotlin receives it as a sealed exception
 /// hierarchy, one subclass per variant, never as a string.
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi(flat_error)]
 pub enum LeafyPuffCoreError {
     #[error("{message}")]
     NotFound { message: String },
