@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sea_orm::sea_query::Expr;
 use sea_orm::{
@@ -20,6 +21,7 @@ impl PgOtpRepository {
     }
 }
 
+#[async_trait]
 impl OtpRepository for PgOtpRepository {
     async fn insert(&self, code: OtpCode) -> Result<(), IamError> {
         let now = Utc::now().fixed_offset();

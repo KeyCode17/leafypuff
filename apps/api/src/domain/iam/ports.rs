@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
@@ -25,53 +26,34 @@ pub trait OtpGenerator: Send + Sync {
     fn digest(&self, code: &str) -> String;
 }
 
+#[async_trait]
 pub trait EmailSender: Send + Sync {
-    fn send_code(
-        &self,
-        to: &str,
-        code: &str,
-        purpose: OtpPurpose,
-    ) -> impl Future<Output = Result<(), IamError>> + Send;
+    async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError>;
 }
 
+#[async_trait]
 pub trait AccountRepository: Send + Sync {
-    fn by_email(
-        &self,
-        email: &str,
-    ) -> impl Future<Output = Result<Option<Account>, IamError>> + Send;
-    fn by_id(&self, id: Uuid) -> impl Future<Output = Result<Option<Account>, IamError>> + Send;
-    fn insert(&self, account: Account) -> impl Future<Output = Result<Account, IamError>> + Send;
-    fn mark_verified(
-        &self,
-        id: Uuid,
-        at: DateTime<Utc>,
-    ) -> impl Future<Output = Result<(), IamError>> + Send;
+    async fn by_email(&self, email: &str) -> Result<Option<Account>, IamError>;
+    async fn by_id(&self, id: Uuid) -> Result<Option<Account>, IamError>;
+    async fn insert(&self, account: Account) -> Result<Account, IamError>;
+    async fn mark_verified(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
 }
 
+#[async_trait]
 pub trait RefreshTokenRepository: Send + Sync {
-    fn insert(&self, token: RefreshToken) -> impl Future<Output = Result<(), IamError>> + Send;
-    fn by_hash(
-        &self,
-        hash: &str,
-    ) -> impl Future<Output = Result<Option<RefreshToken>, IamError>> + Send;
-    fn revoke(
-        &self,
-        id: Uuid,
-        at: DateTime<Utc>,
-    ) -> impl Future<Output = Result<(), IamError>> + Send;
+    async fn insert(&self, token: RefreshToken) -> Result<(), IamError>;
+    async fn by_hash(&self, hash: &str) -> Result<Option<RefreshToken>, IamError>;
+    async fn revoke(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
 }
 
+#[async_trait]
 pub trait OtpRepository: Send + Sync {
-    fn insert(&self, code: OtpCode) -> impl Future<Output = Result<(), IamError>> + Send;
-    fn open_for(
+    async fn insert(&self, code: OtpCode) -> Result<(), IamError>;
+    async fn open_for(
         &self,
         account_id: Uuid,
         purpose: OtpPurpose,
-    ) -> impl Future<Output = Result<Option<OtpCode>, IamError>> + Send;
-    fn record_attempt(&self, id: Uuid) -> impl Future<Output = Result<(), IamError>> + Send;
-    fn consume(
-        &self,
-        id: Uuid,
-        at: DateTime<Utc>,
-    ) -> impl Future<Output = Result<(), IamError>> + Send;
+    ) -> Result<Option<OtpCode>, IamError>;
+    async fn record_attempt(&self, id: Uuid) -> Result<(), IamError>;
+    async fn consume(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
 }

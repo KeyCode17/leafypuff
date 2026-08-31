@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait,
@@ -19,6 +20,7 @@ impl PgRefreshTokenRepository {
     }
 }
 
+#[async_trait]
 impl RefreshTokenRepository for PgRefreshTokenRepository {
     async fn insert(&self, token: RefreshToken) -> Result<(), IamError> {
         let now = Utc::now().fixed_offset();

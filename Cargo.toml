@@ -39,6 +39,7 @@ sha2 = "0.11"
 rand = { version = "0.10", default-features = false, features = ["std", "sys_rng"] }
 zeroize = { version = "1", features = ["zeroize_derive"] }
 data-encoding = "2"
+async-trait = "0.1"
 proptest = "1"
 
 [profile.release]

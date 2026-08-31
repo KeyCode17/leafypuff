@@ -1,4 +1,5 @@
 pub mod account;
+pub mod email;
 pub mod error;
 pub mod policy;
 pub mod ports;

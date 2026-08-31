@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use async_trait::async_trait;
+
 use reqwest::Client;
 use serde_json::json;
 
@@ -31,6 +33,7 @@ impl ResendEmailSender {
     }
 }
 
+#[async_trait]
 impl EmailSender for ResendEmailSender {
     async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError> {
         let subject = match purpose {

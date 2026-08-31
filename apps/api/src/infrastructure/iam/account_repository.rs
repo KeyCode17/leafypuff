@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sea_orm::sea_query::{Alias, Expr};
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
@@ -20,6 +21,7 @@ impl PgAccountRepository {
     }
 }
 
+#[async_trait]
 impl AccountRepository for PgAccountRepository {
     async fn by_email(&self, email: &str) -> Result<Option<Account>, IamError> {
         let row = accounts::Entity::find()

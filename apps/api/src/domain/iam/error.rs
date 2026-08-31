@@ -9,6 +9,10 @@ pub enum IamError {
     InvalidCredentials,
     #[error("Email already registered")]
     EmailAlreadyRegistered,
+    #[error("Code does not match")]
+    InvalidCode,
+    #[error("Email is not verified")]
+    EmailNotVerified,
     #[error("Challenge expired or already used")]
     ChallengeUnusable,
     #[error("Too many attempts")]
