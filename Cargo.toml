@@ -1,0 +1,17 @@
+[workspace]
+resolver = "3"
+members = ["apps/core", "apps/api"]
+
+[workspace.package]
+version = "0.1.0"
+license = "MIT"
+
+[workspace.dependencies]
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"

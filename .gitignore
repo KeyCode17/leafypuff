@@ -1,0 +1,17 @@
+/target
+**/*.rs.bk
+
+docs/
+*.zip
+.DS_Store
+
+apps/android/build/
+apps/android/.gradle/
+apps/android/local.properties
+
+apps/web/node_modules/
+apps/web/dist/
+
+.env
+.env.*
+!.env.example

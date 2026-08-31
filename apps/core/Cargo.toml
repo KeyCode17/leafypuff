@@ -1,0 +1,16 @@
+[package]
+name = "pawnotes-core"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }

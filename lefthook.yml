@@ -1,0 +1,41 @@
+pre-commit:
+  parallel: true
+  commands:
+    rustfmt:
+      glob: "*.rs"
+      run: cargo fmt --all && git add {staged_files}
+    biome:
+      root: "apps/web/"
+      glob: "*.{ts,tsx,json}"
+      run: pnpm exec biome check --write {staged_files} && git add {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    rust-fmt:
+      run: cargo fmt --all --check
+    rust-clippy:
+      run: cargo clippy --workspace --all-targets -- -D warnings
+    rust-test:
+      run: cargo test --workspace
+    web-typecheck:
+      root: "apps/web/"
+      run: pnpm exec tsc --noEmit
+    web-lint:
+      root: "apps/web/"
+      run: pnpm exec biome check .
+    no-react-hooks:
+      run: |
+        if grep -rnE "\buse(State|Effect|Memo|Callback|Ref|Context|Reducer|LayoutEffect|Transition|DeferredValue|Id|SyncExternalStore|Optimistic)\b" apps/web/src; then
+          echo "React hooks are banned: use TanStack Query, Store, Form or Router instead."
+          exit 1
+        fi
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        grep -qE '^(feat|fix)\([a-z0-9-]+\): [a-z][^\n]*[^.]$|^(chore|docs|refactor|test|build|ci|perf|style|revert)(\([a-z0-9-]+\))?: [a-z][^\n]*[^.]$' {1} || {
+          echo "Commit subject must be Conventional: feat(scope): lowercase imperative, no trailing period."
+          exit 1
+        }
