@@ -1,13 +1,8 @@
-mod application;
-mod domain;
-mod http;
-mod infrastructure;
-
 use std::net::SocketAddr;
 
-use domain::ReadinessReport;
-use http::{AppState, build_router};
-use infrastructure::StaticReadinessProbe;
+use leafypuff_api::domain::ReadinessReport;
+use leafypuff_api::http::{AppState, build_router};
+use leafypuff_api::infrastructure::StaticReadinessProbe;
 
 #[tokio::main]
 async fn main() {
