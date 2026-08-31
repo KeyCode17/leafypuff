@@ -17,6 +17,8 @@ pub enum LeafyPuffCoreError {
     Crypto { message: String },
     #[error("{message}")]
     Invalid { message: String },
+    #[error("{message}")]
+    Locked { message: String },
 }
 
 impl From<CoreError> for LeafyPuffCoreError {
@@ -29,6 +31,7 @@ impl From<CoreError> for LeafyPuffCoreError {
             CoreError::Exif(_) => Self::Exif { message },
             CoreError::Crypto(_) => Self::Crypto { message },
             CoreError::Invalid(_) => Self::Invalid { message },
+            CoreError::Locked => Self::Locked { message },
         }
     }
 }

@@ -6,6 +6,8 @@ use std::sync::Arc;
 
 use leafypuff_core::ffi::{LeafyPuffCore, LeafyPuffCoreError};
 
+const VAULT_PASSPHRASE: &str = "a passphrase only this test uses";
+
 async fn core() -> (tempfile::TempDir, Arc<LeafyPuffCore>) {
     let dir = tempfile::tempdir().expect("a temp dir");
     let path = dir
@@ -14,6 +16,9 @@ async fn core() -> (tempfile::TempDir, Arc<LeafyPuffCore>) {
         .to_string_lossy()
         .into_owned();
     let core = LeafyPuffCore::new(path).await.expect("the core opens");
+    core.create_vault(VAULT_PASSPHRASE.to_owned())
+        .await
+        .expect("the vault is created");
     (dir, core)
 }
 

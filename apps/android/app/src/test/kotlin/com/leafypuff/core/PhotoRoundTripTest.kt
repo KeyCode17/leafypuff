@@ -12,6 +12,8 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 
+private const val VaultPassphrase = "a passphrase only this test uses"
+
 class PhotoRoundTripTest {
 
     @Test
@@ -70,7 +72,7 @@ private val PngSignature =
 
 private suspend fun openClient(): CoreClient {
     val dir = Files.createTempDirectory("leafypuff-photos")
-    return CoreClient.open(dir.resolve("diary.sqlite").toString())
+    return CoreClient.open(dir.resolve("diary.sqlite").toString()).also { it.createVault(VaultPassphrase) }
 }
 
 private fun bandedPng(

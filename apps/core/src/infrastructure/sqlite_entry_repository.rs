@@ -6,24 +6,25 @@ use sea_orm::{
 };
 
 use crate::domain::error::ERR_TOO_MANY_PHOTOS;
-use crate::domain::{CoreError, Entry, EntryId, EntryRepository, PhotoRef};
+use crate::domain::{CoreError, Entry, EntryId, EntryRepository, FieldSealer, PhotoRef};
 
 use super::entity::{entries, photos, stickers, tags};
 use super::mapper;
 
 const ISO_DATE: &str = "%Y-%m-%d";
 
-pub struct SqliteEntryRepository {
+pub struct SqliteEntryRepository<S: FieldSealer> {
     connection: DatabaseConnection,
+    sealer: S,
 }
 
-impl SqliteEntryRepository {
-    pub const fn new(connection: DatabaseConnection) -> Self {
-        Self { connection }
+impl<S: FieldSealer> SqliteEntryRepository<S> {
+    pub const fn new(connection: DatabaseConnection, sealer: S) -> Self {
+        Self { connection, sealer }
     }
 }
 
-impl EntryRepository for SqliteEntryRepository {
+impl<S: FieldSealer + Send + Sync> EntryRepository for SqliteEntryRepository<S> {
     async fn save(&self, entry: Entry) -> Result<Entry, CoreError> {
         let id = entry.id.to_text();
         let mut numbered = Vec::with_capacity(entry.photos.len());
@@ -42,7 +43,7 @@ impl EntryRepository for SqliteEntryRepository {
 
         let transaction = self.connection.begin().await?;
 
-        entries::Entity::insert(mapper::entry_row(&saved))
+        entries::Entity::insert(mapper::entry_row(&saved, &self.sealer)?)
             .on_conflict(
                 OnConflict::column(entries::Column::Id)
                     .update_columns([
@@ -101,12 +102,14 @@ impl EntryRepository for SqliteEntryRepository {
             .await?;
         match row {
             None => Ok(None),
-            Some(found) => Ok(
-                super::sqlite_hydrate::hydrate(&self.connection, vec![found])
-                    .await?
-                    .into_iter()
-                    .next(),
-            ),
+            Some(found) => {
+                Ok(
+                    super::sqlite_hydrate::hydrate(&self.connection, vec![found], &self.sealer)
+                        .await?
+                        .into_iter()
+                        .next(),
+                )
+            }
         }
     }
 
@@ -117,7 +120,7 @@ impl EntryRepository for SqliteEntryRepository {
             .limit(u64::from(limit))
             .all(&self.connection)
             .await?;
-        super::sqlite_hydrate::hydrate(&self.connection, rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows, &self.sealer).await
     }
 
     async fn in_range(&self, from: NaiveDate, to: NaiveDate) -> Result<Vec<Entry>, CoreError> {
@@ -128,7 +131,7 @@ impl EntryRepository for SqliteEntryRepository {
             .order_by_desc(entries::Column::CreatedAt)
             .all(&self.connection)
             .await?;
-        super::sqlite_hydrate::hydrate(&self.connection, rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows, &self.sealer).await
     }
 
     async fn on_date(&self, date: NaiveDate) -> Result<Vec<Entry>, CoreError> {
@@ -137,7 +140,7 @@ impl EntryRepository for SqliteEntryRepository {
             .order_by_desc(entries::Column::CreatedAt)
             .all(&self.connection)
             .await?;
-        super::sqlite_hydrate::hydrate(&self.connection, rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows, &self.sealer).await
     }
 
     async fn delete_all(&self) -> Result<(), CoreError> {

@@ -1,11 +1,13 @@
 #![cfg(feature = "sqlite")]
 
 use chrono::{NaiveDate, Utc};
+use leafypuff_core::domain::crypto::ContentKey;
 use leafypuff_core::domain::{Entry, EntryId, EntryRepository, Mood, PhotoRef};
 use leafypuff_core::infrastructure::SqliteEntryRepository;
+use leafypuff_core::infrastructure::VaultSealer;
 use leafypuff_core::infrastructure::db;
 
-async fn repository() -> (tempfile::TempDir, SqliteEntryRepository) {
+async fn repository() -> (tempfile::TempDir, SqliteEntryRepository<VaultSealer>) {
     let dir = tempfile::tempdir().expect("a temp dir");
     let path = dir
         .path()
@@ -16,7 +18,10 @@ async fn repository() -> (tempfile::TempDir, SqliteEntryRepository) {
     db::run_migrations(&connection)
         .await
         .expect("migrations apply");
-    (dir, SqliteEntryRepository::new(connection))
+    (
+        dir,
+        SqliteEntryRepository::new(connection, unlocked_sealer()),
+    )
 }
 
 fn photo(id: &str) -> PhotoRef {
@@ -92,4 +97,12 @@ async fn removing_cover_promotes_next_photo() {
         .expect("the entry exists");
     assert_eq!(reread.cover().map(|found| found.id.as_str()), Some("b"));
     assert_eq!(reread.photos.len(), 2);
+}
+
+fn unlocked_sealer() -> VaultSealer {
+    let sealer = VaultSealer::new();
+    sealer
+        .unlock(ContentKey::generate().expect("a content key"))
+        .expect("the sealer unlocks");
+    sealer
 }

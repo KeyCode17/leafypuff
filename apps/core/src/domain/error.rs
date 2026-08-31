@@ -19,6 +19,9 @@ pub const ERR_PHOTO_UNENCODABLE: &str = "Cover thumbnail could not be encoded";
 pub const ERR_PHOTO_ID_INVALID: &str = "Photo id is not a storage-safe name";
 pub const ERR_PHOTO_MISSING: &str = "Photo is not in app storage";
 pub const ERR_PHOTO_STORE: &str = "Photo storage failure";
+pub const ERR_VAULT_LOCKED: &str = "The vault is locked";
+pub const ERR_VAULT_ABSENT: &str = "No vault exists on this device";
+pub const ERR_VAULT_PRESENT: &str = "A vault already exists on this device";
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {
@@ -34,6 +37,8 @@ pub enum CoreError {
     Crypto(String),
     #[error("Invalid input: {0}")]
     Invalid(String),
+    #[error("Vault is locked")]
+    Locked,
 }
 
 impl From<CryptoError> for CoreError {

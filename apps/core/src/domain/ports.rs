@@ -84,6 +84,25 @@ impl<S: PhotoStore> PhotoStore for &S {
     }
 }
 
+pub trait FieldSealer {
+    fn seal_field(
+        &self,
+        entry_id: crate::domain::EntryId,
+        field_name: &str,
+        field_updated_at_ms: i64,
+        plain: &str,
+    ) -> Result<crate::domain::crypto::SealedField, CoreError>;
+
+    fn open_field(
+        &self,
+        entry_id: crate::domain::EntryId,
+        field_name: &str,
+        field_updated_at_ms: i64,
+        ciphertext: &[u8],
+        nonce: &[u8],
+    ) -> Result<String, CoreError>;
+}
+
 pub trait ContentSealer {
     fn seal(&self, label: &str, plain: &[u8]) -> Result<Vec<u8>, CoreError>;
 

@@ -52,6 +52,28 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.deleteAllEntries()
     }
 
+    suspend fun hasVault(): Boolean = withContext(Dispatchers.IO) {
+        core.hasVault()
+    }
+
+    suspend fun createVault(passphrase: String): String = withContext(Dispatchers.IO) {
+        core.createVault(passphrase)
+    }
+
+    suspend fun unlock(passphrase: String) = withContext(Dispatchers.IO) {
+        core.unlock(passphrase)
+    }
+
+    suspend fun unlockWithRecoveryCode(code: String) = withContext(Dispatchers.IO) {
+        core.unlockWithRecoveryCode(code)
+    }
+
+    fun isUnlocked(): Boolean = core.isUnlocked()
+
+    fun lock() {
+        core.lock()
+    }
+
     suspend fun importPhoto(bytes: ByteArray): ImportedPhoto = withContext(Dispatchers.IO) {
         core.importPhoto(bytes).toImported()
     }

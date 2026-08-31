@@ -1,15 +1,21 @@
 #![cfg(feature = "sqlite")]
 
 use chrono::{NaiveDate, TimeZone, Utc};
+use leafypuff_core::domain::crypto::ContentKey;
 use leafypuff_core::domain::{
     Entry, EntryId, EntryRepository, Location, Mood, PhotoRef, PlacedSticker, Sticker, Weather,
 };
 use leafypuff_core::infrastructure::SqliteEntryRepository;
+use leafypuff_core::infrastructure::VaultSealer;
 use leafypuff_core::infrastructure::db;
 use leafypuff_core::infrastructure::entity::{entries, photos, stickers, tags};
 use sea_orm::{DatabaseConnection, EntityTrait};
 
-async fn repository() -> (tempfile::TempDir, DatabaseConnection, SqliteEntryRepository) {
+async fn repository() -> (
+    tempfile::TempDir,
+    DatabaseConnection,
+    SqliteEntryRepository<VaultSealer>,
+) {
     let dir = tempfile::tempdir().expect("a temp dir");
     let path = dir
         .path()
@@ -20,7 +26,7 @@ async fn repository() -> (tempfile::TempDir, DatabaseConnection, SqliteEntryRepo
     db::run_migrations(&connection)
         .await
         .expect("migrations apply");
-    let repository = SqliteEntryRepository::new(connection.clone());
+    let repository = SqliteEntryRepository::new(connection.clone(), unlocked_sealer());
     (dir, connection, repository)
 }
 
@@ -174,4 +180,12 @@ async fn delete_all_leaves_four_empty_tables() {
             .expect("tags read")
             .is_empty()
     );
+}
+
+fn unlocked_sealer() -> VaultSealer {
+    let sealer = VaultSealer::new();
+    sealer
+        .unlock(ContentKey::generate().expect("a content key"))
+        .expect("the sealer unlocks");
+    sealer
 }
