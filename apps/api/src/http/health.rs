@@ -11,14 +11,14 @@ use super::error::ApiError;
 use super::state::AppState;
 
 pub async fn liveness() -> Response {
-    (StatusCode::OK, Json(Envelope::new("Service is live", ()))).into_response()
+    (StatusCode::OK, Json(Envelope::ok("Service is live", ()))).into_response()
 }
 
 pub async fn readiness(State(state): State<AppState>) -> Response {
     match CheckReadiness::new(state.readiness).execute().await {
         Ok(report) => (
             StatusCode::OK,
-            Json(Envelope::new(
+            Json(Envelope::ok(
                 "Service is ready",
                 ReadinessResponse::from(report),
             )),

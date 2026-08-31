@@ -6,9 +6,13 @@ use serde::de::DeserializeOwned;
 
 use super::error::ApiError;
 
-const ERR_MALFORMED_BODY: &str = "Request body is not valid JSON";
-const ERR_VALIDATION_FAILED: &str = "Request failed validation";
-const ERR_UNSUPPORTED_MEDIA: &str = "Request body must be application/json";
+pub const ERR_MALFORMED_BODY: &str = "MALFORMED_BODY";
+pub const ERR_VALIDATION_FAILED: &str = "VALIDATION_FAILED";
+pub const ERR_UNSUPPORTED_MEDIA: &str = "UNSUPPORTED_MEDIA_TYPE";
+
+const DETAIL_MALFORMED_BODY: &str = "Request body is not valid JSON";
+const DETAIL_VALIDATION_FAILED: &str = "Request failed validation";
+const DETAIL_UNSUPPORTED_MEDIA: &str = "Request body must be application/json";
 
 pub trait ValidatedBody {
     fn validate(&self) -> Result<(), &'static str>;
@@ -27,20 +31,33 @@ where
         let Json(body) = Json::<T>::from_request(request, state)
             .await
             .map_err(refuse)?;
-        body.validate()
-            .map_err(|_| ApiError::new(StatusCode::UNPROCESSABLE_ENTITY, ERR_VALIDATION_FAILED))?;
+        body.validate().map_err(|_| {
+            ApiError::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ERR_VALIDATION_FAILED,
+                DETAIL_VALIDATION_FAILED,
+            )
+        })?;
         Ok(Self(body))
     }
 }
 
 fn refuse(rejection: JsonRejection) -> ApiError {
     match rejection {
-        JsonRejection::JsonDataError(_) => {
-            ApiError::new(StatusCode::UNPROCESSABLE_ENTITY, ERR_VALIDATION_FAILED)
-        }
-        JsonRejection::MissingJsonContentType(_) => {
-            ApiError::new(StatusCode::UNSUPPORTED_MEDIA_TYPE, ERR_UNSUPPORTED_MEDIA)
-        }
-        _ => ApiError::new(StatusCode::BAD_REQUEST, ERR_MALFORMED_BODY),
+        JsonRejection::JsonDataError(_) => ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            ERR_VALIDATION_FAILED,
+            DETAIL_VALIDATION_FAILED,
+        ),
+        JsonRejection::MissingJsonContentType(_) => ApiError::new(
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            ERR_UNSUPPORTED_MEDIA,
+            DETAIL_UNSUPPORTED_MEDIA,
+        ),
+        _ => ApiError::new(
+            StatusCode::BAD_REQUEST,
+            ERR_MALFORMED_BODY,
+            DETAIL_MALFORMED_BODY,
+        ),
     }
 }

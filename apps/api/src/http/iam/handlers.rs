@@ -35,7 +35,7 @@ pub async fn verify_email(
     Validated(body): Validated<VerifyEmailRequest>,
 ) -> Response {
     match state.iam.verify_email().execute(body.into()).await {
-        Ok(()) => (StatusCode::OK, Json(Envelope::new(MESSAGE_VERIFIED, ()))).into_response(),
+        Ok(()) => (StatusCode::OK, Json(Envelope::ok(MESSAGE_VERIFIED, ()))).into_response(),
         Err(error) => ApiError::from(error).into_response(),
     }
 }
@@ -73,11 +73,11 @@ pub async fn refresh(
 fn challenge(message: &str) -> Response {
     (
         StatusCode::ACCEPTED,
-        Json(Envelope::new(message, ChallengeResponse::issued())),
+        Json(Envelope::ok(message, ChallengeResponse::issued())),
     )
         .into_response()
 }
 
 fn session_response(message: &str, session: SessionResponse) -> Response {
-    (StatusCode::OK, Json(Envelope::new(message, session))).into_response()
+    (StatusCode::OK, Json(Envelope::ok(message, session))).into_response()
 }
