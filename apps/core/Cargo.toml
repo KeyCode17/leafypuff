@@ -7,8 +7,13 @@ edition = "2024"
 [lib]
 crate-type = ["rlib"]
 
+[features]
+default = []
+test-support = []
+
 [dev-dependencies]
 tokio = { workspace = true }
+uuid = { workspace = true }
 
 [dependencies]
 chrono = { workspace = true }
