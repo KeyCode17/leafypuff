@@ -1,6 +1,8 @@
 pub mod clock;
 #[cfg(feature = "sqlite")]
 pub mod db;
+#[cfg(feature = "sqlite")]
+pub mod entity;
 #[cfg(feature = "test-support")]
 pub mod memory;
 
