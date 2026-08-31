@@ -21,6 +21,7 @@ required-features = ["ffi-bindgen"]
 
 [dev-dependencies]
 core-migration = { path = "migration" }
+proptest = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
 tempfile = { workspace = true }
@@ -28,14 +29,21 @@ tokio = { workspace = true }
 uuid = { workspace = true }
 
 [dependencies]
+argon2 = { workspace = true }
+chacha20poly1305 = { workspace = true }
 chrono = { workspace = true }
 core-migration = { path = "migration", optional = true }
+data-encoding = { workspace = true }
+hkdf = { workspace = true }
 image = { workspace = true }
 kamadak-exif = { workspace = true }
+rand = { workspace = true }
 sea-orm = { workspace = true, optional = true }
 sea-orm-migration = { workspace = true, optional = true }
 serde = { workspace = true }
+sha2 = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
 uniffi = { workspace = true, optional = true }
 uuid = { workspace = true }
+zeroize = { workspace = true }
