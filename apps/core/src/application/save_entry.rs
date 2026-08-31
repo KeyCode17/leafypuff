@@ -1,20 +1,38 @@
-use crate::domain::{CoreError, Entry, EntryRepository};
+use crate::domain::error::{ERR_ENTRY_EMPTY, ERR_ENTRY_ID_INVALID};
+use crate::domain::{Clock, CoreError, Entry, EntryRepository};
 
-pub struct SaveEntry<R: EntryRepository> {
+pub struct SaveEntry<R: EntryRepository, C: Clock> {
     repository: R,
+    clock: C,
 }
 
-impl<R: EntryRepository> SaveEntry<R> {
-    pub const fn new(repository: R) -> Self {
-        Self { repository }
+impl<R: EntryRepository, C: Clock> SaveEntry<R, C> {
+    pub const fn new(repository: R, clock: C) -> Self {
+        Self { repository, clock }
     }
 
-    pub async fn execute(&self, entry: Entry) -> Result<Entry, CoreError> {
-        if entry.title.trim().is_empty() && entry.body.trim().is_empty() {
-            return Err(CoreError::Invalid(
-                "An entry needs a title or a body".to_owned(),
-            ));
+    pub async fn execute(&self, draft: Entry) -> Result<Entry, CoreError> {
+        if draft.id.is_nil() {
+            return Err(CoreError::Invalid(ERR_ENTRY_ID_INVALID.to_owned()));
         }
-        self.repository.save(entry).await
+        if draft.title.trim().is_empty() && draft.body.trim().is_empty() {
+            return Err(CoreError::Invalid(ERR_ENTRY_EMPTY.to_owned()));
+        }
+
+        let now = self.clock.now();
+        let stamped = match self.repository.by_id(draft.id).await? {
+            Some(existing) => Entry {
+                created_at: existing.created_at,
+                updated_at: now,
+                ..draft
+            },
+            None => Entry {
+                created_at: now,
+                updated_at: now,
+                ..draft
+            },
+        };
+
+        self.repository.save(stamped).await
     }
 }

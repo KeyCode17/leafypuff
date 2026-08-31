@@ -20,6 +20,7 @@ import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
+import com.leafypuff.ui.common.formatEntryDate
 
 @Composable
 fun EntryCard(entry: Entry, modifier: Modifier = Modifier) {

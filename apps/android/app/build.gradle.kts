@@ -1,8 +1,57 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+val workspaceDir = rootProject.file("../..")
+val hostLib = if (System.getProperty("os.name").startsWith("Mac")) {
+    "libleafypuff_core.dylib"
+} else {
+    "libleafypuff_core.so"
+}
+val uniffiOutDir = layout.buildDirectory.dir("generated/uniffi")
+
+val cargoBuildHost by tasks.registering(Exec::class) {
+    workingDir = workspaceDir
+    commandLine("cargo", "build", "-p", "leafypuff-core", "--features", "ffi-bindgen")
+}
+
+val androidSdkDir: String = System.getenv("ANDROID_HOME")
+    ?: System.getenv("ANDROID_SDK_ROOT")
+    ?: Properties().apply {
+        rootProject.file("local.properties").inputStream().use { load(it) }
+    }.getProperty("sdk.dir")
+val androidNdkDir = "$androidSdkDir/ndk/27.2.12479018"
+val androidAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+
+val generateUniffiBindings by tasks.registering(Exec::class) {
+    dependsOn(cargoBuildHost)
+    workingDir = workspaceDir
+    commandLine(
+        "cargo", "run", "-p", "leafypuff-core", "--features", "ffi-bindgen",
+        "--bin", "uniffi-bindgen", "--", "generate",
+        "--library", "target/debug/$hostLib",
+        "--language", "kotlin",
+        "--out-dir", uniffiOutDir.get().asFile.absolutePath,
+        "--no-format",
+    )
+}
+
+val cargoBuildAndroid by tasks.registering(Exec::class) {
+    workingDir = workspaceDir
+    environment("ANDROID_NDK_HOME", androidNdkDir)
+    commandLine(
+        listOf("cargo", "ndk")
+            + androidAbis.flatMap { listOf("-t", it) }
+            + listOf("-o", file("src/main/jniLibs").absolutePath)
+            + listOf("build", "-p", "leafypuff-core", "--features", "ffi", "--release"),
+    )
+}
+
+tasks.named("preBuild") { dependsOn(cargoBuildAndroid) }
 
 android {
     namespace = "com.leafypuff"
@@ -28,6 +77,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    sourceSets["main"].kotlin.srcDir(uniffiOutDir)
 }
 
 dependencies {
@@ -41,4 +92,16 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.kotlinx.datetime)
     implementation(libs.jna) { artifact { type = "aar" } }
+    implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.jna)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(generateUniffiBindings)
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(cargoBuildHost)
+    systemProperty("jna.library.path", File(workspaceDir, "target/debug").absolutePath)
 }

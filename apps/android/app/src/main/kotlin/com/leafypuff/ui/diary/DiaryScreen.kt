@@ -20,6 +20,7 @@ import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
+import com.leafypuff.ui.common.formatMonthYear
 
 @Composable
 fun DiaryScreen(entries: List<Entry>, modifier: Modifier = Modifier) {

@@ -1,0 +1,3 @@
+[bindings.kotlin]
+package_name = "com.leafypuff.core"
+cdylib_name = "leafypuff_core"

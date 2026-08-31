@@ -1,0 +1,27 @@
+[package]
+name = "core-migration"
+version.workspace = true
+license.workspace = true
+edition = "2024"
+publish = false
+
+[lib]
+name = "core_migration"
+path = "src/lib.rs"
+
+# The binary is what `sea-orm-cli migrate up|down` shells into; the library is what
+# apps/core links. required-features keeps clap and sea-orm-cli out of the android
+# .so, which links the library and never the binary.
+[[bin]]
+name = "core-migration"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+cli = ["sea-orm-migration/cli"]
+
+[dependencies]
+async-trait = "0.1"
+sea-orm-migration = { workspace = true }
+tokio = { workspace = true }
