@@ -36,4 +36,5 @@ async-trait = { workspace = true }
 [dev-dependencies]
 api-migration = { path = "migration" }
 api-testing = { path = "testing" }
+tokio = { workspace = true }
 tower = { version = "0.5", features = ["util"] }

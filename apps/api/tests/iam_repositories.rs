@@ -8,7 +8,10 @@ use leafypuff_api::infrastructure::iam::{
     PgAccountRepository, PgOtpRepository, PgRefreshTokenRepository,
 };
 use sea_orm::{Database, DatabaseConnection};
+use tokio::sync::OnceCell;
 use uuid::Uuid;
+
+static MIGRATED: OnceCell<()> = OnceCell::const_new();
 
 async fn connect() -> Option<DatabaseConnection> {
     let Ok(url) = std::env::var("TEST_DATABASE_URL") else {
@@ -22,9 +25,13 @@ async fn connect() -> Option<DatabaseConnection> {
     let connection = Database::connect(&url)
         .await
         .expect("the test database must accept a connection");
-    Migrator::up(&connection, None)
-        .await
-        .expect("the migrations must apply");
+    MIGRATED
+        .get_or_init(|| async {
+            Migrator::up(&connection, None)
+                .await
+                .expect("the migrations must apply");
+        })
+        .await;
     Some(connection)
 }
 
