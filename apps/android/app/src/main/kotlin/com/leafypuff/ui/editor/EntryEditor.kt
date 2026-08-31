@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LocalLeafyColors
+import com.leafypuff.ui.photo.EntryPhoto
 
 private val ScreenGutter = 24.dp
 private val ScrollBottomPadding = 210.dp
@@ -35,7 +36,7 @@ fun EntryEditor(
     onWeatherClick: () -> Unit,
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
-    photos: List<String> = emptyList(),
+    photos: List<EntryPhoto> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     var tool by remember { mutableStateOf<EditorTool?>(null) }

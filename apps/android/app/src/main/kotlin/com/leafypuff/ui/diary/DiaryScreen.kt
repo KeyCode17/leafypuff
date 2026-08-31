@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.ImageBitmap
 import com.leafypuff.domain.Entry
 import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LocalLeafyColors
@@ -23,7 +24,11 @@ import com.leafypuff.ui.common.BunnyFace
 import com.leafypuff.ui.common.formatMonthYear
 
 @Composable
-fun DiaryScreen(entries: List<Entry>, modifier: Modifier = Modifier) {
+fun DiaryScreen(
+    entries: List<Entry>,
+    covers: Map<String, ImageBitmap> = emptyMap(),
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
 
@@ -52,7 +57,7 @@ fun DiaryScreen(entries: List<Entry>, modifier: Modifier = Modifier) {
             }
         }
 
-        items(entries, key = { it.id }) { entry -> EntryCard(entry) }
+        items(entries, key = { it.id }) { entry -> EntryCard(entry, covers[entry.id]) }
 
         item {
             Text(

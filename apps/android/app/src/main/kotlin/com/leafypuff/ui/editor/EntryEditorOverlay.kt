@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
+import com.leafypuff.ui.photo.EntryPhoto
 
 private val SheetEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 private const val SlideMillis = 260
@@ -27,7 +28,7 @@ fun EntryEditorOverlay(
     onWeatherClick: () -> Unit,
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
-    photos: List<String> = emptyList(),
+    photos: List<EntryPhoto> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(

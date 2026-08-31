@@ -3,9 +3,14 @@ package com.leafypuff.core
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 data class PhotoDraft(val id: String, val path: String, val ordinal: Int)
+
+data class ImportedPhoto(val id: String, val path: String, val takenOn: LocalDate?)
 
 data class StickerDraft(
     val key: String,
@@ -45,6 +50,18 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
 
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
         core.deleteAllEntries()
+    }
+
+    suspend fun importPhoto(bytes: ByteArray): ImportedPhoto = withContext(Dispatchers.IO) {
+        core.importPhoto(bytes).toImported()
+    }
+
+    suspend fun photoTakenOn(bytes: ByteArray): LocalDate? = withContext(Dispatchers.IO) {
+        core.photoTakenOn(bytes)?.let(LocalDate::parse)
+    }
+
+    suspend fun coverThumbnail(photoId: String): ByteArray = withContext(Dispatchers.IO) {
+        core.coverThumbnail(photoId)
     }
 
     companion object {
@@ -87,4 +104,10 @@ private fun FfiEntry.toDraft(): EntryDraft = EntryDraft(
     stickers = stickers.map {
         StickerDraft(it.key, it.sticker, it.x, it.y, it.size, it.rotation)
     },
+)
+
+private fun FfiPhoto.toImported(): ImportedPhoto = ImportedPhoto(
+    id = id,
+    path = path,
+    takenOn = takenAt?.let { Instant.parse(it).toLocalDateTime(TimeZone.UTC).date },
 )

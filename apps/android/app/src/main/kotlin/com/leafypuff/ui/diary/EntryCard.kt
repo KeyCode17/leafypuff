@@ -1,11 +1,15 @@
 package com.leafypuff.ui.diary
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -13,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Entry
@@ -22,8 +28,11 @@ import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 import com.leafypuff.ui.common.formatEntryDate
 
+private val CoverHeight = 158.dp
+private val CoverShape = RoundedCornerShape(18.dp)
+
 @Composable
-fun EntryCard(entry: Entry, modifier: Modifier = Modifier) {
+fun EntryCard(entry: Entry, cover: ImageBitmap? = null, modifier: Modifier = Modifier) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
 
@@ -35,6 +44,10 @@ fun EntryCard(entry: Entry, modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (cover != null) {
+            CoverPhoto(cover)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -61,6 +74,25 @@ fun EntryCard(entry: Entry, modifier: Modifier = Modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             entry.tags.forEach { tag -> TagChip(tag) }
         }
+    }
+}
+
+@Composable
+private fun CoverPhoto(cover: ImageBitmap) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(CoverHeight)
+            .clip(CoverShape)
+            .background(LocalLeafyColors.current.soft2),
+    ) {
+        Image(
+            bitmap = cover,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
