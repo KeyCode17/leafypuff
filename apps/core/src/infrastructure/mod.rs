@@ -9,6 +9,7 @@ pub mod mapper;
 pub mod memory;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_entry_repository;
+mod sqlite_hydrate;
 
 pub use clock::SystemClock;
 #[cfg(feature = "test-support")]

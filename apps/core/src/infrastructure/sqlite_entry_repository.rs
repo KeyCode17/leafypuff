@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use chrono::NaiveDate;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::{
@@ -22,57 +20,6 @@ pub struct SqliteEntryRepository {
 impl SqliteEntryRepository {
     pub const fn new(connection: DatabaseConnection) -> Self {
         Self { connection }
-    }
-
-    async fn hydrate(&self, rows: Vec<entries::Model>) -> Result<Vec<Entry>, CoreError> {
-        let ids: Vec<String> = rows.iter().map(|row| row.id.clone()).collect();
-
-        let mut photo_rows: HashMap<String, Vec<photos::Model>> = HashMap::new();
-        for row in photos::Entity::find()
-            .filter(photos::Column::EntryId.is_in(ids.clone()))
-            .order_by_asc(photos::Column::Ordinal)
-            .all(&self.connection)
-            .await?
-        {
-            photo_rows
-                .entry(row.entry_id.clone())
-                .or_default()
-                .push(row);
-        }
-
-        let mut sticker_rows: HashMap<String, Vec<stickers::Model>> = HashMap::new();
-        for row in stickers::Entity::find()
-            .filter(stickers::Column::EntryId.is_in(ids.clone()))
-            .all(&self.connection)
-            .await?
-        {
-            sticker_rows
-                .entry(row.entry_id.clone())
-                .or_default()
-                .push(row);
-        }
-
-        let mut tag_rows: HashMap<String, Vec<tags::Model>> = HashMap::new();
-        for row in tags::Entity::find()
-            .filter(tags::Column::EntryId.is_in(ids))
-            .order_by_asc(tags::Column::Tag)
-            .all(&self.connection)
-            .await?
-        {
-            tag_rows.entry(row.entry_id.clone()).or_default().push(row);
-        }
-
-        rows.into_iter()
-            .map(|row| {
-                let key = row.id.clone();
-                mapper::assemble(
-                    row,
-                    photo_rows.remove(&key).unwrap_or_default(),
-                    sticker_rows.remove(&key).unwrap_or_default(),
-                    tag_rows.remove(&key).unwrap_or_default(),
-                )
-            })
-            .collect()
     }
 }
 
@@ -154,7 +101,12 @@ impl EntryRepository for SqliteEntryRepository {
             .await?;
         match row {
             None => Ok(None),
-            Some(found) => Ok(self.hydrate(vec![found]).await?.into_iter().next()),
+            Some(found) => Ok(
+                super::sqlite_hydrate::hydrate(&self.connection, vec![found])
+                    .await?
+                    .into_iter()
+                    .next(),
+            ),
         }
     }
 
@@ -165,7 +117,7 @@ impl EntryRepository for SqliteEntryRepository {
             .limit(u64::from(limit))
             .all(&self.connection)
             .await?;
-        self.hydrate(rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows).await
     }
 
     async fn in_range(&self, from: NaiveDate, to: NaiveDate) -> Result<Vec<Entry>, CoreError> {
@@ -176,7 +128,7 @@ impl EntryRepository for SqliteEntryRepository {
             .order_by_desc(entries::Column::CreatedAt)
             .all(&self.connection)
             .await?;
-        self.hydrate(rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows).await
     }
 
     async fn on_date(&self, date: NaiveDate) -> Result<Vec<Entry>, CoreError> {
@@ -185,7 +137,7 @@ impl EntryRepository for SqliteEntryRepository {
             .order_by_desc(entries::Column::CreatedAt)
             .all(&self.connection)
             .await?;
-        self.hydrate(rows).await
+        super::sqlite_hydrate::hydrate(&self.connection, rows).await
     }
 
     async fn delete_all(&self) -> Result<(), CoreError> {
