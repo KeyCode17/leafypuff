@@ -12,6 +12,7 @@ pub mod memory;
 pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
 mod sqlite_hydrate;
+pub mod thumbnailer;
 
 pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
@@ -19,3 +20,4 @@ pub use exif_reader::KamadakExifReader;
 pub use memory::{FixedClock, InMemoryEntryRepository};
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
+pub use thumbnailer::ImageThumbnailer;

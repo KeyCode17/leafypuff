@@ -62,3 +62,7 @@ pub trait Clock {
 pub trait ExifReader {
     fn taken_on(&self, bytes: &[u8]) -> Result<Option<NaiveDate>, CoreError>;
 }
+
+pub trait ThumbnailMaker {
+    fn cover(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError>;
+}

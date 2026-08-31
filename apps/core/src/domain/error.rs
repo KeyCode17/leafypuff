@@ -11,6 +11,9 @@ pub const ERR_TEXT_UNREADABLE: &str = "Stored text is not valid UTF-8";
 pub const ERR_TOO_MANY_PHOTOS: &str = "An entry holds more photos than an ordinal can number";
 pub const ERR_STORE_LOCK_POISONED: &str = "Entry store lock poisoned";
 pub const ERR_EXIF_UNREADABLE: &str = "Exif block could not be read";
+pub const ERR_PHOTO_TOO_SMALL: &str = "Photo is too small to hold a 3:2 cover";
+pub const ERR_PHOTO_UNDECODABLE: &str = "Photo bytes are not a supported image";
+pub const ERR_PHOTO_UNENCODABLE: &str = "Cover thumbnail could not be encoded";
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {

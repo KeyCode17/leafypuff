@@ -1,3 +1,4 @@
+pub mod crop;
 pub mod entry;
 pub mod error;
 pub mod mood;
@@ -6,10 +7,11 @@ pub mod ports;
 pub mod sticker;
 pub mod weather;
 
+pub use crop::{COVER_MAX_HEIGHT, COVER_MAX_WIDTH, CropBox, cover_size, top_anchored_cover};
 pub use entry::{Entry, EntryId};
 pub use error::CoreError;
 pub use mood::{Mood, MoodGroup};
 pub use photo::{COVER_ORDINAL, PhotoRef};
-pub use ports::{Clock, EntryRepository, ExifReader};
+pub use ports::{Clock, EntryRepository, ExifReader, ThumbnailMaker};
 pub use sticker::{PlacedSticker, STICKER_MAX_SIZE, STICKER_MIN_SIZE, Sticker};
 pub use weather::{Location, Weather};
