@@ -23,7 +23,14 @@ pub fn seal(
     context: &FieldContext<'_>,
     plaintext: &[u8],
 ) -> Result<SealedField, CryptoError> {
-    let associated = context.to_bytes()?;
+    seal_bytes(key, &context.to_bytes()?, plaintext)
+}
+
+pub(crate) fn seal_bytes(
+    key: &ContentKey,
+    associated: &[u8],
+    plaintext: &[u8],
+) -> Result<SealedField, CryptoError> {
     let mut padded = padding::pad(plaintext)?;
     let nonce: [u8; NONCE_LEN] = random_bytes()?;
     let cipher = XChaCha20Poly1305::new(key.as_bytes().into());
@@ -31,7 +38,7 @@ pub fn seal(
         &XNonce::from(nonce),
         Payload {
             msg: &padded,
-            aad: &associated,
+            aad: associated,
         },
     );
     padded.zeroize();
@@ -47,14 +54,27 @@ pub fn open(
     context: &FieldContext<'_>,
     sealed: &SealedField,
 ) -> Result<Vec<u8>, CryptoError> {
-    let associated = context.to_bytes()?;
+    open_bytes(
+        key,
+        &context.to_bytes()?,
+        &sealed.nonce,
+        sealed.ciphertext.as_slice(),
+    )
+}
+
+pub(crate) fn open_bytes(
+    key: &ContentKey,
+    associated: &[u8],
+    nonce: &[u8; NONCE_LEN],
+    ciphertext: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
     let cipher = XChaCha20Poly1305::new(key.as_bytes().into());
     let mut padded = cipher
         .decrypt(
-            &XNonce::from(sealed.nonce),
+            &XNonce::from(*nonce),
             Payload {
-                msg: sealed.ciphertext.as_slice(),
-                aad: &associated,
+                msg: ciphertext,
+                aad: associated,
             },
         )
         .map_err(|_| CryptoError::Decryption)?;
