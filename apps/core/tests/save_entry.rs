@@ -1,15 +1,23 @@
+use chrono::{NaiveDate, Utc};
 use leafypuff_core::application::SaveEntry;
 use leafypuff_core::domain::{CoreError, Entry, EntryId, Mood};
 use leafypuff_core::infrastructure::InMemoryEntryRepository;
 
 fn entry(title: &str, body: &str) -> Entry {
+    let now = Utc::now();
     Entry {
         id: EntryId::new(),
-        date: "2026-08-31".to_owned(),
+        date: NaiveDate::from_ymd_opt(2026, 8, 31).expect("a real date"),
         mood: Mood::Calm,
         title: title.to_owned(),
         body: body.to_owned(),
         tags: vec!["#slowday".to_owned()],
+        weather: None,
+        location: None,
+        photos: Vec::new(),
+        stickers: Vec::new(),
+        created_at: now,
+        updated_at: now,
     }
 }
 
