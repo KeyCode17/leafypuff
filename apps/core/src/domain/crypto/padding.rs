@@ -1,10 +1,8 @@
 use super::error::CryptoError;
 
 pub const BUCKET: usize = 256;
-#[allow(dead_code)]
 const LENGTH_PREFIX: usize = 4;
 
-#[allow(dead_code)]
 pub(crate) fn pad(plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let length = u32::try_from(plaintext.len()).map_err(|_| CryptoError::Payload)?;
     let occupied = LENGTH_PREFIX
@@ -16,7 +14,6 @@ pub(crate) fn pad(plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     Ok(padded)
 }
 
-#[allow(dead_code)]
 pub(crate) fn unpad(padded: &[u8]) -> Result<Vec<u8>, CryptoError> {
     if padded.len() < BUCKET || !padded.len().is_multiple_of(BUCKET) {
         return Err(CryptoError::Payload);

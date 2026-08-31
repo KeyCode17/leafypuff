@@ -16,7 +16,6 @@ pub struct FieldContext<'a> {
 }
 
 impl FieldContext<'_> {
-    #[allow(dead_code)]
     pub(crate) fn to_bytes(&self) -> Result<Vec<u8>, CryptoError> {
         let name = self.field_name.as_bytes();
         if name.is_empty() {
