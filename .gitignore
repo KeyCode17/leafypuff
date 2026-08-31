@@ -5,8 +5,9 @@ docs/
 *.zip
 .DS_Store
 
-apps/android/build/
+apps/android/**/build/
 apps/android/.gradle/
+apps/android/.kotlin/
 apps/android/local.properties
 
 apps/web/node_modules/
