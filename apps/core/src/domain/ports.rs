@@ -74,6 +74,16 @@ pub trait PhotoStore {
     fn read(&self, id: &str, kind: PhotoKind) -> Result<Vec<u8>, CoreError>;
 }
 
+impl<S: PhotoStore> PhotoStore for &S {
+    fn write(&self, id: &str, kind: PhotoKind, bytes: &[u8]) -> Result<String, CoreError> {
+        (*self).write(id, kind, bytes)
+    }
+
+    fn read(&self, id: &str, kind: PhotoKind) -> Result<Vec<u8>, CoreError> {
+        (*self).read(id, kind)
+    }
+}
+
 pub trait ContentSealer {
     fn seal(&self, label: &str, plain: &[u8]) -> Result<Vec<u8>, CoreError>;
 

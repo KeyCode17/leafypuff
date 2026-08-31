@@ -1,5 +1,6 @@
 pub mod enums;
 pub mod error;
+pub mod photos;
 pub mod records;
 
 use std::sync::Arc;
@@ -9,7 +10,10 @@ use chrono::NaiveDate;
 use crate::application::SaveEntry;
 use crate::domain::error::ERR_DATE_UNREADABLE;
 use crate::domain::{CoreError, Entry, EntryId, EntryRepository};
-use crate::infrastructure::{SqliteEntryRepository, SystemClock, db};
+use crate::infrastructure::{
+    FilePhotoStore, ImageThumbnailer, KamadakExifReader, PlaintextSealer, SqliteEntryRepository,
+    SystemClock, db,
+};
 
 pub use error::LeafyPuffCoreError;
 pub use records::{FfiEntry, FfiPhoto, FfiPlacedSticker};
@@ -26,6 +30,9 @@ fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
 pub struct LeafyPuffCore {
     repository: SqliteEntryRepository,
     clock: SystemClock,
+    photos: FilePhotoStore<PlaintextSealer>,
+    exif: KamadakExifReader,
+    thumbnails: ImageThumbnailer,
 }
 
 #[uniffi::export(async_runtime = "tokio")]
@@ -37,6 +44,9 @@ impl LeafyPuffCore {
         Ok(Arc::new(Self {
             repository: SqliteEntryRepository::new(connection),
             clock: SystemClock,
+            photos: FilePhotoStore::beside(&db_path, PlaintextSealer),
+            exif: KamadakExifReader,
+            thumbnails: ImageThumbnailer,
         }))
     }
 
