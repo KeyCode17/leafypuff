@@ -10,6 +10,6 @@ pub use entry::{Entry, EntryId};
 pub use error::CoreError;
 pub use mood::{Mood, MoodGroup};
 pub use photo::{COVER_ORDINAL, PhotoRef};
-pub use ports::{Clock, EntryRepository};
+pub use ports::{Clock, EntryRepository, ExifReader};
 pub use sticker::{PlacedSticker, STICKER_MAX_SIZE, STICKER_MIN_SIZE, Sticker};
 pub use weather::{Location, Weather};

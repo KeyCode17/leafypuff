@@ -58,3 +58,7 @@ pub trait Clock {
         self.now().date_naive()
     }
 }
+
+pub trait ExifReader {
+    fn taken_on(&self, bytes: &[u8]) -> Result<Option<NaiveDate>, CoreError>;
+}

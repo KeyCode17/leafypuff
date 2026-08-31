@@ -30,6 +30,8 @@ uuid = { workspace = true }
 [dependencies]
 chrono = { workspace = true }
 core-migration = { path = "migration", optional = true }
+image = { workspace = true }
+kamadak-exif = { workspace = true }
 sea-orm = { workspace = true, optional = true }
 sea-orm-migration = { workspace = true, optional = true }
 serde = { workspace = true }

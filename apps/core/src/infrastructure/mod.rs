@@ -3,6 +3,7 @@ pub mod clock;
 pub mod db;
 #[cfg(feature = "sqlite")]
 pub mod entity;
+pub mod exif_reader;
 #[cfg(feature = "sqlite")]
 pub mod mapper;
 #[cfg(feature = "test-support")]
@@ -13,6 +14,7 @@ pub mod sqlite_entry_repository;
 mod sqlite_hydrate;
 
 pub use clock::SystemClock;
+pub use exif_reader::KamadakExifReader;
 #[cfg(feature = "test-support")]
 pub use memory::{FixedClock, InMemoryEntryRepository};
 #[cfg(feature = "sqlite")]
