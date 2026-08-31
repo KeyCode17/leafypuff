@@ -41,6 +41,17 @@ pub struct FfiEntry {
     pub updated_at: String,
 }
 
+impl From<PhotoRef> for FfiPhoto {
+    fn from(photo: PhotoRef) -> Self {
+        Self {
+            id: photo.id,
+            path: photo.path,
+            ordinal: photo.ordinal,
+            taken_at: photo.taken_at.map(|at| at.to_rfc3339()),
+        }
+    }
+}
+
 fn read_timestamp(raw: &str) -> Result<DateTime<Utc>, CoreError> {
     DateTime::parse_from_rfc3339(raw)
         .map(|stamped| stamped.with_timezone(&Utc))
@@ -58,16 +69,7 @@ impl From<Entry> for FfiEntry {
             tags: entry.tags,
             weather: entry.weather,
             location: entry.location,
-            photos: entry
-                .photos
-                .into_iter()
-                .map(|photo| FfiPhoto {
-                    id: photo.id,
-                    path: photo.path,
-                    ordinal: photo.ordinal,
-                    taken_at: photo.taken_at.map(|at| at.to_rfc3339()),
-                })
-                .collect(),
+            photos: entry.photos.into_iter().map(FfiPhoto::from).collect(),
             stickers: entry
                 .stickers
                 .into_iter()

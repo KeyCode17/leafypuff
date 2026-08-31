@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
+import com.leafypuff.ui.photo.EntryPhoto
 
 private val CardPadding = 18.dp
 private val CardGap = 12.dp
@@ -37,7 +38,7 @@ fun EntryNoteCard(
     title: String,
     body: String,
     tags: List<String>,
-    photos: List<String>,
+    photos: List<EntryPhoto>,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onRemoveTag: (Int) -> Unit,
@@ -72,7 +73,7 @@ fun EntryNoteCard(
         )
 
         photos.forEachIndexed { index, photo ->
-            NotePhoto(photoId = photo, isCover = index == 0)
+            NotePhoto(photo = photo, isCover = index == 0)
         }
 
         if (tags.isNotEmpty()) {

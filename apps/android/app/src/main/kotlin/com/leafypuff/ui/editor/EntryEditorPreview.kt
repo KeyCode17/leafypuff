@@ -5,9 +5,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LeafyTheme
+import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.bandedPhoto
 import kotlinx.datetime.LocalDate
 
 private const val FrameWidth = 375
@@ -46,17 +49,17 @@ private fun NewEntryLightPreview() {
 @Preview(name = "Edit entry on light", widthDp = FrameWidth, heightDp = FrameHeight)
 @Composable
 private fun EditEntryLightPreview() {
-    EditorFrame(dark = false, initial = EditDraft, photos = listOf("photo-1", "photo-2"))
+    EditorFrame(dark = false, initial = EditDraft, photos = previewPhotos())
 }
 
 @Preview(name = "Edit entry on dark", widthDp = FrameWidth, heightDp = FrameHeight)
 @Composable
 private fun EditEntryDarkPreview() {
-    EditorFrame(dark = true, initial = EditDraft, photos = listOf("photo-1", "photo-2"))
+    EditorFrame(dark = true, initial = EditDraft, photos = previewPhotos())
 }
 
 @Composable
-private fun EditorFrame(dark: Boolean, initial: EntryDraft, photos: List<String>) {
+private fun EditorFrame(dark: Boolean, initial: EntryDraft, photos: List<EntryPhoto>) {
     LeafyTheme(darkOverride = dark) {
         var draft by remember { mutableStateOf(initial) }
         EntryEditorOverlay(
@@ -74,3 +77,16 @@ private fun EditorFrame(dark: Boolean, initial: EntryDraft, photos: List<String>
         )
     }
 }
+
+private fun previewPhotos(): List<EntryPhoto> = listOf(
+    EntryPhoto(
+        id = "photo-1",
+        cover = bandedPhoto(300, 200, 84, Color(0xFFBFCE94), Color(0xFF6F7C48)),
+        takenOn = LocalDate(2026, 8, 26),
+    ),
+    EntryPhoto(
+        id = "photo-2",
+        cover = bandedPhoto(300, 200, 120, Color(0xFFE3C766), Color(0xFF8B9A5F)),
+        takenOn = null,
+    ),
+)

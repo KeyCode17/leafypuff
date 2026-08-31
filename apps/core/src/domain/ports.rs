@@ -2,6 +2,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 
 use super::entry::{Entry, EntryId};
 use super::error::CoreError;
+use super::photo::PhotoKind;
 
 pub trait EntryRepository {
     fn save(&self, entry: Entry) -> impl Future<Output = Result<Entry, CoreError>>;
@@ -57,4 +58,34 @@ pub trait Clock {
     fn today(&self) -> NaiveDate {
         self.now().date_naive()
     }
+}
+
+pub trait ExifReader {
+    fn taken_on(&self, bytes: &[u8]) -> Result<Option<NaiveDate>, CoreError>;
+}
+
+pub trait ThumbnailMaker {
+    fn cover(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError>;
+}
+
+pub trait PhotoStore {
+    fn write(&self, id: &str, kind: PhotoKind, bytes: &[u8]) -> Result<String, CoreError>;
+
+    fn read(&self, id: &str, kind: PhotoKind) -> Result<Vec<u8>, CoreError>;
+}
+
+impl<S: PhotoStore> PhotoStore for &S {
+    fn write(&self, id: &str, kind: PhotoKind, bytes: &[u8]) -> Result<String, CoreError> {
+        (*self).write(id, kind, bytes)
+    }
+
+    fn read(&self, id: &str, kind: PhotoKind) -> Result<Vec<u8>, CoreError> {
+        (*self).read(id, kind)
+    }
+}
+
+pub trait ContentSealer {
+    fn seal(&self, label: &str, plain: &[u8]) -> Result<Vec<u8>, CoreError>;
+
+    fn open(&self, label: &str, sealed: &[u8]) -> Result<Vec<u8>, CoreError>;
 }

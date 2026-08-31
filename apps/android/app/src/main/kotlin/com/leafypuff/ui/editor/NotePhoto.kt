@@ -1,7 +1,9 @@
 package com.leafypuff.ui.editor
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -12,11 +14,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
+import com.leafypuff.ui.photo.EntryPhoto
 
 private val PhotoHeight = 190.dp
 private val PhotoShape = RoundedCornerShape(16.dp)
@@ -27,7 +31,7 @@ private val BadgeTextSize = 9.sp
 private val BadgeScrim = Color(0x8C242D35)
 
 @Composable
-fun NotePhoto(photoId: String, isCover: Boolean, modifier: Modifier = Modifier) {
+fun NotePhoto(photo: EntryPhoto, isCover: Boolean, modifier: Modifier = Modifier) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
 
@@ -38,11 +42,12 @@ fun NotePhoto(photoId: String, isCover: Boolean, modifier: Modifier = Modifier) 
             .clip(PhotoShape)
             .background(colors.soft2),
     ) {
-        Text(
-            text = photoId,
-            style = typography.metaLabel,
-            color = colors.ink3,
-            modifier = Modifier.align(Alignment.Center),
+        Image(
+            bitmap = photo.cover,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.TopCenter,
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (isCover) {
