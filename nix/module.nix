@@ -94,7 +94,7 @@ in
     systemd.services.leafypuff-api = {
       description = "leafyPuff sync API";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "postgresql.service" "garage.service" ];
+      after = [ "network-online.target" "postgresql.service" "postgresql-setup.service" "garage.service" ];
       wants = [ "network-online.target" ];
       serviceConfig = {
         ExecStart = "${self.packages.${pkgs.stdenv.hostPlatform.system}.leafypuff-api}/bin/leafypuff-api";
