@@ -15,6 +15,9 @@ pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
 mod sqlite_hydrate;
 pub mod thumbnailer;
+pub mod vault_sealer;
+#[cfg(feature = "sqlite")]
+pub mod vault_store;
 pub mod xchacha_sealer;
 
 pub use clock::SystemClock;
@@ -26,4 +29,7 @@ pub use sealer::PlaintextSealer;
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
 pub use thumbnailer::ImageThumbnailer;
+pub use vault_sealer::VaultSealer;
+#[cfg(feature = "sqlite")]
+pub use vault_store::SqliteVaultStore;
 pub use xchacha_sealer::XChaChaSealer;

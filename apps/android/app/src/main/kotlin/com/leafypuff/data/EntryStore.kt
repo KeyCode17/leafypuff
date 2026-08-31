@@ -21,7 +21,17 @@ class EntryStore(private val client: CoreClient) {
     companion object {
         private const val DefaultLimit: UInt = 200u
 
-        suspend fun open(databasePath: String): EntryStore =
-            EntryStore(CoreClient.open(databasePath))
+        /// Opens the device database and unlocks its vault, creating one on first run. Every
+        /// entry field is sealed at rest, so a store handed out locked would fail on the first
+        /// write rather than here.
+        suspend fun open(databasePath: String, passphrase: String): EntryStore {
+            val client = CoreClient.open(databasePath)
+            if (client.hasVault()) {
+                client.unlock(passphrase)
+            } else {
+                client.createVault(passphrase)
+            }
+            return EntryStore(client)
+        }
     }
 }

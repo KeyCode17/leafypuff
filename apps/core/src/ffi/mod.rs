@@ -8,11 +8,12 @@ use std::sync::Arc;
 use chrono::NaiveDate;
 
 use crate::application::SaveEntry;
+use crate::domain::crypto::{KeyVault, RecoveryCode};
 use crate::domain::error::ERR_DATE_UNREADABLE;
 use crate::domain::{CoreError, Entry, EntryId, EntryRepository};
 use crate::infrastructure::{
-    FilePhotoStore, ImageThumbnailer, KamadakExifReader, PlaintextSealer, SqliteEntryRepository,
-    SystemClock, db,
+    FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteEntryRepository, SqliteVaultStore,
+    SystemClock, VaultSealer, db,
 };
 
 pub use error::LeafyPuffCoreError;
@@ -28,9 +29,11 @@ fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
 /// The only handle Kotlin holds. It owns the connection and every adapter behind it.
 #[derive(uniffi::Object)]
 pub struct LeafyPuffCore {
-    repository: SqliteEntryRepository,
+    repository: SqliteEntryRepository<VaultSealer>,
+    vault: SqliteVaultStore,
+    sealer: VaultSealer,
     clock: SystemClock,
-    photos: FilePhotoStore<PlaintextSealer>,
+    photos: FilePhotoStore<VaultSealer>,
     exif: KamadakExifReader,
     thumbnails: ImageThumbnailer,
 }
@@ -41,13 +44,72 @@ impl LeafyPuffCore {
     pub async fn new(db_path: String) -> Result<Arc<Self>, LeafyPuffCoreError> {
         let connection = db::open(&db_path).await?;
         db::run_migrations(&connection).await?;
+        let sealer = VaultSealer::new();
         Ok(Arc::new(Self {
-            repository: SqliteEntryRepository::new(connection),
+            repository: SqliteEntryRepository::new(connection.clone(), sealer.clone()),
+            vault: SqliteVaultStore::new(connection),
+            sealer: sealer.clone(),
             clock: SystemClock,
-            photos: FilePhotoStore::beside(&db_path, PlaintextSealer),
+            photos: FilePhotoStore::beside(&db_path, sealer),
             exif: KamadakExifReader,
             thumbnails: ImageThumbnailer,
         }))
+    }
+
+    /// Creates the one vault this device will ever hold and returns the recovery code once.
+    /// The caller must show it and never store it; nothing here writes it down.
+    pub async fn create_vault(&self, passphrase: String) -> Result<String, LeafyPuffCoreError> {
+        let code = RecoveryCode::generate().map_err(CoreError::from)?;
+        let (vault, key) = KeyVault::create(&passphrase, &code).map_err(CoreError::from)?;
+        self.vault.create(&vault).await?;
+        self.sealer.unlock(key)?;
+        Ok(code.to_code_string().to_string())
+    }
+
+    pub async fn has_vault(&self) -> Result<bool, LeafyPuffCoreError> {
+        Ok(self.vault.exists().await?)
+    }
+
+    pub async fn unlock(&self, passphrase: String) -> Result<(), LeafyPuffCoreError> {
+        let vault = self.vault.read().await?;
+        let key = vault
+            .unlock_with_passphrase(&passphrase)
+            .map_err(CoreError::from)?;
+        self.sealer.unlock(key)?;
+        Ok(())
+    }
+
+    pub async fn unlock_with_recovery_code(&self, code: String) -> Result<(), LeafyPuffCoreError> {
+        let vault = self.vault.read().await?;
+        let parsed = RecoveryCode::parse(&code).map_err(CoreError::from)?;
+        let key = vault
+            .unlock_with_recovery_code(&parsed)
+            .map_err(CoreError::from)?;
+        self.sealer.unlock(key)?;
+        Ok(())
+    }
+
+    /// Rewraps the content key under a new passphrase. No entry is re-encrypted.
+    pub async fn change_passphrase(
+        &self,
+        current: String,
+        replacement: String,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let vault = self.vault.read().await?;
+        let rewrapped = vault
+            .rewrap_passphrase(&current, &replacement)
+            .map_err(CoreError::from)?;
+        self.vault.replace(&rewrapped).await?;
+        Ok(())
+    }
+
+    pub fn lock(&self) -> Result<(), LeafyPuffCoreError> {
+        self.sealer.lock()?;
+        Ok(())
+    }
+
+    pub fn is_unlocked(&self) -> bool {
+        self.sealer.is_unlocked()
     }
 
     pub async fn save_entry(&self, entry: FfiEntry) -> Result<FfiEntry, LeafyPuffCoreError> {

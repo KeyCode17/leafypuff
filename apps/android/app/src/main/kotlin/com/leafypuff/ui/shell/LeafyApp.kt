@@ -35,6 +35,7 @@ import kotlinx.datetime.todayIn
 fun LeafyApp(
     importer: PhotoImporter,
     databasePath: String,
+    passphrase: String,
     versionName: String,
 ) {
     val scope = rememberCoroutineScope()
@@ -50,7 +51,7 @@ fun LeafyApp(
     var preferences by remember { mutableStateOf(AppPreferences(darkMode = systemDark)) }
 
     LaunchedEffect(databasePath) {
-        val opened = EntryStore.open(databasePath)
+        val opened = EntryStore.open(databasePath, passphrase)
         store = opened
         entries = opened.list()
     }

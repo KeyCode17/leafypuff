@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder};
 
-use crate::domain::{CoreError, Entry};
+use crate::domain::{CoreError, Entry, FieldSealer};
 
 use super::entity::{entries, photos, stickers, tags};
 use super::mapper;
@@ -10,6 +10,7 @@ use super::mapper;
 pub(super) async fn hydrate(
     connection: &DatabaseConnection,
     rows: Vec<entries::Model>,
+    sealer: &(dyn FieldSealer + Send + Sync),
 ) -> Result<Vec<Entry>, CoreError> {
     let ids: Vec<String> = rows.iter().map(|row| row.id.clone()).collect();
 
@@ -56,6 +57,7 @@ pub(super) async fn hydrate(
                 photo_rows.remove(&key).unwrap_or_default(),
                 sticker_rows.remove(&key).unwrap_or_default(),
                 tag_rows.remove(&key).unwrap_or_default(),
+                sealer,
             )
         })
         .collect()

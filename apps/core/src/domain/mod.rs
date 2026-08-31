@@ -13,6 +13,8 @@ pub use entry::{Entry, EntryId};
 pub use error::CoreError;
 pub use mood::{Mood, MoodGroup};
 pub use photo::{COVER_ORDINAL, PhotoKind, PhotoRef};
-pub use ports::{Clock, ContentSealer, EntryRepository, ExifReader, PhotoStore, ThumbnailMaker};
+pub use ports::{
+    Clock, ContentSealer, EntryRepository, ExifReader, FieldSealer, PhotoStore, ThumbnailMaker,
+};
 pub use sticker::{PlacedSticker, STICKER_MAX_SIZE, STICKER_MIN_SIZE, Sticker};
 pub use weather::{Location, Weather};

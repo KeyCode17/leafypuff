@@ -7,12 +7,14 @@ import kotlin.test.assertNotNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 
+private const val VaultPassphrase = "a passphrase only this test uses"
+
 class RoundTripTest {
 
     @Test
     fun anEntrySurvivesTheBoundaryUnchanged() = runBlocking {
         val dir = Files.createTempDirectory("leafypuff")
-        val client = CoreClient.open(dir.resolve("diary.sqlite").toString())
+        val client = CoreClient.open(dir.resolve("diary.sqlite").toString()).also { it.createVault(VaultPassphrase) }
 
         val draft = EntryDraft(
             id = "11111111-1111-4111-8111-111111111111",
