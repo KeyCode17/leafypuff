@@ -35,7 +35,7 @@ commit-msg:
   commands:
     conventional:
       run: |
-        grep -qE '^(feat|fix)\([a-z0-9-]+\): [a-z][^\n]*[^.]$|^(chore|docs|refactor|test|build|ci|perf|style|revert)(\([a-z0-9-]+\))?: [a-z][^\n]*[^.]$' {1} || {
+        grep -qE '^(feat|fix)\([a-z0-9-]+\): [a-z].*[^.]$|^(chore|docs|refactor|test|build|ci|perf|style|revert)(\([a-z0-9-]+\))?: [a-z].*[^.]$' {1} || {
           echo "Commit subject must be Conventional: feat(scope): lowercase imperative, no trailing period."
           exit 1
         }
