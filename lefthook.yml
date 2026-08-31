@@ -21,6 +21,18 @@ pre-push:
       run: cargo clippy --workspace --all-targets -- -D warnings
     rust-test:
       run: cargo test --workspace
+    rust-clippy-all-features:
+      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+    rust-test-all-features:
+      run: cargo test --workspace --all-features
+    rust-test-no-default:
+      run: cargo test -p leafypuff-core --no-default-features
+    rust-layering:
+      run: |
+        if rg -n 'sea_orm|sea_query|uniffi::(Object|Record|Error)|\bFfi[A-Z]' apps/core/src/domain apps/core/src/application; then
+          echo "Adapter and FFI types must not appear in domain/ or application/."
+          exit 1
+        fi
     web-typecheck:
       root: "apps/web/"
       run: pnpm exec tsc --noEmit
