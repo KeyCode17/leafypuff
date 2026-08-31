@@ -14,6 +14,9 @@ pub const ERR_EXIF_UNREADABLE: &str = "Exif block could not be read";
 pub const ERR_PHOTO_TOO_SMALL: &str = "Photo is too small to hold a 3:2 cover";
 pub const ERR_PHOTO_UNDECODABLE: &str = "Photo bytes are not a supported image";
 pub const ERR_PHOTO_UNENCODABLE: &str = "Cover thumbnail could not be encoded";
+pub const ERR_PHOTO_ID_INVALID: &str = "Photo id is not a storage-safe name";
+pub const ERR_PHOTO_MISSING: &str = "Photo is not in app storage";
+pub const ERR_PHOTO_STORE: &str = "Photo storage failure";
 
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {

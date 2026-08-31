@@ -8,6 +8,8 @@ pub mod exif_reader;
 pub mod mapper;
 #[cfg(feature = "test-support")]
 pub mod memory;
+pub mod photo_store;
+pub mod sealer;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
@@ -18,6 +20,8 @@ pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
 #[cfg(feature = "test-support")]
 pub use memory::{FixedClock, InMemoryEntryRepository};
+pub use photo_store::FilePhotoStore;
+pub use sealer::PlaintextSealer;
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
 pub use thumbnailer::ImageThumbnailer;
