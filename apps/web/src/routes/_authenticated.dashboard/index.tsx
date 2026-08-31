@@ -4,8 +4,8 @@ import type { ReactElement } from "react"
 import { Guard } from "#/components/guard"
 import { Typography } from "#/components/typography"
 import { PERMISSION } from "#/constants/permission"
-import { dashboardSummaryQueryOptions } from "#/routes/dashboard/_apis/dashboard-api"
-import { useDashboard } from "#/routes/dashboard/_hooks/use-dashboard"
+import { dashboardSummaryQueryOptions } from "#/routes/_authenticated.dashboard/_apis/dashboard-api"
+import { useDashboard } from "#/routes/_authenticated.dashboard/_hooks/use-dashboard"
 
 const DashboardPage = (): ReactElement => {
 	const { summary } = useDashboard()
@@ -30,7 +30,7 @@ const DashboardPage = (): ReactElement => {
 	)
 }
 
-export const Route = createFileRoute("/dashboard/")({
+export const Route = createFileRoute("/_authenticated/dashboard/")({
 	loader: ({ context }) =>
 		context.queryClient.ensureQueryData(dashboardSummaryQueryOptions()),
 	component: DashboardPage,
