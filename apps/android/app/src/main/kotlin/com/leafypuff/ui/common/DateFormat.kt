@@ -14,10 +14,10 @@ private val FullMonths = listOf(
     "July", "August", "September", "October", "November", "December",
 )
 
-fun formatEntryDate(date: LocalDate): String {
-    val weekday = DayNames[date.dayOfWeek.ordinal]
-    val month = ShortMonths[date.monthNumber - 1]
-    return "$weekday, ${date.dayOfMonth} $month ${date.year}"
-}
+fun formatShortDate(date: LocalDate): String =
+    "${date.dayOfMonth} ${ShortMonths[date.monthNumber - 1]} ${date.year}"
+
+fun formatEntryDate(date: LocalDate): String =
+    "${DayNames[date.dayOfWeek.ordinal]}, ${formatShortDate(date)}"
 
 fun formatMonthYear(date: LocalDate): String = "${FullMonths[date.monthNumber - 1]} ${date.year}"

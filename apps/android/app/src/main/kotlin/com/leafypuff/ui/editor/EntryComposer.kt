@@ -13,6 +13,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.leafypuff.domain.Mood
+import com.leafypuff.ui.common.ToastOverlay
+import com.leafypuff.ui.common.ToastRequest
+import com.leafypuff.ui.common.exifPromptToast
 import com.leafypuff.ui.mood.MoodPickerOverlay
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.PhotoImporter
@@ -33,11 +36,20 @@ fun EntryComposer(
     var draft by remember { mutableStateOf(blankDraft(today)) }
     var editing by remember { mutableStateOf(false) }
     var photos by remember { mutableStateOf(emptyList<EntryPhoto>()) }
+    var toast by remember { mutableStateOf<ToastRequest?>(null) }
+    var asking by remember { mutableStateOf(false) }
+    var promptedDay by remember { mutableStateOf<LocalDate?>(null) }
 
     val addPhoto = rememberPhotoPicker { bytes ->
         scope.launch {
             val picked = importer.import(bytes) ?: return@launch
             photos = photos + picked
+            val day = picked.takenOn
+            if (day != null) {
+                promptedDay = day
+                toast = exifPromptToast(day)
+                asking = true
+            }
         }
     }
 
@@ -46,6 +58,7 @@ fun EntryComposer(
             draft = blankDraft(today)
             editing = false
             photos = emptyList()
+            asking = false
         }
     }
 
@@ -81,6 +94,16 @@ fun EntryComposer(
             onAddPhoto = addPhoto,
             photos = photos,
             modifier = Modifier.statusBarsPadding(),
+        )
+
+        ToastOverlay(
+            visible = open && asking,
+            request = toast,
+            onAccept = {
+                promptedDay?.let { day -> draft = draft.copy(date = day) }
+                asking = false
+            },
+            onDismiss = { asking = false },
         )
     }
 }
