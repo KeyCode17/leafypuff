@@ -9,10 +9,10 @@ pub enum ConfigError {
 #[derive(Debug, Clone)]
 pub struct Config {
     pub database_url: String,
-    pub minio_endpoint: String,
-    pub minio_bucket: String,
-    pub minio_access_key: String,
-    pub minio_secret_key: String,
+    pub s3_endpoint: String,
+    pub s3_bucket: String,
+    pub s3_access_key: String,
+    pub s3_secret_key: String,
     pub port: u16,
 }
 
@@ -26,10 +26,10 @@ impl Config {
 
         Ok(Self {
             database_url: required("DATABASE_URL")?,
-            minio_endpoint: required("MINIO_ENDPOINT")?,
-            minio_bucket: required("MINIO_BUCKET")?,
-            minio_access_key: required("MINIO_ACCESS_KEY")?,
-            minio_secret_key: required("MINIO_SECRET_KEY")?,
+            s3_endpoint: required("S3_ENDPOINT")?,
+            s3_bucket: required("S3_BUCKET")?,
+            s3_access_key: required("S3_ACCESS_KEY")?,
+            s3_secret_key: required("S3_SECRET_KEY")?,
             port,
         })
     }

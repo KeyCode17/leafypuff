@@ -26,6 +26,12 @@ in
       type = lib.types.port;
       default = 8080;
     };
+
+    storageListen = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1:3900";
+      description = "Where the S3 API listens. Loopback only; the API is its sole reader.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -46,19 +52,33 @@ in
       ];
     };
 
-    # Loopback on purpose: every object read and write goes through the API, so MinIO
-    # gets no vhost and no firewall hole. Exposing it would be a second public surface.
-    services.minio = {
+    # Loopback on purpose: every object read and write goes through the API, so the
+    # object store gets no vhost and no firewall hole. Exposing it would be a second
+    # public surface.
+    #
+    # Garage rather than MinIO: nixpkgs marks minio insecure with six unfixed CVEs,
+    # two of them unauthenticated object write, and upstream has abandoned it.
+    services.garage = {
       enable = true;
-      listenAddress = "127.0.0.1:9000";
-      consoleAddress = "127.0.0.1:9001";
-      rootCredentialsFile = cfg.environmentFile;
+      package = pkgs.garage;
+      environmentFile = cfg.environmentFile;
+      settings = {
+        replication_factor = 1;
+        db_engine = "lmdb";
+        metadata_dir = "/var/lib/garage/meta";
+        data_dir = "/var/lib/garage/data";
+        rpc_bind_addr = "127.0.0.1:3901";
+        s3_api = {
+          api_bind_addr = cfg.storageListen;
+          s3_region = "garage";
+        };
+      };
     };
 
     systemd.services.leafypuff-api = {
       description = "leafyPuff sync API";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "postgresql.service" "minio.service" ];
+      after = [ "network-online.target" "postgresql.service" "garage.service" ];
       wants = [ "network-online.target" ];
       serviceConfig = {
         ExecStart = "${self.packages.${pkgs.stdenv.hostPlatform.system}.leafypuff-api}/bin/leafypuff-api";

@@ -19,15 +19,15 @@ fn a_complete_environment_parses() {
         "DATABASE_URL".to_owned(),
         "postgres:///leafypuff".to_owned(),
     );
-    map.insert("MINIO_ENDPOINT".to_owned(), "127.0.0.1:9000".to_owned());
-    map.insert("MINIO_BUCKET".to_owned(), "leafypuff".to_owned());
-    map.insert("MINIO_ACCESS_KEY".to_owned(), "access".to_owned());
-    map.insert("MINIO_SECRET_KEY".to_owned(), "secret".to_owned());
+    map.insert("S3_ENDPOINT".to_owned(), "127.0.0.1:9000".to_owned());
+    map.insert("S3_BUCKET".to_owned(), "leafypuff".to_owned());
+    map.insert("S3_ACCESS_KEY".to_owned(), "access".to_owned());
+    map.insert("S3_SECRET_KEY".to_owned(), "secret".to_owned());
     map.insert("PORT".to_owned(), "8080".to_owned());
 
     let config = Config::from_env(&source(map)).expect("a complete environment must parse");
     assert_eq!(config.port, 8080);
-    assert_eq!(config.minio_bucket, "leafypuff");
+    assert_eq!(config.s3_bucket, "leafypuff");
 }
 
 #[test]
@@ -37,10 +37,10 @@ fn a_non_numeric_port_is_rejected_by_name() {
         "DATABASE_URL".to_owned(),
         "postgres:///leafypuff".to_owned(),
     );
-    map.insert("MINIO_ENDPOINT".to_owned(), "127.0.0.1:9000".to_owned());
-    map.insert("MINIO_BUCKET".to_owned(), "leafypuff".to_owned());
-    map.insert("MINIO_ACCESS_KEY".to_owned(), "access".to_owned());
-    map.insert("MINIO_SECRET_KEY".to_owned(), "secret".to_owned());
+    map.insert("S3_ENDPOINT".to_owned(), "127.0.0.1:9000".to_owned());
+    map.insert("S3_BUCKET".to_owned(), "leafypuff".to_owned());
+    map.insert("S3_ACCESS_KEY".to_owned(), "access".to_owned());
+    map.insert("S3_SECRET_KEY".to_owned(), "secret".to_owned());
     map.insert("PORT".to_owned(), "eighty".to_owned());
 
     let error = Config::from_env(&source(map)).expect_err("a non-numeric port must fail");
