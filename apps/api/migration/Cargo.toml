@@ -22,5 +22,5 @@ cli = ["sea-orm-migration/cli"]
 
 [dependencies]
 async-trait = "0.1"
-sea-orm-migration = { workspace = true }
+sea-orm-migration = { workspace = true, features = ["sqlx-postgres"] }
 tokio = { workspace = true }

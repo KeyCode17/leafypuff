@@ -18,8 +18,11 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 kamadak-exif = "0.6"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres", "sqlx-sqlite", "runtime-tokio-rustls", "macros"] }
-sea-orm-migration = { version = "1.1", default-features = false, features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+# No sqlx driver is enabled here on purpose. apps/core ships inside the android .so and needs
+# sqlite alone; apps/api needs postgres alone. A driver enabled at the workspace level would be
+# linked into both, so each consumer names the one driver it actually opens.
+sea-orm = { version = "1", default-features = false, features = ["runtime-tokio-rustls", "macros"] }
+sea-orm-migration = { version = "1.1", default-features = false, features = ["runtime-tokio-rustls"] }
 tempfile = "3"
 uniffi = { version = "0.32.0", features = ["tokio"] }
 # "password-hash" is the PHC-string API: it encodes salt and parameters alongside the digest so a

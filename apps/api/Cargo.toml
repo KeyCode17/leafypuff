@@ -21,7 +21,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-sea-orm = { workspace = true }
+sea-orm = { workspace = true, features = ["sqlx-postgres"] }
 api-migration = { path = "migration" }
 rand = { workspace = true }
 reqwest = { workspace = true }
