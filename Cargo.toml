@@ -22,9 +22,10 @@ sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres"
 sea-orm-migration = { version = "1.1", default-features = false, features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 tempfile = "3"
 uniffi = { version = "0.32.0", features = ["tokio"] }
-# argon2's "password-hash" default feature is the PHC-string API; this module uses
-# hash_password_into and does not need it. "zeroize" wipes each crate's internal state on drop.
-argon2 = { version = "0.6", default-features = false, features = ["alloc", "zeroize"] }
+# "password-hash" is the PHC-string API: it encodes salt and parameters alongside the digest so a
+# stored credential stays verifiable after the cost parameters are raised. "zeroize" wipes each
+# crate's internal state on drop.
+argon2 = { version = "0.6", default-features = false, features = ["alloc", "password-hash", "getrandom", "zeroize"] }
 chacha20poly1305 = { version = "0.11", default-features = false, features = ["alloc", "zeroize"] }
 hkdf = "0.13"
 jsonwebtoken = "9"

@@ -16,12 +16,12 @@ pub trait PasswordHasher: Send + Sync {
 
 pub trait TokenIssuer: Send + Sync {
     fn access_token(&self, account_id: Uuid) -> Result<String, IamError>;
-    fn refresh_secret(&self) -> String;
+    fn refresh_secret(&self) -> Result<String, IamError>;
     fn digest(&self, secret: &str) -> String;
 }
 
 pub trait OtpGenerator: Send + Sync {
-    fn code(&self) -> String;
+    fn code(&self) -> Result<String, IamError>;
     fn digest(&self, code: &str) -> String;
 }
 
