@@ -1,5 +1,5 @@
 pub mod config;
-pub mod readiness_probe;
+pub mod dependency_probe;
 
 pub use config::{Config, ConfigError};
-pub use readiness_probe::StaticReadinessProbe;
+pub use dependency_probe::DependencyProbe;

@@ -1,12 +1,12 @@
-use crate::infrastructure::StaticReadinessProbe;
+use crate::infrastructure::DependencyProbe;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct AppState {
-    pub readiness: StaticReadinessProbe,
+    pub readiness: DependencyProbe,
 }
 
 impl AppState {
-    pub const fn new(readiness: StaticReadinessProbe) -> Self {
+    pub const fn new(readiness: DependencyProbe) -> Self {
         Self { readiness }
     }
 }
