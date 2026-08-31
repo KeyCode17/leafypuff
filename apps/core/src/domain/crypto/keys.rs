@@ -22,7 +22,6 @@ pub struct ContentKey {
     bytes: [u8; KEY_LEN],
 }
 
-#[allow(dead_code)]
 impl ContentKey {
     /// Draws a fresh content key from the operating system entropy source.
     pub fn generate() -> Result<Self, CryptoError> {
@@ -52,7 +51,6 @@ pub struct MasterKey {
     bytes: [u8; KEY_LEN],
 }
 
-#[allow(dead_code)]
 impl MasterKey {
     pub(crate) const fn from_bytes(bytes: [u8; KEY_LEN]) -> Self {
         Self { bytes }
@@ -75,7 +73,6 @@ pub struct RecoveryKey {
     bytes: [u8; KEY_LEN],
 }
 
-#[allow(dead_code)]
 impl RecoveryKey {
     pub(crate) const fn from_bytes(bytes: [u8; KEY_LEN]) -> Self {
         Self { bytes }
