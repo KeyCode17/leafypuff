@@ -22,3 +22,8 @@ sea-orm = { version = "1", default-features = false, features = ["sqlx-postgres"
 sea-orm-migration = { version = "1.1", default-features = false, features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 tempfile = "3"
 uniffi = { version = "0.32.0", features = ["tokio"] }
+
+[profile.release]
+strip = "symbols"
+lto = true
+codegen-units = 1

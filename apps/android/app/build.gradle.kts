@@ -63,6 +63,12 @@ android {
         targetSdk = 35
         versionCode = 4
         versionName = "0.4.0"
+
+        // JNA ships jnidispatch for mips, mips64, armeabi and x86 — architectures Android
+        // dropped years ago. Without this filter they ride along in every APK.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     buildFeatures {
