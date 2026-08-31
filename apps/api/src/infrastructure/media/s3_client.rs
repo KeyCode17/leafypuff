@@ -1,6 +1,7 @@
 use aws_credential_types::Credentials;
 use aws_sdk_s3::config::{BehaviorVersion, Region};
 use aws_sdk_s3::{Client, Config as S3Config};
+use aws_smithy_async::rt::sleep::default_async_sleep;
 
 use crate::infrastructure::Config;
 
@@ -15,16 +16,16 @@ pub fn build_s3_client(config: &Config) -> Client {
         None,
         PROVIDER,
     );
-    let built = S3Config::builder()
+    let mut builder = S3Config::builder()
         .behavior_version(BehaviorVersion::latest())
         .region(Region::new(REGION))
         .endpoint_url(endpoint(&config.s3_endpoint))
         .credentials_provider(credentials)
         // Garage speaks path style only. Virtual-hosted style would resolve a bucket
         // subdomain that has no DNS record on loopback.
-        .force_path_style(true)
-        .build();
-    Client::from_conf(built)
+        .force_path_style(true);
+    builder.set_sleep_impl(default_async_sleep());
+    Client::from_conf(builder.build())
 }
 
 fn endpoint(configured: &str) -> String {
