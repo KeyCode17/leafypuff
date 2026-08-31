@@ -54,11 +54,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Entries::Date).text().not_null())
                     .col(ColumnDef::new(Entries::Mood).text().not_null())
                     .col(ColumnDef::new(Entries::Tags).json_binary().not_null())
-                    .col(
-                        ColumnDef::new(Entries::StickerPlacements)
-                            .json_binary()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Entries::StickerPlacements).text().not_null())
                     .col(ColumnDef::new(Entries::Revision).big_integer().not_null())
                     .col(
                         ColumnDef::new(Entries::DeviceUpdatedAt)

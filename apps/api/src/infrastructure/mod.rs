@@ -2,6 +2,7 @@ pub mod config;
 pub mod db;
 pub mod dependency_probe;
 pub mod iam;
+pub mod sync;
 
 pub use config::{Config, ConfigError};
 pub use db::connect_and_migrate;
