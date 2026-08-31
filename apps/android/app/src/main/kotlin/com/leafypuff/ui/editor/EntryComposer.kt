@@ -29,6 +29,7 @@ fun EntryComposer(
     today: LocalDate,
     importer: PhotoImporter,
     onClose: () -> Unit,
+    onSave: (EntryDraft, List<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -85,7 +86,7 @@ fun EntryComposer(
             visible = open && editing,
             draft = draft,
             onDraftChange = { draft = it },
-            onSave = onClose,
+            onSave = { onSave(draft, photos.map { photo -> photo.id }) },
             onClose = onClose,
             onMoodClick = { editing = false },
             onDateClick = { },
