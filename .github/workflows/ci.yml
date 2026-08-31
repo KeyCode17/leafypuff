@@ -93,7 +93,12 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
+      # packages: '' skips the action's default install list. That list pulls the emulator,
+      # which this job never boots and whose download has failed mid-archive on the runner;
+      # the next step installs the one package the cross-build actually needs.
       - uses: android-actions/setup-android@v3
+        with:
+          packages: ''
       - name: install the ndk the cross-build needs
         run: |
           sdkmanager "ndk;$ANDROID_NDK_VERSION"
