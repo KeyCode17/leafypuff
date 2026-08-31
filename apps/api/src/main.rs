@@ -12,10 +12,10 @@ async fn main() {
         Config::from_env(&|key| std::env::var(key).ok()).expect("configuration is incomplete");
 
     let probe = match Database::connect(&config.database_url).await {
-        Ok(connection) => DependencyProbe::new(connection, config.minio_endpoint.clone()),
+        Ok(connection) => DependencyProbe::new(connection, config.s3_endpoint.clone()),
         Err(error) => {
             tracing::error!(%error, "database unreachable at startup");
-            DependencyProbe::unreachable(config.minio_endpoint.clone())
+            DependencyProbe::unreachable(config.s3_endpoint.clone())
         }
     };
 
