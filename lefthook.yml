@@ -9,6 +9,9 @@ pre-commit:
       glob: "*.{ts,tsx,json}"
       run: pnpm exec biome check --write {staged_files} && git add {staged_files}
 
+# Lefthook skips pre-push commands when it computes no changed push files, and the
+# override is a CLI flag (--force) with no config equivalent. These therefore fire
+# unreliably; .github/workflows/ci.yml is the gate that actually blocks.
 pre-push:
   parallel: false
   commands:
