@@ -33,6 +33,10 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      # The repository tests skip themselves when this is unset, which is right on a laptop
+      # with no cluster running and wrong in CI. Fail before the suite rather than pass green.
+      - name: the database url reaches the suite
+        run: test -n "$TEST_DATABASE_URL"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       # apps/core builds without its sqlite feature inside the android .so. Running only the
