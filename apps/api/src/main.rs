@@ -28,7 +28,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(address)
         .await
         .expect("failed to bind the configured port");
-    tracing::info!(%address, "pawnotes-api listening");
+    tracing::info!(%address, "leafypuff-api listening");
     axum::serve(listener, app)
         .await
         .expect("server terminated unexpectedly");

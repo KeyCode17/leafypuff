@@ -1,10 +1,10 @@
-package com.pawnotes.theme
+package com.leafypuff.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 @Immutable
-data class PawColors(
+data class LeafyColors(
     val bg: Color,
     val surface: Color,
     val sheet: Color,
@@ -21,7 +21,7 @@ data class PawColors(
     val keyLine: Color,
 )
 
-val PawLightColors = PawColors(
+val LeafyLightColors = LeafyColors(
     bg = Color(0xFFF6F8EC),
     surface = Color(0xFFFAFDFE),
     sheet = Color(0xFFFFFFFF),
@@ -38,7 +38,7 @@ val PawLightColors = PawColors(
     keyLine = Color(0xFFE7EBDA),
 )
 
-val PawDarkColors = PawColors(
+val LeafyDarkColors = LeafyColors(
     bg = Color(0xFF191D14),
     surface = Color(0xFF22271B),
     sheet = Color(0xFF22271B),

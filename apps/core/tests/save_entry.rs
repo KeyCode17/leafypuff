@@ -1,6 +1,6 @@
-use pawnotes_core::application::SaveEntry;
-use pawnotes_core::domain::{CoreError, Entry, EntryId, Mood};
-use pawnotes_core::infrastructure::InMemoryEntryRepository;
+use leafypuff_core::application::SaveEntry;
+use leafypuff_core::domain::{CoreError, Entry, EntryId, Mood};
+use leafypuff_core::infrastructure::InMemoryEntryRepository;
 
 fn entry(title: &str, body: &str) -> Entry {
     Entry {

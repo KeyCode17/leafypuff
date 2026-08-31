@@ -1,15 +1,15 @@
-package com.pawnotes.ui.shell
+package com.leafypuff.ui.shell
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.pawnotes.theme.LocalPawColors
+import com.leafypuff.theme.LocalLeafyColors
 
 @Composable
-fun PawApp() {
-    val colors = LocalPawColors.current
+fun LeafyApp() {
+    val colors = LocalLeafyColors.current
     Box(
         modifier = Modifier
             .fillMaxSize()

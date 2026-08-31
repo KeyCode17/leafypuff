@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.pawnotes"
+    namespace = "com.leafypuff"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.pawnotes"
+        applicationId = "com.leafypuff"
         minSdk = 23
         targetSdk = 35
         versionCode = 1

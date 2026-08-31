@@ -1,4 +1,4 @@
-# PawNotes
+# leafyPuff
 
 A personal diary app. Warm sage palette, hand-drawn bunny faces as moods, light and dark themes, and everything the UI reads but should not compute pushed into a shared Rust core.
 
@@ -10,8 +10,8 @@ Hexagonal (ports and adapters) inside each crate, one Cargo workspace across the
 
 ```
 apps/
-├── core/      pawnotes-core  — shared Rust core, hexagonal, reused on both tiers
-├── api/       pawnotes-api   — Axum sync API, hexagonal
+├── core/      leafypuff-core  — shared Rust core, hexagonal, reused on both tiers
+├── api/       leafypuff-api   — Axum sync API, hexagonal
 ├── android/   Kotlin + Jetpack Compose client (Gradle, not a workspace member)
 └── web/       TanStack CMS (pnpm, not a workspace member)
 ```

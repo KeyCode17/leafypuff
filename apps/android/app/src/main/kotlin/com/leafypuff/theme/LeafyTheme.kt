@@ -1,24 +1,24 @@
-package com.pawnotes.theme
+package com.leafypuff.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 
-val LocalPawColors = staticCompositionLocalOf { PawLightColors }
-val LocalPawTypeScale = staticCompositionLocalOf { PawTypeScaleMedium }
+val LocalLeafyColors = staticCompositionLocalOf { LeafyLightColors }
+val LocalLeafyTypeScale = staticCompositionLocalOf { LeafyTypeScaleMedium }
 
 @Composable
-fun PawTheme(
+fun LeafyTheme(
     darkOverride: Boolean? = null,
-    typeScale: PawTypeScale = PawTypeScaleMedium,
+    typeScale: LeafyTypeScale = LeafyTypeScaleMedium,
     content: @Composable () -> Unit,
 ) {
     val dark = darkOverride ?: isSystemInDarkTheme()
-    val colors = if (dark) PawDarkColors else PawLightColors
+    val colors = if (dark) LeafyDarkColors else LeafyLightColors
     CompositionLocalProvider(
-        LocalPawColors provides colors,
-        LocalPawTypeScale provides typeScale,
+        LocalLeafyColors provides colors,
+        LocalLeafyTypeScale provides typeScale,
         content = content,
     )
 }

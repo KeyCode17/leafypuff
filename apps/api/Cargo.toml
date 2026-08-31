@@ -1,11 +1,11 @@
 [package]
-name = "pawnotes-api"
+name = "leafypuff-api"
 version.workspace = true
 license.workspace = true
 edition = "2024"
 
 [dependencies]
-pawnotes-core = { path = "../core" }
+leafypuff-core = { path = "../core" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

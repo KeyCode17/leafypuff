@@ -245,6 +245,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "leafypuff-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "leafypuff-core",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "leafypuff-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -299,29 +323,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "pawnotes-api"
-version = "0.1.0"
-dependencies = [
- "axum",
- "pawnotes-core",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "pawnotes-core"
-version = "0.1.0"
-dependencies = [
- "serde",
- "thiserror",
- "uuid",
-]
 
 [[package]]
 name = "percent-encoding"

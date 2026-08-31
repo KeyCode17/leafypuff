@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pawnotes"
+rootProject.name = "leafypuff"
 include(":app")

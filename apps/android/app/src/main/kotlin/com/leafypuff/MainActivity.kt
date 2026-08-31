@@ -1,17 +1,17 @@
-package com.pawnotes
+package com.leafypuff
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.pawnotes.theme.PawTheme
-import com.pawnotes.ui.shell.PawApp
+import com.leafypuff.theme.LeafyTheme
+import com.leafypuff.ui.shell.LeafyApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            PawTheme {
-                PawApp()
+            LeafyTheme {
+                LeafyApp()
             }
         }
     }
