@@ -8,5 +8,5 @@ pub use account::{Account, OtpCode, OtpPurpose, RefreshToken};
 pub use error::IamError;
 pub use ports::{
     AccountRepository, Clock, EmailSender, OtpGenerator, OtpRepository, PasswordHasher,
-    RefreshTokenRepository, TokenIssuer,
+    RefreshTokenRepository, TokenIssuer, TokenVerifier,
 };

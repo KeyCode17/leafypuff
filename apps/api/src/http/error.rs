@@ -4,6 +4,7 @@ use axum::response::{IntoResponse, Response};
 
 use crate::domain::DomainError;
 use crate::domain::iam::IamError;
+use crate::domain::sync::SyncError;
 
 use super::envelope::Envelope;
 
@@ -14,6 +15,8 @@ pub const ERR_EMAIL_TAKEN: &str = "EMAIL_ALREADY_REGISTERED";
 pub const ERR_TOO_MANY_ATTEMPTS: &str = "TOO_MANY_ATTEMPTS";
 pub const ERR_MAIL_UNAVAILABLE: &str = "MAIL_UNAVAILABLE";
 pub const ERR_INTERNAL: &str = "INTERNAL";
+pub const ERR_FORBIDDEN: &str = "FORBIDDEN";
+pub const ERR_MALFORMED_BATCH: &str = "MALFORMED_BATCH";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -22,6 +25,7 @@ const DETAIL_EMAIL_TAKEN: &str = "Email already registered";
 const DETAIL_TOO_MANY_ATTEMPTS: &str = "Too many attempts";
 const DETAIL_MAIL_UNAVAILABLE: &str = "The mail provider is unavailable";
 const DETAIL_INTERNAL: &str = "Something went wrong";
+const DETAIL_FORBIDDEN: &str = "That entry belongs to another account";
 
 pub struct ApiError {
     status: StatusCode,
@@ -84,6 +88,29 @@ impl From<IamError> for ApiError {
             }
             IamError::Storage(reason) => {
                 tracing::error!(%reason, "an iam request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<SyncError> for ApiError {
+    fn from(error: SyncError) -> Self {
+        match error {
+            SyncError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_FORBIDDEN)
+            }
+            SyncError::Malformed(detail) => Self::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ERR_MALFORMED_BATCH,
+                &detail,
+            ),
+            SyncError::Storage(reason) => {
+                tracing::error!(%reason, "a sync request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,
