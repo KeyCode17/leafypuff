@@ -19,7 +19,24 @@ in
 
     environmentFile = lib.mkOption {
       type = lib.types.path;
-      description = "Holds DATABASE_URL, MINIO_* and RESEND_API_KEY. Never enters the nix store.";
+      description = ''
+        Holds every secret the API reads: DATABASE_URL, S3_ACCESS_KEY, S3_SECRET_KEY,
+        RESEND_API_KEY, JWT_SIGNING_SECRET and OTP_PEPPER. Never enters the nix store.
+      '';
+    };
+
+    storageEnvironmentFile = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        Holds GARAGE_RPC_SECRET only. Separate from environmentFile on purpose: garage has
+        no reason to hold the mail key or the token signing secret, and a compromise of one
+        unit should not hand over the other unit's credentials.
+      '';
+    };
+
+    mailFrom = lib.mkOption {
+      type = lib.types.str;
+      description = "RFC 5322 From header on every OTP mail. Not a secret, so it stays in the module.";
     };
 
     port = lib.mkOption {
@@ -77,7 +94,7 @@ in
     services.garage = {
       enable = true;
       package = pkgs.garage;
-      environmentFile = cfg.environmentFile;
+      environmentFile = cfg.storageEnvironmentFile;
       settings = {
         replication_factor = 1;
         db_engine = "lmdb";
@@ -99,7 +116,10 @@ in
       serviceConfig = {
         ExecStart = "${self.packages.${pkgs.stdenv.hostPlatform.system}.leafypuff-api}/bin/leafypuff-api";
         EnvironmentFile = cfg.environmentFile;
-        Environment = [ "PORT=${toString cfg.port}" ];
+        Environment = [
+          "PORT=${toString cfg.port}"
+          "MAIL_FROM=${cfg.mailFrom}"
+        ];
         User = "leafypuff";
         Group = "leafypuff";
         Restart = "on-failure";

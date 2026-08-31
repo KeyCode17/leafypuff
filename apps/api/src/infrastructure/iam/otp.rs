@@ -8,11 +8,11 @@ const CODE_SPACE: u64 = 1_000_000;
 const DRAW_LIMIT: u64 = u64::MAX - (u64::MAX % CODE_SPACE);
 
 pub struct Blake3Otp {
-    pepper: String,
+    pepper: [u8; 32],
 }
 
 impl Blake3Otp {
-    pub const fn new(pepper: String) -> Self {
+    pub const fn new(pepper: [u8; 32]) -> Self {
         Self { pepper }
     }
 }
@@ -30,8 +30,7 @@ impl OtpGenerator for Blake3Otp {
     }
 
     fn digest(&self, code: &str) -> String {
-        let key = blake3::hash(self.pepper.as_bytes());
-        blake3::keyed_hash(key.as_bytes(), code.as_bytes())
+        blake3::keyed_hash(&self.pepper, code.as_bytes())
             .to_hex()
             .to_string()
     }

@@ -1525,6 +1525,7 @@ dependencies = [
  "axum",
  "blake3",
  "chrono",
+ "data-encoding",
  "jsonwebtoken",
  "leafypuff-core",
  "rand 0.10.2",
