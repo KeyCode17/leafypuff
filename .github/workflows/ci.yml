@@ -39,6 +39,20 @@ jobs:
       # all-features gate once hid a missing cfg attribute, so each shape is built on its own.
       - run: cargo build -p leafypuff-core
       - run: cargo test --workspace
+      - name: secrets never reach a log
+        run: |
+          if grep -rnE "tracing::(info|warn|error|debug|trace)!\([^)]*\b(password|plain|otp_pepper|pepper|refresh_secret|access_token|api_key|resend_api_key)\b" apps/api/src apps/core/src; then
+            echo "A log statement names secret material. Log an identifier, never the value."
+            exit 1
+          fi
+          if grep -A1 -E "derive\([^)]*Debug" apps/api/src/infrastructure/config.rs apps/api/src/application/iam/mint_session.rs | grep -E "pub struct (Config|Session)\b"; then
+            echo "Config and Session carry secrets. A Debug derive on them is a log."
+            exit 1
+          fi
+          if git grep -nE "re_[A-Za-z0-9]{8}_[A-Za-z0-9]{20,}" -- . ':!.github'; then
+            echo "A Resend API key is committed. Rotate it and move it into sops."
+            exit 1
+          fi
 
   web:
     runs-on: ubuntu-latest

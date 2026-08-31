@@ -114,6 +114,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "api-testing"
+version = "0.4.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "leafypuff-api",
+ "uuid",
+]
+
+[[package]]
 name = "argon2"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1545,6 +1555,7 @@ name = "leafypuff-api"
 version = "0.4.0"
 dependencies = [
  "api-migration",
+ "api-testing",
  "argon2",
  "async-trait",
  "axum",
@@ -1560,6 +1571,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
  "uuid",

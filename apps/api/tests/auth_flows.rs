@@ -1,6 +1,4 @@
-#[path = "support/mod.rs"]
-mod support;
-
+use api_testing::World;
 use chrono::Duration;
 use leafypuff_api::application::iam::Session;
 use leafypuff_api::application::iam::{
@@ -8,7 +6,6 @@ use leafypuff_api::application::iam::{
 };
 use leafypuff_api::domain::iam::policy::OTP_TTL_SECONDS;
 use leafypuff_api::domain::iam::{IamError, OtpPurpose};
-use support::World;
 
 const EMAIL: &str = "Person@Example.test";
 const NORMALISED: &str = "person@example.test";
@@ -31,7 +28,7 @@ fn registration() -> RegisterInput {
 }
 
 async fn verified_world() -> World {
-    let world = World::new();
+    let world = World::default();
     world.generator.queue("123456");
     world
         .register()
@@ -51,7 +48,7 @@ async fn verified_world() -> World {
 
 #[tokio::test]
 async fn registration_normalises_the_address_and_mails_a_code() {
-    let world = World::new();
+    let world = World::default();
     world.generator.queue("123456");
 
     world
@@ -77,7 +74,7 @@ async fn registration_normalises_the_address_and_mails_a_code() {
 
 #[tokio::test]
 async fn a_second_registration_of_the_same_address_is_rejected_and_mails_nothing() {
-    let world = World::new();
+    let world = World::default();
     world.generator.queue("123456");
     world
         .register()
@@ -97,7 +94,7 @@ async fn a_second_registration_of_the_same_address_is_rejected_and_mails_nothing
 
 #[tokio::test]
 async fn a_verification_code_expires() {
-    let world = World::new();
+    let world = World::default();
     world.generator.queue("123456");
     world
         .register()
@@ -165,7 +162,7 @@ async fn an_unknown_address_costs_the_same_verification_as_a_wrong_password() {
 
 #[tokio::test]
 async fn signing_in_needs_a_verified_address() {
-    let world = World::new();
+    let world = World::default();
     world.generator.queue("123456");
     world
         .register()
