@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
+import com.leafypuff.theme.Inter
 import com.leafypuff.theme.Rubik
 
 private const val BackspaceGlyph = "⌫"
@@ -82,6 +83,11 @@ private fun KeypadKey(label: String, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, style = KeyLabelStyle, color = colors.ink)
+        val style = if (label == BackspaceGlyph) {
+            KeyLabelStyle.copy(fontFamily = Inter)
+        } else {
+            KeyLabelStyle
+        }
+        Text(text = label, style = style, color = colors.ink)
     }
 }
