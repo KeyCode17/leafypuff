@@ -4,9 +4,11 @@ use chrono::{TimeZone, Utc};
 use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
+use leafypuff_api::application::media::MediaServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
+use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
 use crate::sync_repositories::{
     InMemoryCheckpoints, InMemoryConflicts, InMemoryEntries, InMemoryIdempotency,
@@ -26,6 +28,8 @@ pub struct World {
     pub entries: InMemoryEntries,
     pub conflicts: InMemoryConflicts,
     pub sync: SyncServices,
+    pub objects: InMemoryObjects,
+    pub media: MediaServices,
 }
 
 impl Default for World {
@@ -65,6 +69,12 @@ impl Default for World {
             keys: Arc::new(InMemoryWrappedKeys::default()),
         };
 
+        let objects = InMemoryObjects::default();
+        let media = MediaServices {
+            objects: Arc::new(objects.clone()),
+            media: Arc::new(InMemoryMedia::default()),
+        };
+
         Self {
             accounts,
             credentials,
@@ -78,6 +88,8 @@ impl Default for World {
             entries,
             conflicts,
             sync,
+            objects,
+            media,
         }
     }
 }

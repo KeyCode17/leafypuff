@@ -4,6 +4,7 @@ pub mod envelope;
 pub mod error;
 pub mod health;
 pub mod iam;
+pub mod media;
 pub mod rate_limit;
 pub mod router;
 pub mod state;

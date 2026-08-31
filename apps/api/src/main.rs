@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use leafypuff_api::application::iam::IamServices;
+use leafypuff_api::application::media::MediaServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
 use leafypuff_api::http::{AppState, build_router};
@@ -9,6 +10,7 @@ use leafypuff_api::infrastructure::iam::{
     Argon2Hasher, Blake3Otp, JwtTokenIssuer, PgAccountRepository, PgOtpRepository,
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
 };
+use leafypuff_api::infrastructure::media::{PgMediaRepository, S3ObjectStore, build_s3_client};
 use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
 };
@@ -46,11 +48,19 @@ async fn main() {
         checkpoints: Arc::new(PgCheckpointStore::new(connection.clone())),
         idempotency: Arc::new(PgIdempotencyStore::new(connection.clone())),
         conflicts: Arc::new(PgConflictSink::new(connection.clone())),
-        keys: Arc::new(PgWrappedKeyStore::new(connection)),
+        keys: Arc::new(PgWrappedKeyStore::new(connection.clone())),
+    };
+
+    let media = MediaServices {
+        objects: Arc::new(S3ObjectStore::new(
+            build_s3_client(&config),
+            config.s3_bucket.clone(),
+        )),
+        media: Arc::new(PgMediaRepository::new(connection.clone())),
     };
 
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
-    let app = build_router(AppState::new(probe, iam, sync));
+    let app = build_router(AppState::new(probe, iam, sync, media));
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)

@@ -4,6 +4,7 @@ use axum::response::{IntoResponse, Response};
 
 use crate::domain::DomainError;
 use crate::domain::iam::IamError;
+use crate::domain::media::MediaError;
 use crate::domain::sync::SyncError;
 
 use super::envelope::Envelope;
@@ -17,6 +18,8 @@ pub const ERR_MAIL_UNAVAILABLE: &str = "MAIL_UNAVAILABLE";
 pub const ERR_INTERNAL: &str = "INTERNAL";
 pub const ERR_FORBIDDEN: &str = "FORBIDDEN";
 pub const ERR_MALFORMED_BATCH: &str = "MALFORMED_BATCH";
+pub const ERR_OBJECT_NOT_FOUND: &str = "OBJECT_NOT_FOUND";
+pub const ERR_OBJECT_TOO_LARGE: &str = "OBJECT_TOO_LARGE";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -26,6 +29,8 @@ const DETAIL_TOO_MANY_ATTEMPTS: &str = "Too many attempts";
 const DETAIL_MAIL_UNAVAILABLE: &str = "The mail provider is unavailable";
 const DETAIL_INTERNAL: &str = "Something went wrong";
 const DETAIL_FORBIDDEN: &str = "That entry belongs to another account";
+const DETAIL_OBJECT_NOT_FOUND: &str = "No such object";
+const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
 
 pub struct ApiError {
     status: StatusCode,
@@ -111,6 +116,31 @@ impl From<SyncError> for ApiError {
             ),
             SyncError::Storage(reason) => {
                 tracing::error!(%reason, "a sync request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<MediaError> for ApiError {
+    fn from(error: MediaError) -> Self {
+        match error {
+            MediaError::NotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_OBJECT_NOT_FOUND,
+                DETAIL_OBJECT_NOT_FOUND,
+            ),
+            MediaError::TooLarge => Self::new(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                ERR_OBJECT_TOO_LARGE,
+                DETAIL_OBJECT_TOO_LARGE,
+            ),
+            MediaError::Storage(reason) => {
+                tracing::error!(%reason, "an object storage request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,

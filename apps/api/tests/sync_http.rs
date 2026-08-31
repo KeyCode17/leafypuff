@@ -17,6 +17,7 @@ fn router(world: &World) -> Router {
         probe,
         world.services.clone(),
         world.sync.clone(),
+        world.media.clone(),
     ))
 }
 

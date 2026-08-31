@@ -5,6 +5,7 @@ mod m20260901_000002_otp_codes;
 mod m20260901_000003_sync_entries;
 mod m20260901_000004_sync_state;
 mod m20260901_000005_sync_conflicts;
+mod m20260901_000006_media_objects;
 
 pub struct Migrator;
 
@@ -17,6 +18,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000003_sync_entries::Migration),
             Box::new(m20260901_000004_sync_state::Migration),
             Box::new(m20260901_000005_sync_conflicts::Migration),
+            Box::new(m20260901_000006_media_objects::Migration),
         ]
     }
 }
