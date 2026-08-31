@@ -27,6 +27,22 @@ in
       default = 8080;
     };
 
+    dnsProvider = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        lego DNS-01 provider. Required when the zone sits behind a proxy such as
+        Cloudflare, because an HTTP-01 challenge never reaches nginx. Null keeps
+        the webroot challenge.
+      '';
+    };
+
+    acmeEnvironmentFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Holds the DNS provider credential lego reads. Required with dnsProvider.";
+    };
+
     storageListen = lib.mkOption {
       type = lib.types.str;
       default = "127.0.0.1:3900";
@@ -106,8 +122,17 @@ in
       recommendedTlsSettings = true;
       virtualHosts.${cfg.domain} = {
         forceSSL = true;
-        enableACME = true;
+        enableACME = cfg.dnsProvider == null;
+        useACMEHost = if cfg.dnsProvider == null then null else cfg.domain;
         locations."/".proxyPass = "http://127.0.0.1:${toString cfg.port}";
+      };
+    };
+
+    security.acme.certs = lib.mkIf (cfg.dnsProvider != null) {
+      ${cfg.domain} = {
+        inherit (cfg) dnsProvider;
+        environmentFile = cfg.acmeEnvironmentFile;
+        group = "nginx";
       };
     };
 
