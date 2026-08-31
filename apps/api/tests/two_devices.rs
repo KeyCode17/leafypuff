@@ -104,9 +104,14 @@ async fn harness() -> Option<Harness> {
         media: Arc::new(PgMediaRepository::new(connection.clone())),
     };
 
+    let rbac = leafypuff_api::application::rbac::RbacServices {
+        roles: Arc::new(api_testing::rbac_repositories::InMemoryRoles::default()),
+        permissions: Arc::new(api_testing::rbac_repositories::InMemoryRoles::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+    };
     let probe = DependencyProbe::new(url, "127.0.0.1:3900".to_owned());
     Some(Harness {
-        router: build_router(AppState::new(probe, iam, sync, media)),
+        router: build_router(AppState::new(probe, iam, sync, media, rbac)),
         account_id: owner.id,
         token,
         connection,

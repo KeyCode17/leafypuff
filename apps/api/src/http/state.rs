@@ -1,5 +1,6 @@
 use crate::application::iam::IamServices;
 use crate::application::media::MediaServices;
+use crate::application::rbac::RbacServices;
 use crate::application::sync::SyncServices;
 use crate::infrastructure::DependencyProbe;
 
@@ -9,6 +10,7 @@ pub struct AppState {
     pub iam: IamServices,
     pub sync: SyncServices,
     pub media: MediaServices,
+    pub rbac: RbacServices,
 }
 
 impl AppState {
@@ -17,12 +19,14 @@ impl AppState {
         iam: IamServices,
         sync: SyncServices,
         media: MediaServices,
+        rbac: RbacServices,
     ) -> Self {
         Self {
             readiness,
             iam,
             sync,
             media,
+            rbac,
         }
     }
 }

@@ -6,6 +6,9 @@ mod m20260901_000003_sync_entries;
 mod m20260901_000004_sync_state;
 mod m20260901_000005_sync_conflicts;
 mod m20260901_000006_media_objects;
+mod m20260901_000007_rbac;
+mod m20260901_000008_role_grants;
+mod m20260901_000009_audit;
 
 pub struct Migrator;
 
@@ -19,6 +22,9 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000004_sync_state::Migration),
             Box::new(m20260901_000005_sync_conflicts::Migration),
             Box::new(m20260901_000006_media_objects::Migration),
+            Box::new(m20260901_000007_rbac::Migration),
+            Box::new(m20260901_000008_role_grants::Migration),
+            Box::new(m20260901_000009_audit::Migration),
         ]
     }
 }
