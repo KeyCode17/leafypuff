@@ -45,6 +45,14 @@ impl OtpPurpose {
             Self::SignIn => "sign_in",
         }
     }
+
+    pub fn from_stored(value: &str) -> Option<Self> {
+        match value {
+            "verify_email" => Some(Self::VerifyEmail),
+            "sign_in" => Some(Self::SignIn),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

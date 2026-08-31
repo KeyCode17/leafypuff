@@ -8,6 +8,25 @@ on:
 jobs:
   rust:
     runs-on: ubuntu-latest
+    # The repository tests talk to a real PostgreSQL. A mocked connection would assert
+    # nothing about citext, the partial unique indexes or the timestamp round trip, which
+    # is the whole reason those tests exist.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: leafypuff
+          POSTGRES_PASSWORD: leafypuff
+          POSTGRES_DB: leafypuff
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://leafypuff:leafypuff@127.0.0.1:5432/leafypuff
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -16,6 +35,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      # apps/core builds without its sqlite feature inside the android .so. Running only the
+      # all-features gate once hid a missing cfg attribute, so each shape is built on its own.
+      - run: cargo build -p leafypuff-core
       - run: cargo test --workspace
 
   web:

@@ -21,7 +21,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-sea-orm = { workspace = true, features = ["sqlx-postgres"] }
+sea-orm = { workspace = true, features = ["sqlx-postgres", "with-chrono", "with-uuid"] }
 api-migration = { path = "migration" }
 rand = { workspace = true }
 reqwest = { workspace = true }
@@ -31,3 +31,6 @@ argon2 = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 data-encoding = { workspace = true }
+
+[dev-dependencies]
+api-migration = { path = "migration" }
