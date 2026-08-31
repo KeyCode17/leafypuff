@@ -106,7 +106,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "api-migration"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "sea-orm-migration",
@@ -115,7 +115,7 @@ dependencies = [
 
 [[package]]
 name = "api-testing"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1098,7 +1098,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "core-migration"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "async-trait",
  "sea-orm-migration",
@@ -2186,7 +2186,7 @@ dependencies = [
 
 [[package]]
 name = "leafypuff-api"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "api-migration",
  "api-testing",
@@ -2217,7 +2217,7 @@ dependencies = [
 
 [[package]]
 name = "leafypuff-core"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "argon2",
  "chacha20poly1305",
