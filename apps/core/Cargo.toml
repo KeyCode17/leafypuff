@@ -5,12 +5,19 @@ license.workspace = true
 edition = "2024"
 
 [lib]
-crate-type = ["rlib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
 default = []
 test-support = []
 sqlite = ["dep:sea-orm", "dep:core-migration", "dep:sea-orm-migration"]
+ffi = ["sqlite", "dep:uniffi", "dep:tokio"]
+ffi-bindgen = ["ffi", "uniffi/cli"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["ffi-bindgen"]
 
 [dev-dependencies]
 core-migration = { path = "migration" }
@@ -27,4 +34,6 @@ sea-orm = { workspace = true, optional = true }
 sea-orm-migration = { workspace = true, optional = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, optional = true }
+uniffi = { workspace = true, optional = true }
 uuid = { workspace = true }
