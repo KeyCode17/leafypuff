@@ -28,5 +28,8 @@
 
         packages.default = self.packages.${system}.leafypuff-api;
       }
-    );
+    )
+    // {
+      nixosModules.default = import ./nix/module.nix self;
+    };
 }
