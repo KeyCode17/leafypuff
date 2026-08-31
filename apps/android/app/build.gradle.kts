@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +19,14 @@ val cargoBuildHost by tasks.registering(Exec::class) {
     commandLine("cargo", "build", "-p", "leafypuff-core", "--features", "ffi-bindgen")
 }
 
+val androidSdkDir: String = System.getenv("ANDROID_HOME")
+    ?: System.getenv("ANDROID_SDK_ROOT")
+    ?: Properties().apply {
+        rootProject.file("local.properties").inputStream().use { load(it) }
+    }.getProperty("sdk.dir")
+val androidNdkDir = "$androidSdkDir/ndk/27.2.12479018"
+val androidAbis = listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+
 val generateUniffiBindings by tasks.registering(Exec::class) {
     dependsOn(cargoBuildHost)
     workingDir = workspaceDir
@@ -29,6 +39,19 @@ val generateUniffiBindings by tasks.registering(Exec::class) {
         "--no-format",
     )
 }
+
+val cargoBuildAndroid by tasks.registering(Exec::class) {
+    workingDir = workspaceDir
+    environment("ANDROID_NDK_HOME", androidNdkDir)
+    commandLine(
+        listOf("cargo", "ndk")
+            + androidAbis.flatMap { listOf("-t", it) }
+            + listOf("-o", file("src/main/jniLibs").absolutePath)
+            + listOf("build", "-p", "leafypuff-core", "--features", "ffi", "--release"),
+    )
+}
+
+tasks.named("preBuild") { dependsOn(cargoBuildAndroid) }
 
 android {
     namespace = "com.leafypuff"
