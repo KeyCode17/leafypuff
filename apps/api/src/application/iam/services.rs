@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::domain::iam::{
     AccountRepository, Clock, EmailSender, OtpGenerator, OtpRepository, PasswordHasher,
-    RefreshTokenRepository, TokenIssuer,
+    RefreshTokenRepository, TokenIssuer, TokenVerifier,
 };
 
 use super::consume_challenge::ConsumeChallenge;
@@ -17,6 +17,7 @@ pub struct IamServices {
     pub otps: Arc<dyn OtpRepository>,
     pub hasher: Arc<dyn PasswordHasher>,
     pub tokens: Arc<dyn TokenIssuer>,
+    pub verifier: Arc<dyn TokenVerifier>,
     pub generator: Arc<dyn OtpGenerator>,
     pub mail: Arc<dyn EmailSender>,
     pub clock: Arc<dyn Clock>,

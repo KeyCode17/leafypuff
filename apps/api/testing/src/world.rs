@@ -4,9 +4,16 @@ use chrono::{TimeZone, Utc};
 use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
+use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
+use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
+use crate::sync_repositories::{
+    InMemoryCheckpoints, InMemoryConflicts, InMemoryEntries, InMemoryIdempotency,
+    InMemoryWrappedKeys,
+};
 
 pub struct World {
     pub accounts: InMemoryAccounts,
@@ -18,6 +25,11 @@ pub struct World {
     pub generator: ScriptedOtp,
     pub issuer: SequentialIssuer,
     pub services: IamServices,
+    pub entries: InMemoryEntries,
+    pub conflicts: InMemoryConflicts,
+    pub sync: SyncServices,
+    pub objects: InMemoryObjects,
+    pub media: MediaServices,
 }
 
 impl Default for World {
@@ -41,9 +53,26 @@ impl Default for World {
             otps: Arc::new(otps.clone()),
             hasher: Arc::new(hasher.clone()),
             tokens: Arc::new(issuer.clone()),
+            verifier: Arc::new(issuer.clone()),
             generator: Arc::new(generator.clone()),
             mail: Arc::new(mailer.clone()),
             clock: Arc::new(clock.clone()),
+        };
+
+        let entries = InMemoryEntries::default();
+        let conflicts = InMemoryConflicts::default();
+        let sync = SyncServices {
+            entries: Arc::new(entries.clone()),
+            checkpoints: Arc::new(InMemoryCheckpoints::default()),
+            idempotency: Arc::new(InMemoryIdempotency::default()),
+            conflicts: Arc::new(conflicts.clone()),
+            keys: Arc::new(InMemoryWrappedKeys::default()),
+        };
+
+        let objects = InMemoryObjects::default();
+        let media = MediaServices {
+            objects: Arc::new(objects.clone()),
+            media: Arc::new(InMemoryMedia::default()),
         };
 
         Self {
@@ -56,6 +85,11 @@ impl Default for World {
             generator,
             issuer,
             services,
+            entries,
+            conflicts,
+            sync,
+            objects,
+            media,
         }
     }
 }

@@ -21,6 +21,10 @@ pub trait TokenIssuer: Send + Sync {
     fn digest(&self, secret: &str) -> String;
 }
 
+pub trait TokenVerifier: Send + Sync {
+    fn account_id(&self, access_token: &str) -> Result<Uuid, IamError>;
+}
+
 pub trait OtpGenerator: Send + Sync {
     fn code(&self) -> Result<String, IamError>;
     fn digest(&self, code: &str) -> String;

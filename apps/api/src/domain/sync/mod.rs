@@ -1,0 +1,21 @@
+pub mod change_set;
+pub mod conflict;
+pub mod cursor;
+pub mod entry_record;
+pub mod envelope;
+pub mod error;
+pub mod field;
+pub mod fingerprint;
+pub mod ports;
+pub mod resolve;
+
+pub use change_set::{ChangeSet, KeyKind, WrappedKeyRow};
+pub use conflict::FieldConflict;
+pub use cursor::SyncCursor;
+pub use entry_record::EntryRecord;
+pub use envelope::FieldEnvelope;
+pub use error::SyncError;
+pub use field::EncryptedField;
+pub use fingerprint::fingerprint;
+pub use ports::{CheckpointStore, ConflictSink, EntryStore, IdempotencyStore, WrappedKeyStore};
+pub use resolve::{FieldOutcome, resolve_field};

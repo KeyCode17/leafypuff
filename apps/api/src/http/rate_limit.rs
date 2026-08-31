@@ -20,8 +20,11 @@ pub const UNKNOWN_CLIENT: &str = "unknown";
 const CF_CONNECTING_IP: &str = "cf-connecting-ip";
 const FORWARDED_FOR: &str = "x-forwarded-for";
 
-const ERR_TOO_MANY_REQUESTS: &str = "Too many requests, try again shortly";
-const ERR_LIMITER_UNAVAILABLE: &str = "The rate limiter is unavailable";
+pub const ERR_TOO_MANY_REQUESTS: &str = "TOO_MANY_REQUESTS";
+pub const ERR_LIMITER_UNAVAILABLE: &str = "LIMITER_UNAVAILABLE";
+
+const DETAIL_TOO_MANY_REQUESTS: &str = "Too many requests, try again shortly";
+const DETAIL_LIMITER_UNAVAILABLE: &str = "The rate limiter is unavailable";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verdict {
@@ -87,12 +90,20 @@ pub async fn guard(limiter: RateLimiter, request: Request, next: Next) -> Respon
     let key = client_key(request.headers());
     match limiter.verdict(&key, Instant::now()) {
         Verdict::Allowed => next.run(request).await,
-        Verdict::Refused => {
-            ApiError::new(StatusCode::TOO_MANY_REQUESTS, ERR_TOO_MANY_REQUESTS).into_response()
-        }
+        Verdict::Refused => ApiError::new(
+            StatusCode::TOO_MANY_REQUESTS,
+            ERR_TOO_MANY_REQUESTS,
+            DETAIL_TOO_MANY_REQUESTS,
+        )
+        .into_response(),
         Verdict::Unavailable => {
             tracing::error!("the rate limiter lock is poisoned");
-            ApiError::new(StatusCode::SERVICE_UNAVAILABLE, ERR_LIMITER_UNAVAILABLE).into_response()
+            ApiError::new(
+                StatusCode::SERVICE_UNAVAILABLE,
+                ERR_LIMITER_UNAVAILABLE,
+                DETAIL_LIMITER_UNAVAILABLE,
+            )
+            .into_response()
         }
     }
 }

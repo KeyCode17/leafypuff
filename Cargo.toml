@@ -3,7 +3,7 @@ resolver = "3"
 members = ["apps/core", "apps/core/migration", "apps/api", "apps/api/migration", "apps/api/testing"]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 license = "MIT"
 
 [workspace.dependencies]
@@ -40,6 +40,15 @@ rand = { version = "0.10", default-features = false, features = ["std", "sys_rng
 zeroize = { version = "1", features = ["zeroize_derive"] }
 data-encoding = "2"
 async-trait = "0.1"
+# The S3 client is only ever pointed at garage on loopback. default-features off keeps the
+# default credential providers, IMDS and the native TLS stack out of the closure.
+aws-config = { version = "1", default-features = false, features = ["behavior-version-latest", "rustls"] }
+# rt-tokio brings the default async sleep. Without it the client panics on its first request
+# with "an async sleep implementation is required for retry to work", at runtime rather than
+# at construction. http-1x is what the tokio runtime's body type needs.
+aws-sdk-s3 = { version = "1", default-features = false, features = ["rustls", "rt-tokio", "http-1x", "default-https-client"] }
+aws-credential-types = "1"
+aws-smithy-async = { version = "1", features = ["rt-tokio"] }
 proptest = "1"
 
 [profile.release]

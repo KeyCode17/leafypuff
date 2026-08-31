@@ -21,7 +21,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-sea-orm = { workspace = true, features = ["sqlx-postgres", "with-chrono", "with-uuid"] }
+sea-orm = { workspace = true, features = ["sqlx-postgres", "with-chrono", "with-uuid", "with-json"] }
 api-migration = { path = "migration" }
 rand = { workspace = true }
 reqwest = { workspace = true }
@@ -32,6 +32,10 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 data-encoding = { workspace = true }
 async-trait = { workspace = true }
+aws-config = { workspace = true }
+aws-sdk-s3 = { workspace = true }
+aws-credential-types = { workspace = true }
+aws-smithy-async = { workspace = true }
 
 [dev-dependencies]
 api-migration = { path = "migration" }

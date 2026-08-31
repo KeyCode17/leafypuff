@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use leafypuff_api::domain::iam::{
     Clock, EmailSender, IamError, OtpGenerator, OtpPurpose, PasswordHasher, TokenIssuer,
+    TokenVerifier,
 };
 use uuid::Uuid;
 
@@ -134,5 +135,14 @@ impl TokenIssuer for SequentialIssuer {
 
     fn digest(&self, secret: &str) -> String {
         format!("digest:{secret}")
+    }
+}
+
+impl TokenVerifier for SequentialIssuer {
+    fn account_id(&self, access_token: &str) -> Result<Uuid, IamError> {
+        access_token
+            .strip_prefix("access:")
+            .and_then(|raw| Uuid::parse_str(raw).ok())
+            .ok_or(IamError::InvalidCredentials)
     }
 }

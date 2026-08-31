@@ -14,7 +14,12 @@ const PASSWORD: &str = "correct horse battery";
 
 fn router(world: &World) -> Router {
     let probe = DependencyProbe::new("postgres://unused".to_owned(), "127.0.0.1:3900".to_owned());
-    build_router(AppState::new(probe, world.services.clone()))
+    build_router(AppState::new(
+        probe,
+        world.services.clone(),
+        world.sync.clone(),
+        world.media.clone(),
+    ))
 }
 
 async fn post(app: Router, path: &str, body: Value) -> (StatusCode, String) {
@@ -141,8 +146,10 @@ async fn a_rejection_carries_the_envelope_and_nothing_else() {
         .keys()
         .collect();
     keys.sort();
-    assert_eq!(keys, vec!["data", "message", "version"]);
-    assert_eq!(parsed["message"], "Request failed validation");
+    assert_eq!(keys, vec!["data", "error", "message", "success"]);
+    assert_eq!(parsed["success"], serde_json::json!(false));
+    assert_eq!(parsed["data"], Value::Null);
+    assert_eq!(parsed["error"]["code"], "VALIDATION_FAILED");
 }
 
 #[tokio::test]
