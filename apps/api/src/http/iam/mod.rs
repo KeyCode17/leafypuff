@@ -13,5 +13,7 @@ pub fn router() -> Router<AppState> {
         .route("/verify-email", post(handlers::verify_email))
         .route("/sign-in", post(handlers::sign_in))
         .route("/sign-in/verify", post(handlers::complete_sign_in))
+        .route("/password/forgot", post(handlers::forgot_password))
+        .route("/password/reset", post(handlers::reset_password))
         .route("/refresh", post(handlers::refresh))
 }

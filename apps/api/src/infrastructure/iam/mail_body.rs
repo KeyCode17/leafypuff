@@ -33,6 +33,13 @@ const SIGN_IN: Letter = Letter {
     closing: IGNORE_CODE,
 };
 
+const RESET_PASSWORD: Letter = Letter {
+    subject: "Reset your leafyPuff password",
+    heading: "Reset your password",
+    lead: "Use this code to choose a new password. Your diary itself stays sealed by the password it was created with, so keep your recovery code within reach.",
+    closing: IGNORE_CODE,
+};
+
 const EXISTING_ACCOUNT: Letter = Letter {
     subject: "You already have a leafyPuff account",
     heading: "You already have an account",
@@ -63,6 +70,7 @@ const fn letter(purpose: OtpPurpose) -> Letter {
     match purpose {
         OtpPurpose::VerifyEmail => VERIFY_EMAIL,
         OtpPurpose::SignIn => SIGN_IN,
+        OtpPurpose::ResetPassword => RESET_PASSWORD,
     }
 }
 
@@ -117,11 +125,13 @@ mod tests {
         let subjects = [
             VERIFY_EMAIL.subject,
             SIGN_IN.subject,
+            RESET_PASSWORD.subject,
             EXISTING_ACCOUNT.subject,
         ];
         let headings = [
             VERIFY_EMAIL.heading,
             SIGN_IN.heading,
+            RESET_PASSWORD.heading,
             EXISTING_ACCOUNT.heading,
         ];
         for pair in [subjects, headings] {

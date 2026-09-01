@@ -8,7 +8,10 @@ use crate::domain::iam::{
 use super::consume_challenge::ConsumeChallenge;
 use super::issue_challenge::IssueChallenge;
 use super::mint_session::MintSession;
-use super::{CompleteSignIn, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail};
+use super::{
+    CompleteSignIn, RefreshSession, RegisterAccount, ResetPassword, StartPasswordReset,
+    StartSignIn, VerifyEmail,
+};
 
 #[derive(Clone)]
 pub struct IamServices {
@@ -54,6 +57,20 @@ impl IamServices {
             Arc::clone(&self.accounts),
             self.consume_challenge(),
             self.mint_session(),
+        )
+    }
+
+    pub fn start_password_reset(&self) -> StartPasswordReset {
+        StartPasswordReset::new(Arc::clone(&self.accounts), self.issue_challenge())
+    }
+
+    pub fn reset_password(&self) -> ResetPassword {
+        ResetPassword::new(
+            Arc::clone(&self.accounts),
+            Arc::clone(&self.credentials),
+            Arc::clone(&self.hasher),
+            self.consume_challenge(),
+            Arc::clone(&self.clock),
         )
     }
 

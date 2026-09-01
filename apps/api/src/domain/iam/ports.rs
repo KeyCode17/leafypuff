@@ -43,6 +43,13 @@ pub trait AccountRepository: Send + Sync {
     async fn by_id(&self, id: Uuid) -> Result<Option<Account>, IamError>;
     async fn insert(&self, account: Account) -> Result<Account, IamError>;
     async fn mark_verified(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
+
+    async fn update_password(
+        &self,
+        id: Uuid,
+        password_hash: String,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError>;
 }
 
 #[async_trait]
@@ -50,6 +57,8 @@ pub trait RefreshTokenRepository: Send + Sync {
     async fn insert(&self, token: RefreshToken) -> Result<(), IamError>;
     async fn by_hash(&self, hash: &str) -> Result<Option<RefreshToken>, IamError>;
     async fn revoke(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
+
+    async fn revoke_all(&self, account_id: Uuid, at: DateTime<Utc>) -> Result<(), IamError>;
 }
 
 #[async_trait]

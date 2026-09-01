@@ -1,5 +1,6 @@
 use super::dto::{
-    CompleteSignInRequest, RefreshRequest, RegisterRequest, SignInRequest, VerifyEmailRequest,
+    CompleteSignInRequest, ForgotPasswordRequest, RefreshRequest, RegisterRequest,
+    ResetPasswordRequest, SignInRequest, VerifyEmailRequest,
 };
 use crate::http::validated::ValidatedBody;
 
@@ -33,6 +34,20 @@ impl ValidatedBody for CompleteSignInRequest {
         email(&self.email)?;
         code(&self.code)?;
         device_id(&self.device_id)
+    }
+}
+
+impl ValidatedBody for ForgotPasswordRequest {
+    fn validate(&self) -> Result<(), &'static str> {
+        email(&self.email)
+    }
+}
+
+impl ValidatedBody for ResetPasswordRequest {
+    fn validate(&self) -> Result<(), &'static str> {
+        email(&self.email)?;
+        code(&self.code)?;
+        password(&self.password)
     }
 }
 

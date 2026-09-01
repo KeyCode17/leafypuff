@@ -19,6 +19,12 @@ impl InMemoryAccounts {
     }
 }
 
+impl InMemoryCredentials {
+    pub fn snapshot(&self) -> Vec<RefreshToken> {
+        self.rows.lock().expect("the credential lock holds").clone()
+    }
+}
+
 #[async_trait]
 impl AccountRepository for InMemoryAccounts {
     async fn by_email(&self, email: &str) -> Result<Option<Account>, IamError> {
@@ -50,6 +56,19 @@ impl AccountRepository for InMemoryAccounts {
         let mut rows = self.rows.lock().expect("the account lock holds");
         for row in rows.iter_mut().filter(|row| row.id == id) {
             row.email_verified_at = Some(at);
+        }
+        Ok(())
+    }
+
+    async fn update_password(
+        &self,
+        id: Uuid,
+        password_hash: String,
+        _at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let mut rows = self.rows.lock().expect("the account lock holds");
+        for row in rows.iter_mut().filter(|row| row.id == id) {
+            row.password_hash.clone_from(&password_hash);
         }
         Ok(())
     }
@@ -132,6 +151,17 @@ impl RefreshTokenRepository for InMemoryCredentials {
     async fn revoke(&self, id: Uuid, at: DateTime<Utc>) -> Result<(), IamError> {
         let mut rows = self.rows.lock().expect("the credential lock holds");
         for row in rows.iter_mut().filter(|row| row.id == id) {
+            row.revoked_at = Some(at);
+        }
+        Ok(())
+    }
+
+    async fn revoke_all(&self, account_id: Uuid, at: DateTime<Utc>) -> Result<(), IamError> {
+        let mut rows = self.rows.lock().expect("the credential lock holds");
+        for row in rows
+            .iter_mut()
+            .filter(|row| row.account_id == account_id && row.revoked_at.is_none())
+        {
             row.revoked_at = Some(at);
         }
         Ok(())

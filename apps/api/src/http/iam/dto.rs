@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::application::iam::{
-    CompleteSignInInput, RefreshInput, RegisterInput, Session, StartSignInInput, VerifyEmailInput,
+    CompleteSignInInput, RefreshInput, RegisterInput, ResetPasswordInput, Session,
+    StartPasswordResetInput, StartSignInInput, VerifyEmailInput,
 };
 use crate::domain::iam::policy::{ACCESS_TOKEN_TTL_SECONDS, OTP_TTL_SECONDS};
 
@@ -42,6 +43,20 @@ pub struct CompleteSignInRequest {
 pub struct RefreshRequest {
     pub refresh_token: String,
     pub device_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ForgotPasswordRequest {
+    pub email: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResetPasswordRequest {
+    pub email: String,
+    pub code: String,
+    pub password: String,
 }
 
 #[derive(Serialize)]
@@ -110,6 +125,24 @@ impl From<CompleteSignInRequest> for CompleteSignInInput {
             email: request.email,
             code: request.code,
             device_id: request.device_id,
+        }
+    }
+}
+
+impl From<ForgotPasswordRequest> for StartPasswordResetInput {
+    fn from(request: ForgotPasswordRequest) -> Self {
+        Self {
+            email: request.email,
+        }
+    }
+}
+
+impl From<ResetPasswordRequest> for ResetPasswordInput {
+    fn from(request: ResetPasswordRequest) -> Self {
+        Self {
+            email: request.email,
+            code: request.code,
+            password: request.password,
         }
     }
 }

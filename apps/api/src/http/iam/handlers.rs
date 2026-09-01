@@ -10,8 +10,8 @@ use crate::http::state::AppState;
 use crate::http::validated::Validated;
 
 use super::dto::{
-    ChallengeResponse, CompleteSignInRequest, RefreshRequest, RegisterRequest, SessionResponse,
-    SignInRequest, VerifyEmailRequest,
+    ChallengeResponse, CompleteSignInRequest, ForgotPasswordRequest, RefreshRequest,
+    RegisterRequest, ResetPasswordRequest, SessionResponse, SignInRequest, VerifyEmailRequest,
 };
 
 const MESSAGE_REGISTERED: &str = "Check your inbox for a verification code";
@@ -19,6 +19,8 @@ const MESSAGE_VERIFIED: &str = "Email verified";
 const MESSAGE_CODE_SENT: &str = "Check your inbox for a sign-in code";
 const MESSAGE_SIGNED_IN: &str = "Signed in";
 const MESSAGE_REFRESHED: &str = "Session refreshed";
+const MESSAGE_RESET_SENT: &str = "Check your inbox for a reset code";
+const MESSAGE_PASSWORD_CHANGED: &str = "Password changed";
 
 pub async fn register(
     State(state): State<AppState>,
@@ -56,6 +58,30 @@ pub async fn complete_sign_in(
 ) -> Response {
     match state.iam.complete_sign_in().execute(body.into()).await {
         Ok(session) => session_response(MESSAGE_SIGNED_IN, session.into()),
+        Err(error) => ApiError::from(error).into_response(),
+    }
+}
+
+pub async fn forgot_password(
+    State(state): State<AppState>,
+    Validated(body): Validated<ForgotPasswordRequest>,
+) -> Response {
+    match state.iam.start_password_reset().execute(body.into()).await {
+        Ok(()) => challenge(MESSAGE_RESET_SENT),
+        Err(error) => ApiError::from(error).into_response(),
+    }
+}
+
+pub async fn reset_password(
+    State(state): State<AppState>,
+    Validated(body): Validated<ResetPasswordRequest>,
+) -> Response {
+    match state.iam.reset_password().execute(body.into()).await {
+        Ok(()) => (
+            StatusCode::OK,
+            Json(Envelope::ok(MESSAGE_PASSWORD_CHANGED, ())),
+        )
+            .into_response(),
         Err(error) => ApiError::from(error).into_response(),
     }
 }
