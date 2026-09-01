@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.leafypuff.data.DeviceKey
 import com.leafypuff.data.EntryStore
+import com.leafypuff.data.PinLock
 import com.leafypuff.data.PreferenceStore
 import com.leafypuff.data.SessionStore
 import com.leafypuff.data.VaultAccess
@@ -52,6 +53,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     val session = remember(context) { SessionStore(context) }
     val reminders = remember(context) { ReminderScheduler(context) }
     val deviceKey = remember(context) { DeviceKey(context) }
+    val pin = remember(context) { PinLock(context) }
     val askToNotify = rememberLauncherForActivityResult(RequestPermission()) { }
 
     var store by remember { mutableStateOf<EntryStore?>(null) }
@@ -118,6 +120,15 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         preferences = preferences,
                         versionName = versionName,
                         onPreferencesChange = {
+                            // Turning the lock off forgets the PIN, so turning it back on asks
+                            // for a new one. That is the change-PIN flow the handoff says is
+                            // undesigned, built out of the two screens that already exist -- and
+                            // without it a forgotten PIN locks the owner out of their own diary
+                            // with no way back. The PIN guards the screen, never the vault, so
+                            // dropping it loses nothing.
+                            if (preferences.lockEnabled && !it.lockEnabled) {
+                                pin.clear()
+                            }
                             preferences = it
                             settings.save(it)
                             reminders.apply(it.reminderEnabled, it.reminderTime)

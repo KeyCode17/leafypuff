@@ -65,7 +65,9 @@ internal fun SettingsToggleCard(
         SettingsDivider()
         ToggleRow(
             label = "PIN / Face ID lock",
-            subLabel = "Ask when opening leafyPuff",
+            // The design gives the reminder row a sub-line that changes with its switch; the lock
+            // row earns the same, because "off" and "asks on every open" are worth telling apart.
+            subLabel = if (lockEnabled) "Ask when opening leafyPuff" else "Off",
             checked = lockEnabled,
             onToggle = onToggleLock,
         )
