@@ -105,7 +105,11 @@ fun AuthScreen(
             }
         }
 
-        PrimaryCta(label = state.mode.cta, enabled = !pending, onClick = onSubmit)
+        PrimaryCta(
+            label = if (pending) state.mode.working else state.mode.cta,
+            enabled = !pending,
+            onClick = onSubmit,
+        )
 
         if (!state.mode.verifying) {
             AuthFooterSwitch(mode = state.mode, onSwitch = onSwitchMode)

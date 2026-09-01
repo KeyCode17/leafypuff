@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use chrono::{DateTime, Utc};
 use data_encoding::BASE64;
 use reqwest::Client;
@@ -5,10 +7,18 @@ use sea_orm::ActiveValue;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::http_error::reached;
 use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 
 use super::entity::entries;
 use super::sync_outbox::{Carried, InboundPhoto, InboundSticker, SyncOutbox};
+
+/// A phone leaves wifi mid-request and the socket simply stops answering. Without a deadline the
+/// call waits forever, the screen stays on its spinner, and the owner cannot tell a slow network
+/// from a dead button. These are generous enough for argon2 on a small server and short enough
+/// that a hang becomes an error someone can act on.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const PULL_PATH: &str = "/v1/sync/pull";
 const PUSH_PATH: &str = "/v1/sync/push";
@@ -27,6 +37,8 @@ pub struct SyncClient {
 impl SyncClient {
     pub fn new(base_url: String, access_token: String) -> Result<Self, CoreError> {
         let client = Client::builder()
+            .connect_timeout(CONNECT_TIMEOUT)
+            .timeout(REQUEST_TIMEOUT)
             .build()
             .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
         Ok(Self {
@@ -76,7 +88,7 @@ impl SyncClient {
             .json(&json!({ "records": records }))
             .send()
             .await
-            .map_err(|error| CoreError::Storage(format!("{ERR_UNREACHABLE}: {error}")))?;
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         if !response.status().is_success() {
             return Err(CoreError::Storage(format!(
                 "{ERR_REFUSED}: {}",
@@ -98,7 +110,7 @@ impl SyncClient {
             .header("x-device-id", device_id)
             .send()
             .await
-            .map_err(|error| CoreError::Storage(format!("{ERR_UNREACHABLE}: {error}")))?;
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         if !response.status().is_success() {
             return Err(CoreError::Storage(format!(
                 "{ERR_REFUSED}: {}",

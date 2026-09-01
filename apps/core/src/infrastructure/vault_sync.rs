@@ -1,9 +1,19 @@
+use std::time::Duration;
+
 use data_encoding::BASE64;
 use reqwest::Client;
 use serde_json::{Value, json};
 
+use super::http_error::reached;
 use crate::domain::CoreError;
 use crate::domain::crypto::{KeyVault, WrappedKey};
+
+/// A phone leaves wifi mid-request and the socket simply stops answering. Without a deadline the
+/// call waits forever, the screen stays on its spinner, and the owner cannot tell a slow network
+/// from a dead button. These are generous enough for argon2 on a small server and short enough
+/// that a hang becomes an error someone can act on.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const KEYS_PATH: &str = "/v1/sync/keys";
 const KIND_PASSPHRASE: &str = "passphrase";
@@ -26,6 +36,8 @@ pub struct VaultSync {
 impl VaultSync {
     pub fn new(base_url: String, access_token: String) -> Result<Self, CoreError> {
         let client = Client::builder()
+            .connect_timeout(CONNECT_TIMEOUT)
+            .timeout(REQUEST_TIMEOUT)
             .build()
             .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
         Ok(Self {
@@ -85,7 +97,7 @@ impl VaultSync {
             }))
             .send()
             .await
-            .map_err(|error| CoreError::Storage(format!("{ERR_UNREACHABLE}: {error}")))?;
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         refuse_unless_ok(response).await
     }
 
@@ -96,7 +108,7 @@ impl VaultSync {
             .bearer_auth(&self.access_token)
             .send()
             .await
-            .map_err(|error| CoreError::Storage(format!("{ERR_UNREACHABLE}: {error}")))?;
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         response
             .json()
             .await

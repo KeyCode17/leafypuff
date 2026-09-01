@@ -3,7 +3,7 @@ resolver = "3"
 members = ["apps/core", "apps/core/migration", "apps/api", "apps/api/migration", "apps/api/testing"]
 
 [workspace.package]
-version = "0.20.2"
+version = "0.20.3"
 license = "MIT"
 
 [workspace.dependencies]

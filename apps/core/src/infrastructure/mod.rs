@@ -6,9 +6,11 @@ pub mod db;
 #[cfg(feature = "sqlite")]
 pub mod entity;
 pub mod exif_reader;
+#[cfg(feature = "sync")]
+#[cfg(feature = "sync")]
+pub mod http_error;
 #[cfg(feature = "sqlite")]
 pub mod mapper;
-#[cfg(feature = "sync")]
 #[cfg(feature = "sync")]
 pub mod media_sync;
 #[cfg(feature = "test-support")]

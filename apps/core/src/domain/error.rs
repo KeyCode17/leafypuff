@@ -40,6 +40,8 @@ pub enum CoreError {
     Invalid(String),
     #[error("Vault is locked")]
     Locked,
+    #[error("Timed out: {0}")]
+    Timeout(String),
     #[error("{rejection}: {detail}")]
     Rejected {
         rejection: Rejection,
