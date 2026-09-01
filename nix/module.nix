@@ -12,6 +12,15 @@ in
       description = "Public hostname served over TLS.";
     };
 
+    webDomain = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        Public hostname for the CMS bundle. Null serves no web vhost at all, which is what a
+        deployment that only wants the sync API should get.
+      '';
+    };
+
     acmeEmail = lib.mkOption {
       type = lib.types.str;
       description = "Contact address for Let's Encrypt.";
@@ -140,21 +149,47 @@ in
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      virtualHosts.${cfg.domain} = {
-        forceSSL = true;
-        enableACME = cfg.dnsProvider == null;
-        useACMEHost = if cfg.dnsProvider == null then null else cfg.domain;
-        locations."/".proxyPass = "http://127.0.0.1:${toString cfg.port}";
+      virtualHosts = {
+        ${cfg.domain} = {
+          forceSSL = true;
+          enableACME = cfg.dnsProvider == null;
+          useACMEHost = if cfg.dnsProvider == null then null else cfg.domain;
+          locations."/".proxyPass = "http://127.0.0.1:${toString cfg.port}";
+        };
+      }
+      // lib.optionalAttrs (cfg.webDomain != null) {
+        ${cfg.webDomain} = {
+          forceSSL = true;
+          enableACME = cfg.dnsProvider == null;
+          useACMEHost = if cfg.dnsProvider == null then null else cfg.webDomain;
+          root = self.packages.${pkgs.stdenv.hostPlatform.system}.leafypuff-web;
+          # The CMS is a single-page app: every path it routes is served by index.html, and
+          # without this a refresh on /dashboard would be a 404 from nginx rather than a screen.
+          locations."/".tryFiles = "$uri $uri/ /index.html";
+          # Hashed asset names, so they can be cached hard. index.html carries the mapping and
+          # must not be, or a deploy would leave browsers pointing at assets that are gone.
+          locations."/assets/".extraConfig = "expires 1y; add_header Cache-Control immutable;";
+          locations."= /index.html".extraConfig = "add_header Cache-Control \"no-cache\";";
+        };
       };
     };
 
-    security.acme.certs = lib.mkIf (cfg.dnsProvider != null) {
-      ${cfg.domain} = {
-        inherit (cfg) dnsProvider;
-        environmentFile = cfg.acmeEnvironmentFile;
-        group = "nginx";
-      };
-    };
+    security.acme.certs = lib.mkIf (cfg.dnsProvider != null) (
+      {
+        ${cfg.domain} = {
+          inherit (cfg) dnsProvider;
+          environmentFile = cfg.acmeEnvironmentFile;
+          group = "nginx";
+        };
+      }
+      // lib.optionalAttrs (cfg.webDomain != null) {
+        ${cfg.webDomain} = {
+          inherit (cfg) dnsProvider;
+          environmentFile = cfg.acmeEnvironmentFile;
+          group = "nginx";
+        };
+      }
+    );
 
     networking.firewall.allowedTCPPorts = [ 80 443 ];
   };
