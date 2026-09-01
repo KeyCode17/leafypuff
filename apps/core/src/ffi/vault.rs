@@ -1,0 +1,82 @@
+use crate::domain::CoreError;
+use crate::domain::crypto::{KEY_LEN, open_for_device};
+use crate::infrastructure::VaultSync;
+
+use super::LeafyPuffCore;
+use super::error::LeafyPuffCoreError;
+
+const ERR_DEVICE_KEY_LEN: &str = "A device key must be 32 bytes";
+const ERR_NO_DEVICE_SLOT: &str = "This device has never been unlocked";
+
+#[uniffi::export(async_runtime = "tokio")]
+impl LeafyPuffCore {
+    /// True when this device can unlock on its own. False on a fresh install, which is what sends
+    /// the owner to the password.
+    pub async fn has_device_slot(&self) -> Result<bool, LeafyPuffCoreError> {
+        Ok(self.device_slot.read().await?.is_some())
+    }
+
+    /// Wraps the unlocked content key under a key the device holds in hardware, so the next launch
+    /// does not ask for the account password. Requires an unlocked vault.
+    pub async fn remember_on_device(&self, device_key: Vec<u8>) -> Result<(), LeafyPuffCoreError> {
+        let key = device_key_of(&device_key)?;
+        let wrapped = self.sealer.seal_for_device(&key)?;
+        self.device_slot.replace(&wrapped).await?;
+        Ok(())
+    }
+
+    pub async fn unlock_with_device_key(
+        &self,
+        device_key: Vec<u8>,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let key = device_key_of(&device_key)?;
+        let wrapped = self
+            .device_slot
+            .read()
+            .await?
+            .ok_or_else(|| CoreError::Invalid(ERR_NO_DEVICE_SLOT.to_owned()))?;
+        let content = open_for_device(&key, &wrapped).map_err(CoreError::from)?;
+        self.sealer.unlock(content)?;
+        Ok(())
+    }
+
+    /// Drops the device's own copy. Signing out uses this: the diary stays sealed on disk and the
+    /// next launch has to go through the account password again.
+    pub async fn forget_device_key(&self) -> Result<(), LeafyPuffCoreError> {
+        self.device_slot.forget().await?;
+        Ok(())
+    }
+
+    /// Uploads the vault so another device can restore it. It holds no key material -- two wrapped
+    /// copies of the content key and a salt -- so the server learns nothing by holding it.
+    pub async fn upload_vault(
+        &self,
+        base_url: String,
+        access_token: String,
+        updated_at_ms: i64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let held = self.vault.read().await?;
+        VaultSync::new(base_url, access_token)?
+            .push(&held, updated_at_ms)
+            .await?;
+        Ok(())
+    }
+
+    /// Fetches the account's vault and writes it over this device's. False when the account has
+    /// never uploaded one, which is the signal to create a fresh vault instead.
+    pub async fn restore_vault(
+        &self,
+        base_url: String,
+        access_token: String,
+    ) -> Result<bool, LeafyPuffCoreError> {
+        let Some(held) = VaultSync::new(base_url, access_token)?.pull().await? else {
+            return Ok(false);
+        };
+        self.vault.replace(&held).await?;
+        Ok(true)
+    }
+}
+
+fn device_key_of(raw: &[u8]) -> Result<[u8; KEY_LEN], CoreError> {
+    <[u8; KEY_LEN]>::try_from(raw).map_err(|_| CoreError::Invalid(ERR_DEVICE_KEY_LEN.to_owned()))
+}

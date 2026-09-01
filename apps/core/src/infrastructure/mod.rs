@@ -8,6 +8,9 @@ pub mod entity;
 pub mod exif_reader;
 #[cfg(feature = "sqlite")]
 pub mod mapper;
+#[cfg(feature = "sync")]
+#[cfg(feature = "sync")]
+pub mod media_sync;
 #[cfg(feature = "test-support")]
 pub mod memory;
 pub mod photo_store;
@@ -24,12 +27,16 @@ pub mod thumbnailer;
 pub mod vault_sealer;
 #[cfg(feature = "sqlite")]
 pub mod vault_store;
+#[cfg(feature = "sync")]
+pub mod vault_sync;
 pub mod xchacha_sealer;
 
 #[cfg(feature = "sync")]
 pub use auth_client::AuthClient;
 pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
+#[cfg(feature = "sync")]
+pub use media_sync::MediaSync;
 #[cfg(feature = "test-support")]
 pub use memory::{FixedClock, InMemoryEntryRepository};
 pub use photo_store::FilePhotoStore;
@@ -43,5 +50,7 @@ pub use sync_outbox::SyncOutbox;
 pub use thumbnailer::ImageThumbnailer;
 pub use vault_sealer::VaultSealer;
 #[cfg(feature = "sqlite")]
-pub use vault_store::SqliteVaultStore;
+pub use vault_store::{SqliteDeviceSlotStore, SqliteVaultStore};
+#[cfg(feature = "sync")]
+pub use vault_sync::VaultSync;
 pub use xchacha_sealer::XChaChaSealer;

@@ -36,12 +36,19 @@ fn envelope(plaintext: &[u8], updated_at_ms: i64, device_id: Uuid) -> Value {
 }
 
 fn record(id: Uuid, device_id: Uuid, at: i64) -> Value {
+    record_carrying(id, device_id, at, "[]")
+}
+
+fn record_carrying(id: Uuid, device_id: Uuid, at: i64, photo_refs: &str) -> Value {
     json!({
         "id": id,
         "date": "2026-09-01",
         "mood": "calm",
         "tags": ["rain"],
         "sticker_placements": "[]",
+        "photo_refs": photo_refs,
+        "weather": "sunny",
+        "location": "home",
         "device_updated_at_ms": at,
         "deleted_at_ms": Value::Null,
         "title": envelope(b"sealed-title", at, device_id),
@@ -300,4 +307,31 @@ async fn a_wrapped_key_round_trips_as_an_opaque_blob() {
     assert_eq!(read_status, StatusCode::OK);
     assert_eq!(body["data"][0]["kind"], json!("passphrase"));
     assert_eq!(body["data"][0]["blob"], json!(blob));
+}
+
+#[tokio::test]
+async fn a_pushed_record_carries_its_photo_references_back_out() {
+    let world = World::default();
+    let account_id = Uuid::new_v4();
+    let device_id = Uuid::new_v4();
+    let refs = r#"[{"id":"3f2a91c0-0000-4000-8000-0000000000aa","ordinal":0}]"#;
+
+    let (status, _) = send(
+        router(&world),
+        push_request(
+            account_id,
+            device_id,
+            "photo-refs",
+            json!({ "records": [record_carrying(Uuid::new_v4(), device_id, 10, refs)] }),
+        ),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+
+    let (status, body) = send(router(&world), pull_request(account_id, Uuid::new_v4(), 0)).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["data"]["records"][0]["photo_refs"], refs);
+    assert_eq!(body["data"]["records"][0]["weather"], "sunny");
+    assert_eq!(body["data"]["records"][0]["location"], "home");
 }

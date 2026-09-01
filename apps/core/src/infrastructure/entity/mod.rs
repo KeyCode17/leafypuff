@@ -1,3 +1,4 @@
+pub mod device_slot;
 pub mod entries;
 pub mod photos;
 pub mod stickers;

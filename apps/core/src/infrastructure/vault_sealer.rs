@@ -1,7 +1,8 @@
 use std::sync::{Arc, RwLock};
 
 use crate::domain::crypto::{
-    ContentKey, FieldContext, SealedField, open, open_blob, seal, seal_blob,
+    ContentKey, FieldContext, KEY_LEN, SealedField, WrappedKey, open, open_blob, seal, seal_blob,
+    seal_for_device,
 };
 use crate::domain::error::ERR_VAULT_LOCKED;
 use crate::domain::{ContentSealer, CoreError, EntryId, FieldSealer};
@@ -33,6 +34,13 @@ impl VaultSealer {
 
     pub fn is_unlocked(&self) -> bool {
         self.key.read().is_ok_and(|held| held.is_some())
+    }
+
+    /// Wraps the held content key under a key the device keeps in hardware. The content key
+    /// itself never leaves this type -- the caller gets ciphertext it cannot open without the
+    /// same device key.
+    pub fn seal_for_device(&self, device_key: &[u8; KEY_LEN]) -> Result<WrappedKey, CoreError> {
+        self.with_key(|key| Ok(seal_for_device(device_key, key)?))
     }
 
     fn with_key<T>(

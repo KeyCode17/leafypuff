@@ -5,7 +5,7 @@ use crate::domain::CoreError;
 use crate::domain::crypto::{KeyVault, WrappedKey};
 use crate::domain::error::{ERR_VAULT_ABSENT, ERR_VAULT_PRESENT};
 
-use super::entity::vault;
+use super::entity::{device_slot, vault};
 
 const ONLY_ROW: i32 = 1;
 
@@ -79,4 +79,48 @@ fn wrapped(nonce: Vec<u8>, ciphertext: Vec<u8>) -> Result<WrappedKey, CoreError>
             .map_err(|_| CoreError::Storage(ERR_VAULT_ABSENT.to_owned()))?,
         ciphertext,
     })
+}
+
+/// The device-bound copy of the content key. Separate from SqliteVaultStore on purpose: the vault
+/// is what travels to the server, and this row is what must never leave the device.
+pub struct SqliteDeviceSlotStore {
+    connection: DatabaseConnection,
+}
+
+impl SqliteDeviceSlotStore {
+    pub const fn new(connection: DatabaseConnection) -> Self {
+        Self { connection }
+    }
+
+    pub async fn read(&self) -> Result<Option<WrappedKey>, CoreError> {
+        let Some(row) = device_slot::Entity::find_by_id(ONLY_ROW)
+            .one(&self.connection)
+            .await?
+        else {
+            return Ok(None);
+        };
+        Ok(Some(wrapped(row.nonce, row.ciphertext)?))
+    }
+
+    pub async fn replace(&self, held: &WrappedKey) -> Result<(), CoreError> {
+        device_slot::Entity::delete_by_id(ONLY_ROW)
+            .exec(&self.connection)
+            .await?;
+        device_slot::Entity::insert(device_slot::ActiveModel {
+            id: ActiveValue::Set(ONLY_ROW),
+            nonce: ActiveValue::Set(held.nonce.to_vec()),
+            ciphertext: ActiveValue::Set(held.ciphertext.clone()),
+            created_at: ActiveValue::Set(Utc::now().to_rfc3339()),
+        })
+        .exec(&self.connection)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn forget(&self) -> Result<(), CoreError> {
+        device_slot::Entity::delete_by_id(ONLY_ROW)
+            .exec(&self.connection)
+            .await?;
+        Ok(())
+    }
 }

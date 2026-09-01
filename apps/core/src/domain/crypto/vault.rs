@@ -10,6 +10,7 @@ use super::seal::NONCE_LEN;
 
 const PASSPHRASE_SLOT: &[u8] = b"leafypuff:wrap:passphrase:v1";
 const RECOVERY_SLOT: &[u8] = b"leafypuff:wrap:recovery:v1";
+const DEVICE_SLOT: &[u8] = b"leafypuff:wrap:device:v1";
 
 /// A content key sealed under a wrapping key. Opaque to the server.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -115,4 +116,21 @@ impl KeyVault {
             recovery_slot: self.recovery_slot.clone(),
         })
     }
+}
+
+/// Wraps the content key under a key this device holds in hardware. The result stays on the device
+/// and is never synced: it saves a returning owner from typing the account password every launch,
+/// and a device that has never been unlocked has none, which is what forces the password there.
+pub fn seal_for_device(
+    device_key: &[u8; KEY_LEN],
+    content: &ContentKey,
+) -> Result<WrappedKey, CryptoError> {
+    wrap_content_key(device_key, DEVICE_SLOT, content)
+}
+
+pub fn open_for_device(
+    device_key: &[u8; KEY_LEN],
+    wrapped: &WrappedKey,
+) -> Result<ContentKey, CryptoError> {
+    open_slot(device_key, DEVICE_SLOT, wrapped)
 }

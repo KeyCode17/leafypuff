@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 
 use super::entity::entries;
-use super::sync_outbox::SyncOutbox;
+use super::sync_outbox::{Carried, InboundPhoto, InboundSticker, SyncOutbox};
 
 const PULL_PATH: &str = "/v1/sync/pull";
 const PUSH_PATH: &str = "/v1/sync/push";
@@ -50,8 +50,8 @@ impl SyncClient {
         let cursor = outbox.cursor().await?;
         let (records, advanced) = self.pull(&device_id, cursor).await?;
         let pulled = u32::try_from(records.len()).unwrap_or(u32::MAX);
-        for record in records {
-            outbox.accept(record).await?;
+        for (record, carried) in records {
+            outbox.accept(record, &carried).await?;
         }
         outbox.advance(advanced).await?;
 
@@ -90,7 +90,7 @@ impl SyncClient {
         &self,
         device_id: &str,
         cursor: i64,
-    ) -> Result<(Vec<entries::ActiveModel>, i64), CoreError> {
+    ) -> Result<(Vec<(entries::ActiveModel, Carried)>, i64), CoreError> {
         let response = self
             .client
             .get(format!("{}{PULL_PATH}?cursor={cursor}", self.base_url))
@@ -119,7 +119,7 @@ impl SyncClient {
         let accepted = rows
             .iter()
             .map(inbound)
-            .collect::<Result<Vec<entries::ActiveModel>, CoreError>>()?;
+            .collect::<Result<Vec<(entries::ActiveModel, Carried)>, CoreError>>()?;
         Ok((accepted, advanced))
     }
 }
@@ -131,6 +131,9 @@ fn record(row: &OutboundEntry, device_id: &str) -> Result<Value, CoreError> {
         "mood": row.mood,
         "tags": row.tags,
         "sticker_placements": row.sticker_placements,
+        "photo_refs": row.photo_refs,
+        "weather": row.weather,
+        "location": row.location,
         "device_updated_at_ms": row.device_updated_at_ms,
         "deleted_at_ms": row.deleted_at_ms,
         "title": envelope(&row.title_ciphertext, &row.title_nonce, row.device_updated_at_ms, device_id),
@@ -147,28 +150,107 @@ fn envelope(ciphertext: &[u8], nonce: &[u8], at_ms: i64, device_id: &str) -> Val
     })
 }
 
-fn inbound(row: &Value) -> Result<entries::ActiveModel, CoreError> {
+fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
     let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
     let updated_at_ms = row["title"]["updated_at_ms"].as_i64().ok_or_else(shape)?;
     let updated_at = DateTime::<Utc>::from_timestamp_millis(updated_at_ms)
         .ok_or_else(shape)?
         .to_rfc3339();
 
-    Ok(entries::ActiveModel {
-        id: ActiveValue::Set(row["id"].as_str().ok_or_else(shape)?.to_owned()),
-        date: ActiveValue::Set(row["date"].as_str().ok_or_else(shape)?.to_owned()),
-        mood: ActiveValue::Set(row["mood"].as_str().ok_or_else(shape)?.to_owned()),
-        title: ActiveValue::Set(bytes(&row["title"]["ciphertext"])?),
-        title_nonce: ActiveValue::Set(Some(bytes(&row["title"]["nonce"])?)),
-        body: ActiveValue::Set(bytes(&row["body"]["ciphertext"])?),
-        body_nonce: ActiveValue::Set(Some(bytes(&row["body"]["nonce"])?)),
-        revision: ActiveValue::Set(0),
-        weather: ActiveValue::Set(None),
-        location: ActiveValue::Set(None),
-        created_at: ActiveValue::Set(updated_at.clone()),
-        updated_at: ActiveValue::Set(updated_at.clone()),
-        synced_at: ActiveValue::Set(Some(updated_at)),
-    })
+    let entry_id = row["id"].as_str().ok_or_else(shape)?.to_owned();
+    let carried = Carried {
+        photos: inbound_photos(&row["photo_refs"], &entry_id)?,
+        stickers: inbound_stickers(&row["sticker_placements"])?,
+        tags: inbound_tags(&row["tags"])?,
+        entry_id: entry_id.clone(),
+    };
+
+    Ok((
+        entries::ActiveModel {
+            id: ActiveValue::Set(entry_id),
+            date: ActiveValue::Set(row["date"].as_str().ok_or_else(shape)?.to_owned()),
+            mood: ActiveValue::Set(row["mood"].as_str().ok_or_else(shape)?.to_owned()),
+            title: ActiveValue::Set(bytes(&row["title"]["ciphertext"])?),
+            title_nonce: ActiveValue::Set(Some(bytes(&row["title"]["nonce"])?)),
+            body: ActiveValue::Set(bytes(&row["body"]["ciphertext"])?),
+            body_nonce: ActiveValue::Set(Some(bytes(&row["body"]["nonce"])?)),
+            revision: ActiveValue::Set(0),
+            weather: ActiveValue::Set(row["weather"].as_str().map(str::to_owned)),
+            location: ActiveValue::Set(row["location"].as_str().map(str::to_owned)),
+            created_at: ActiveValue::Set(updated_at.clone()),
+            updated_at: ActiveValue::Set(updated_at.clone()),
+            synced_at: ActiveValue::Set(Some(updated_at)),
+        },
+        carried,
+    ))
+}
+
+/// The server carries photo references as the JSON string the writing device sent. `path` is left
+/// empty: this device fills it in when it fetches the blob, and an empty one is how the next sync
+/// knows it has not.
+fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, CoreError> {
+    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let Some(encoded) = value.as_str() else {
+        return Ok(Vec::new());
+    };
+    let parsed: Value = serde_json::from_str(encoded).map_err(|_| shape())?;
+    parsed
+        .as_array()
+        .ok_or_else(shape)?
+        .iter()
+        .map(|photo| {
+            Ok(InboundPhoto {
+                id: photo["id"].as_str().ok_or_else(shape)?.to_owned(),
+                entry_id: entry_id.to_owned(),
+                path: String::new(),
+                ordinal: i32::try_from(photo["ordinal"].as_i64().ok_or_else(shape)?)
+                    .map_err(|_| shape())?,
+            })
+        })
+        .collect()
+}
+
+/// An absent list reads as no tags, the way the photo and sticker parsers beside it treat their
+/// own fields. A record that arrives without them is a record with none, not a reason to abandon
+/// the whole pull.
+fn inbound_tags(value: &Value) -> Result<Vec<String>, CoreError> {
+    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let Some(tags) = value.as_array() else {
+        return Ok(Vec::new());
+    };
+    tags.iter()
+        .map(|tag| tag.as_str().map(str::to_owned).ok_or_else(shape))
+        .collect()
+}
+
+fn inbound_stickers(value: &Value) -> Result<Vec<InboundSticker>, CoreError> {
+    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let Some(encoded) = value.as_str() else {
+        return Ok(Vec::new());
+    };
+    let parsed: Value = serde_json::from_str(encoded).map_err(|_| shape())?;
+    parsed
+        .as_array()
+        .ok_or_else(shape)?
+        .iter()
+        .map(|sticker| {
+            Ok(InboundSticker {
+                key: sticker["key"].as_str().ok_or_else(shape)?.to_owned(),
+                kind: sticker["kind"].as_str().ok_or_else(shape)?.to_owned(),
+                x: number(&sticker["x"])?,
+                y: number(&sticker["y"])?,
+                size: number(&sticker["size"])?,
+                rotation: number(&sticker["rotation"])?,
+            })
+        })
+        .collect()
+}
+
+fn number(value: &Value) -> Result<f32, CoreError> {
+    value
+        .as_f64()
+        .map(|held| held as f32)
+        .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))
 }
 
 fn bytes(value: &Value) -> Result<Vec<u8>, CoreError> {
@@ -178,4 +260,98 @@ fn bytes(value: &Value) -> Result<Vec<u8>, CoreError> {
     BASE64
         .decode(encoded.as_bytes())
         .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))
+}
+
+#[cfg(test)]
+#[allow(clippy::expect_used)]
+mod tests {
+    use super::{inbound_stickers, inbound_tags};
+    use crate::infrastructure::entity::{photos, stickers};
+    use crate::infrastructure::sync_outbox::{photo_refs, sticker_placements};
+
+    fn sticker(key: &str, kind: &str) -> stickers::Model {
+        stickers::Model {
+            id: key.to_owned(),
+            entry_id: "e1".to_owned(),
+            kind: kind.to_owned(),
+            x: 0.25,
+            y: 0.5,
+            size: 64.0,
+            rotation: 90.0,
+        }
+    }
+
+    #[test]
+    fn a_placed_sticker_survives_the_wire_unchanged() {
+        let written = sticker_placements(&[sticker("heart-0", "Heart")]).expect("it writes");
+
+        let read = inbound_stickers(&serde_json::Value::String(written)).expect("it reads");
+
+        assert_eq!(read.len(), 1);
+        assert_eq!(read[0].key, "heart-0");
+        assert_eq!(read[0].kind, "Heart");
+        assert!((read[0].x - 0.25).abs() < f32::EPSILON);
+        assert!((read[0].y - 0.5).abs() < f32::EPSILON);
+        assert!((read[0].size - 64.0).abs() < f32::EPSILON);
+        assert!((read[0].rotation - 90.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn an_entry_with_no_stickers_writes_and_reads_an_empty_list() {
+        let written = sticker_placements(&[]).expect("it writes");
+
+        assert_eq!(written, "[]");
+        assert!(
+            inbound_stickers(&serde_json::Value::String(written))
+                .expect("it reads")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn a_photo_reference_survives_the_wire_unchanged() {
+        let row = photos::Model {
+            id: "3f2a91c0-0000-4000-8000-0000000000aa".to_owned(),
+            entry_id: "e1".to_owned(),
+            path: "/somewhere/on/the/first/device".to_owned(),
+            ordinal: 0,
+            taken_at: None,
+        };
+
+        let written = photo_refs(&[row]).expect("it writes");
+        let read =
+            super::inbound_photos(&serde_json::Value::String(written), "e1").expect("it reads");
+
+        assert_eq!(read.len(), 1);
+        assert_eq!(read[0].id, "3f2a91c0-0000-4000-8000-0000000000aa");
+        assert_eq!(read[0].ordinal, 0);
+        // The path is deliberately not carried: it named a directory on another handset.
+        assert!(read[0].path.is_empty());
+    }
+
+    #[test]
+    fn a_sticker_the_device_could_not_write_is_refused_rather_than_shipped() {
+        let mut broken = sticker("heart-0", "Heart");
+        broken.rotation = f32::NAN;
+
+        // A NaN would print as `NaN`, which is not JSON. The server would store it happily and
+        // every device that pulled it would fail to parse it, forever.
+        assert!(sticker_placements(&[broken]).is_err());
+    }
+
+    #[test]
+    fn a_record_with_no_tag_list_reads_as_no_tags() {
+        assert!(
+            inbound_tags(&serde_json::Value::Null)
+                .expect("it reads")
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn tags_come_back_as_written() {
+        let read = inbound_tags(&serde_json::json!(["#rain", "#home"])).expect("it reads");
+
+        assert_eq!(read, vec!["#rain".to_owned(), "#home".to_owned()]);
+    }
 }
