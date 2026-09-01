@@ -26,6 +26,10 @@ pub enum MoodGroup {
     Negative,
 }
 
+impl MoodGroup {
+    pub const ALL: [Self; 3] = [Self::Positive, Self::Neutral, Self::Negative];
+}
+
 impl Mood {
     pub const ALL: [Self; 12] = [
         Self::Happy,

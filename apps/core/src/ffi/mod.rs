@@ -1,29 +1,37 @@
+pub mod account;
+pub mod auth_records;
+pub mod entries;
 pub mod enums;
 pub mod error;
 pub mod photos;
 pub mod records;
+pub mod stats_records;
 
 use std::sync::Arc;
 
 use chrono::NaiveDate;
 
-use crate::application::SaveEntry;
+use crate::domain::CoreError;
 use crate::domain::crypto::{
     KeyVault, RecoveryCode, hash_pin as crypto_hash_pin, verify_pin as crypto_verify_pin,
 };
 use crate::domain::error::ERR_DATE_UNREADABLE;
-use crate::domain::{CoreError, Entry, EntryId, EntryRepository};
 use crate::infrastructure::{
     FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteEntryRepository, SqliteVaultStore,
-    SyncClient, SyncOutbox, SystemClock, VaultSealer, db,
+    SyncOutbox, SystemClock, VaultSealer, db,
 };
 
+pub use auth_records::{FfiChallenge, FfiSession};
 pub use error::LeafyPuffCoreError;
 pub use records::{FfiEntry, FfiPhoto, FfiPlacedSticker, FfiSyncOutcome};
+pub use stats_records::{
+    FfiGroupCount, FfiMoodCount, FfiMoodGroup, FfiStats, FfiStatsRange, FfiTagCount,
+    FfiWeekdayCount,
+};
 
 use records::ISO_DATE;
 
-fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
+pub(super) fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
     NaiveDate::parse_from_str(raw, ISO_DATE)
         .map_err(|_| CoreError::Invalid(format!("{ERR_DATE_UNREADABLE}: {raw}")))
 }
@@ -126,61 +134,5 @@ impl LeafyPuffCore {
 
     pub fn is_unlocked(&self) -> bool {
         self.sealer.is_unlocked()
-    }
-
-    /// Exchanges with the server. The device uploads the ciphertext it already holds and stores
-    /// what comes back without opening it, so this works whether or not the vault is unlocked.
-    pub async fn sync_now(
-        &self,
-        base_url: String,
-        access_token: String,
-    ) -> Result<FfiSyncOutcome, LeafyPuffCoreError> {
-        let client = SyncClient::new(base_url, access_token)?;
-        let outcome = client.exchange(&self.outbox).await?;
-        Ok(FfiSyncOutcome::from(outcome))
-    }
-
-    pub async fn device_id(&self) -> Result<String, LeafyPuffCoreError> {
-        Ok(self.outbox.device_id().await?)
-    }
-
-    pub async fn save_entry(&self, entry: FfiEntry) -> Result<FfiEntry, LeafyPuffCoreError> {
-        let draft = Entry::try_from(entry)?;
-        let saved = SaveEntry::new(&self.repository, self.clock)
-            .execute(draft)
-            .await?;
-        Ok(FfiEntry::from(saved))
-    }
-
-    pub async fn entry_by_id(&self, id: String) -> Result<Option<FfiEntry>, LeafyPuffCoreError> {
-        let found = self.repository.by_id(EntryId::parse(&id)?).await?;
-        Ok(found.map(FfiEntry::from))
-    }
-
-    pub async fn list_entries(&self, limit: u32) -> Result<Vec<FfiEntry>, LeafyPuffCoreError> {
-        let found = self.repository.list_desc(limit).await?;
-        Ok(found.into_iter().map(FfiEntry::from).collect())
-    }
-
-    pub async fn entries_in_range(
-        &self,
-        from: String,
-        to: String,
-    ) -> Result<Vec<FfiEntry>, LeafyPuffCoreError> {
-        let found = self
-            .repository
-            .in_range(read_date(&from)?, read_date(&to)?)
-            .await?;
-        Ok(found.into_iter().map(FfiEntry::from).collect())
-    }
-
-    pub async fn entry_on_date(&self, date: String) -> Result<Vec<FfiEntry>, LeafyPuffCoreError> {
-        let found = self.repository.on_date(read_date(&date)?).await?;
-        Ok(found.into_iter().map(FfiEntry::from).collect())
-    }
-
-    pub async fn delete_all_entries(&self) -> Result<(), LeafyPuffCoreError> {
-        self.repository.delete_all().await?;
-        Ok(())
     }
 }

@@ -1,4 +1,4 @@
-use crate::domain::CoreError;
+use crate::domain::{CoreError, Rejection};
 
 /// The error every exported method returns. Kotlin receives it as a sealed exception
 /// hierarchy, one subclass per variant, never as a string.
@@ -19,6 +19,18 @@ pub enum LeafyPuffCoreError {
     Invalid { message: String },
     #[error("{message}")]
     Locked { message: String },
+    #[error("{message}")]
+    InvalidCredentials { message: String },
+    #[error("{message}")]
+    EmailNotVerified { message: String },
+    #[error("{message}")]
+    EmailTaken { message: String },
+    #[error("{message}")]
+    TooManyAttempts { message: String },
+    #[error("{message}")]
+    MailUnavailable { message: String },
+    #[error("{message}")]
+    ServiceUnavailable { message: String },
 }
 
 impl From<CoreError> for LeafyPuffCoreError {
@@ -32,6 +44,15 @@ impl From<CoreError> for LeafyPuffCoreError {
             CoreError::Crypto(_) => Self::Crypto { message },
             CoreError::Invalid(_) => Self::Invalid { message },
             CoreError::Locked => Self::Locked { message },
+            CoreError::Rejected { rejection, .. } => match rejection {
+                Rejection::InvalidCredentials => Self::InvalidCredentials { message },
+                Rejection::EmailNotVerified => Self::EmailNotVerified { message },
+                Rejection::EmailTaken => Self::EmailTaken { message },
+                Rejection::TooManyAttempts => Self::TooManyAttempts { message },
+                Rejection::MailUnavailable => Self::MailUnavailable { message },
+                Rejection::ServiceUnavailable => Self::ServiceUnavailable { message },
+                Rejection::Unknown => Self::Invalid { message },
+            },
         }
     }
 }
