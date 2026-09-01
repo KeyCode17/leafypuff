@@ -8,7 +8,9 @@ use std::sync::Arc;
 use chrono::NaiveDate;
 
 use crate::application::SaveEntry;
-use crate::domain::crypto::{KeyVault, RecoveryCode};
+use crate::domain::crypto::{
+    KeyVault, RecoveryCode, hash_pin as crypto_hash_pin, verify_pin as crypto_verify_pin,
+};
 use crate::domain::error::ERR_DATE_UNREADABLE;
 use crate::domain::{CoreError, Entry, EntryId, EntryRepository};
 use crate::infrastructure::{
@@ -24,6 +26,18 @@ use records::ISO_DATE;
 fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
     NaiveDate::parse_from_str(raw, ISO_DATE)
         .map_err(|_| CoreError::Invalid(format!("{ERR_DATE_UNREADABLE}: {raw}")))
+}
+
+/// Hashes a screen-lock PIN. The caller stores the returned string and never the digits. Free
+/// rather than a method: the screen lock has nothing to do with the database handle.
+#[uniffi::export]
+pub fn hash_pin(pin: String) -> Result<String, LeafyPuffCoreError> {
+    Ok(crypto_hash_pin(&pin).map_err(CoreError::from)?)
+}
+
+#[uniffi::export]
+pub fn verify_pin(pin: String, stored: String) -> bool {
+    crypto_verify_pin(&pin, &stored)
 }
 
 /// The only handle Kotlin holds. It owns the connection and every adapter behind it.
