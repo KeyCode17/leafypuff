@@ -31,6 +31,8 @@ fun DestinationHost(
     onCompose: () -> Unit,
     onOpenEntry: (Entry) -> Unit,
     onRangeChange: (StatRange) -> Unit,
+    lastSynced: String,
+    onSync: () -> Unit,
     onExport: () -> Unit,
     onPreferencesChange: (AppPreferences) -> Unit,
     onDeleteAll: () -> Unit,
@@ -70,6 +72,8 @@ fun DestinationHost(
             onToggleLock = { onPreferencesChange(preferences.copy(lockEnabled = it)) },
             onStickerPackChange = { onPreferencesChange(preferences.copy(stickerPack = it)) },
             onTextSizeChange = { onPreferencesChange(preferences.copy(textSize = it)) },
+            lastSynced = lastSynced,
+            onSync = onSync,
             onExport = onExport,
             onDeleteAll = onDeleteAll,
         )

@@ -24,7 +24,8 @@ import kotlinx.coroutines.launch
 fun AuthGate(
     apiBaseUrl: String,
     client: CoreClient?,
-    onSignedIn: (String) -> Unit,
+    signedIn: Boolean,
+    onSignedIn: (SignedIn) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -32,7 +33,6 @@ fun AuthGate(
     val session = remember(context) { SessionStore(context) }
     val scope = rememberCoroutineScope()
 
-    var signedIn by remember { mutableStateOf(session.signedIn()) }
     var state by remember { mutableStateOf(AuthFormState()) }
     var pending by remember { mutableStateOf(false) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
@@ -63,9 +63,7 @@ fun AuthGate(
                 else -> {
                     pending = true
                     scope.launch {
-                        state = advance(core, apiBaseUrl, state, session, onSignedIn) {
-                            signedIn = true
-                        }
+                        state = advance(core, apiBaseUrl, state, session, onSignedIn)
                         pending = false
                     }
                 }
@@ -92,8 +90,7 @@ private suspend fun advance(
     apiBaseUrl: String,
     state: AuthFormState,
     session: SessionStore,
-    onSignedIn: (String) -> Unit,
-    onSession: () -> Unit,
+    onSignedIn: (SignedIn) -> Unit,
 ): AuthFormState = runCatching {
     when (state.mode) {
         AuthMode.Signup -> {
@@ -126,8 +123,9 @@ private suspend fun advance(
         AuthMode.VerifySignIn -> {
             val issued = client.verifySignIn(apiBaseUrl, state.email, state.code)
             session.start(state.email, issued.accessToken, issued.refreshToken)
-            onSignedIn(state.name)
-            onSession()
+            // The password goes straight on to the vault and is not held anywhere else: it is the
+            // only thing that opens an account's diary on a handset that has never seen it.
+            onSignedIn(SignedIn(state.name, state.password, issued.accessToken))
             state
         }
     }
@@ -152,3 +150,6 @@ private fun readable(mode: AuthMode, failure: Throwable): String = when (failure
     is LeafyPuffCoreException.Storage -> "No connection. Check your network."
     else -> "Something went wrong. Try again."
 }
+
+/// What a completed sign-in hands back. The password travels no further than the vault.
+data class SignedIn(val name: String, val password: String, val accessToken: String)

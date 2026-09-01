@@ -11,22 +11,26 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 private const val KeystoreProvider = "AndroidKeyStore"
-private const val KeyAlias = "leafypuff.vault.passphrase"
+private const val KeyAlias = "leafypuff.device.key"
 private const val Transformation = "AES/GCM/NoPadding"
 private const val PreferencesName = "leafypuff.device"
 private const val CiphertextKey = "passphrase.ciphertext"
 private const val NonceKey = "passphrase.nonce"
 private const val TagBits = 128
-private const val PassphraseBytes = 32
+private const val DeviceKeyBytes = 32
 
 /**
- * The vault passphrase this device uses until the owner sets a PIN. It is generated once, sealed
- * by a hardware-backed Keystore key that never leaves the secure element, and kept beside the
- * database as ciphertext. Extracting the database alone yields nothing readable.
+ * The key this handset wraps its copy of the content key under. Generated once, sealed by a
+ * hardware-backed Keystore key that never leaves the secure element, and kept beside the database
+ * as ciphertext.
+ *
+ * It is not the vault's passphrase and never was. A key minted per handset can only ever open what
+ * that handset sealed, which is why the diary used to die with the phone; the vault itself is
+ * opened by the account password and travels with the account.
  */
-class DeviceSecret(private val context: Context) {
+class DeviceKey(private val context: Context) {
 
-    fun passphrase(): String {
+    fun bytes(): ByteArray {
         val preferences = context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
         val stored = preferences.getString(CiphertextKey, null)
         val nonce = preferences.getString(NonceKey, null)
@@ -34,21 +38,30 @@ class DeviceSecret(private val context: Context) {
             return open(decode(stored), decode(nonce))
         }
 
-        val fresh = ByteArray(PassphraseBytes).also { java.security.SecureRandom().nextBytes(it) }
+        val fresh = ByteArray(DeviceKeyBytes).also { java.security.SecureRandom().nextBytes(it) }
         val cipher = Cipher.getInstance(Transformation).apply { init(Cipher.ENCRYPT_MODE, key()) }
         val sealed = cipher.doFinal(fresh)
         preferences.edit()
             .putString(CiphertextKey, encode(sealed))
             .putString(NonceKey, encode(cipher.iv))
             .apply()
-        return encode(fresh)
+        return fresh
     }
 
-    private fun open(sealed: ByteArray, nonce: ByteArray): String {
+    /// Drops the wrapping key. The device slot it sealed becomes unopenable, which is what signing
+    /// out is: the diary stays on disk, sealed, and the account password is the only way back in.
+    fun forget() {
+        context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
+    }
+
+    private fun open(sealed: ByteArray, nonce: ByteArray): ByteArray {
         val cipher = Cipher.getInstance(Transformation).apply {
             init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(TagBits, nonce))
         }
-        return encode(cipher.doFinal(sealed))
+        return cipher.doFinal(sealed)
     }
 
     private fun key(): SecretKey {

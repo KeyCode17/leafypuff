@@ -47,6 +47,7 @@ fun LeafyHome(
     onOpenEntry: suspend (Entry) -> OpenedEntry?,
     onStatistics: suspend (StatRange) -> StatsSummary?,
     onExport: suspend () -> String?,
+    onSync: suspend () -> Boolean,
     onSave: (EntryDraft, List<String>, () -> Unit) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
@@ -64,6 +65,7 @@ fun LeafyHome(
     var range by remember { mutableStateOf(StatRange.SevenDays) }
     var statistics by remember { mutableStateOf(StatsSummary()) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
+    var lastSynced by remember { mutableStateOf("Never") }
 
     LaunchedEffect(entries) {
         covers = loadCovers(library, entries, covers)
@@ -118,6 +120,14 @@ fun LeafyHome(
                 },
                 onOpenEntry = { opening = it },
                 onRangeChange = { range = it },
+                lastSynced = lastSynced,
+                onSync = {
+                    scope.launch {
+                        val moved = onSync()
+                        lastSynced = syncLabel(moved)
+                        toast = plainToast(syncMessage(moved))
+                    }
+                },
                 onExport = {
                     scope.launch {
                         val written = onExport()
@@ -164,6 +174,9 @@ fun LeafyHome(
                     // editor was opened from.
                     current = Destination.Diary
                     toast = saveToast(reopened)
+                    // Push what was just written. A diary that only leaves the handset when the
+                    // owner remembers to ask is a diary that loses the day the handset does.
+                    scope.launch { if (onSync()) lastSynced = syncLabel(true) }
                 }
             },
             modifier = Modifier.fillMaxSize(),
@@ -192,4 +205,14 @@ private suspend fun loadCovers(
 private fun exportMessage(path: String?): String = when (path) {
     null -> "The export could not be written."
     else -> "Diary exported to ${path.substringAfterLast('/')}."
+}
+
+private fun syncLabel(moved: Boolean): String = when {
+    moved -> "Just now"
+    else -> "Not signed in"
+}
+
+private fun syncMessage(moved: Boolean): String = when {
+    moved -> "Diary synced."
+    else -> "Sign in to sync."
 }

@@ -1,6 +1,7 @@
 package com.leafypuff.data
 
 import com.leafypuff.core.CoreClient
+import com.leafypuff.core.SyncSummary
 import com.leafypuff.domain.Entry
 import com.leafypuff.ui.stats.StatRange
 import com.leafypuff.ui.stats.StatsSummary
@@ -28,6 +29,11 @@ class EntryStore(internal val client: CoreClient) {
 
     suspend fun export(destination: String): String = client.exportDiary(destination)
 
+    /// No token, no exchange. A signed-out device keeps writing locally; it has nothing to
+    /// push to and nobody to ask.
+    suspend fun sync(baseUrl: String, accessToken: String?): SyncSummary? =
+        accessToken?.let { client.syncNow(baseUrl, it) }
+
     suspend fun deleteAll() {
         client.deleteAll()
     }
@@ -35,17 +41,9 @@ class EntryStore(internal val client: CoreClient) {
     companion object {
         private const val DefaultLimit: UInt = 200u
 
-        /// Opens the device database and unlocks its vault, creating one on first run. Every
-        /// entry field is sealed at rest, so a store handed out locked would fail on the first
-        /// write rather than here.
-        suspend fun open(databasePath: String, passphrase: String): EntryStore {
-            val client = CoreClient.open(databasePath)
-            if (client.hasVault()) {
-                client.unlock(passphrase)
-            } else {
-                client.createVault(passphrase)
-            }
-            return EntryStore(client)
-        }
+        /// Opens the device database and nothing else. The vault is opened by the account
+        /// password once the owner has signed in -- creating one here would mint a key that only
+        /// this handset could ever use, which is what kept a diary from following its owner.
+        suspend fun open(databasePath: String): EntryStore = EntryStore(CoreClient.open(databasePath))
     }
 }
