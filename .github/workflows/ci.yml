@@ -39,10 +39,13 @@ jobs:
         run: test -n "$TEST_DATABASE_URL"
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       # apps/core builds without its sqlite feature inside the android .so. Running only the
       # all-features gate once hid a missing cfg attribute, so each shape is built on its own.
       - run: cargo build -p leafypuff-core
       - run: cargo test --workspace
+      - run: cargo test --workspace --all-features
+      - run: cargo test -p leafypuff-core --no-default-features
       - name: secrets never reach a log
         run: |
           if grep -rnE "tracing::(info|warn|error|debug|trace)!\([^)]*\b(password|plain|plaintext|ciphertext|otp_pepper|pepper|refresh_secret|access_token|api_key|resend_api_key|content_key|passphrase|recovery_code|blob)\b" apps/api/src apps/core/src; then
