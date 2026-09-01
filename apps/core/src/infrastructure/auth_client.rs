@@ -13,6 +13,8 @@ const REGISTER_PATH: &str = "/v1/auth/register";
 const SIGN_IN_PATH: &str = "/v1/auth/sign-in";
 const VERIFY_SIGN_IN_PATH: &str = "/v1/auth/sign-in/verify";
 const VERIFY_EMAIL_PATH: &str = "/v1/auth/verify-email";
+const FORGOT_PASSWORD_PATH: &str = "/v1/auth/password/forgot";
+const RESET_PASSWORD_PATH: &str = "/v1/auth/password/reset";
 
 const ERR_UNREACHABLE: &str = "The account service could not be reached";
 const ERR_SHAPE: &str = "The account service answered an unexpected shape";
@@ -54,6 +56,27 @@ impl AuthClient {
     pub async fn verify_email(&self, email: String, code: String) -> Result<(), CoreError> {
         self.post(VERIFY_EMAIL_PATH, &json!({ "email": email, "code": code }))
             .await?;
+        Ok(())
+    }
+
+    pub async fn forgot_password(&self, email: String) -> Result<Challenge, CoreError> {
+        let body = self
+            .post(FORGOT_PASSWORD_PATH, &json!({ "email": email }))
+            .await?;
+        challenge(&body)
+    }
+
+    pub async fn reset_password(
+        &self,
+        email: String,
+        code: String,
+        password: String,
+    ) -> Result<(), CoreError> {
+        self.post(
+            RESET_PASSWORD_PATH,
+            &json!({ "email": email, "code": code, "password": password }),
+        )
+        .await?;
         Ok(())
     }
 

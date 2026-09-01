@@ -1,5 +1,5 @@
 use crate::domain::CoreError;
-use crate::domain::crypto::{KEY_LEN, open_for_device};
+use crate::domain::crypto::{ContentKey, KEY_LEN, KeyVault, RecoveryCode, open_for_device};
 use crate::infrastructure::VaultSync;
 
 use super::LeafyPuffCore;
@@ -54,6 +54,53 @@ impl LeafyPuffCore {
         Ok(())
     }
 
+    pub async fn change_passphrase(
+        &self,
+        base_url: String,
+        access_token: String,
+        current: String,
+        replacement: String,
+        updated_at_ms: i64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let vault = self.vault.read().await?;
+        let content = vault
+            .unlock_with_passphrase(&current)
+            .map_err(CoreError::from)?;
+        self.reseal(
+            base_url,
+            access_token,
+            &vault,
+            content,
+            &replacement,
+            updated_at_ms,
+        )
+        .await
+    }
+
+    pub async fn reseal_with_recovery_code(
+        &self,
+        base_url: String,
+        access_token: String,
+        code: String,
+        replacement: String,
+        updated_at_ms: i64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let vault = self.vault.read().await?;
+        let parsed = RecoveryCode::parse(&code).map_err(CoreError::from)?;
+        let content = vault
+            .unlock_with_recovery_code(&parsed)
+            .map_err(CoreError::from)?;
+        self.reseal(
+            base_url,
+            access_token,
+            &vault,
+            content,
+            &replacement,
+            updated_at_ms,
+        )
+        .await
+    }
+
     pub async fn restore_vault(
         &self,
         base_url: String,
@@ -64,6 +111,28 @@ impl LeafyPuffCore {
         };
         self.vault.replace(&held).await?;
         Ok(true)
+    }
+}
+
+impl LeafyPuffCore {
+    async fn reseal(
+        &self,
+        base_url: String,
+        access_token: String,
+        vault: &KeyVault,
+        content: ContentKey,
+        replacement: &str,
+        updated_at_ms: i64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let rewrapped = vault
+            .rewrap_with(&content, replacement)
+            .map_err(CoreError::from)?;
+        self.vault.replace(&rewrapped).await?;
+        self.sealer.unlock(content)?;
+        VaultSync::new(base_url, access_token)?
+            .push(&rewrapped, updated_at_ms)
+            .await?;
+        Ok(())
     }
 }
 

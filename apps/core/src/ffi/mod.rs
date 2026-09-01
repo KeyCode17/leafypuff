@@ -111,19 +111,6 @@ impl LeafyPuffCore {
         Ok(())
     }
 
-    pub async fn change_passphrase(
-        &self,
-        current: String,
-        replacement: String,
-    ) -> Result<(), LeafyPuffCoreError> {
-        let vault = self.vault.read().await?;
-        let rewrapped = vault
-            .rewrap_passphrase(&current, &replacement)
-            .map_err(CoreError::from)?;
-        self.vault.replace(&rewrapped).await?;
-        Ok(())
-    }
-
     pub fn lock(&self) -> Result<(), LeafyPuffCoreError> {
         self.sealer.lock()?;
         Ok(())
