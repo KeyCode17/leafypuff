@@ -8,9 +8,9 @@ use uuid::Uuid;
 use crate::domain::error::ERR_TIMESTAMP_UNREADABLE;
 use crate::domain::{CoreError, EntryId, OutboundEntry};
 
-use super::entity::{entries, photos, sync_state, tags};
+use super::entity::{entries, photos, stickers, sync_state, tags};
 
-const ERR_PHOTO_REFS: &str = "Photo references could not be written";
+const ERR_REFERENCES: &str = "Entry references could not be written";
 
 const ONLY_ROW: i32 = 1;
 const PUSH_BATCH: u64 = 100;
@@ -84,6 +84,10 @@ impl SyncOutbox {
                 .filter(tags::Column::EntryId.eq(row.id.clone()))
                 .all(&self.connection)
                 .await?;
+            let placed = stickers::Entity::find()
+                .filter(stickers::Column::EntryId.eq(row.id.clone()))
+                .all(&self.connection)
+                .await?;
             let carried = photos::Entity::find()
                 .filter(photos::Column::EntryId.eq(row.id.clone()))
                 .order_by_asc(photos::Column::Ordinal)
@@ -94,8 +98,10 @@ impl SyncOutbox {
                 date: row.date,
                 mood: row.mood,
                 tags: labels.into_iter().map(|tag| tag.tag).collect(),
-                sticker_placements: "[]".to_owned(),
+                sticker_placements: sticker_placements(&placed)?,
                 photo_refs: photo_refs(&carried)?,
+                weather: row.weather,
+                location: row.location,
                 device_updated_at_ms: millis(&row.updated_at)?,
                 deleted_at_ms: None,
                 title_ciphertext: row.title,
@@ -164,7 +170,7 @@ impl SyncOutbox {
     pub async fn accept(
         &self,
         inbound: entries::ActiveModel,
-        carried: &[InboundPhoto],
+        carried: &Carried,
     ) -> Result<(), CoreError> {
         entries::Entity::insert(inbound)
             .on_conflict(
@@ -176,6 +182,8 @@ impl SyncOutbox {
                         entries::Column::TitleNonce,
                         entries::Column::Body,
                         entries::Column::BodyNonce,
+                        entries::Column::Weather,
+                        entries::Column::Location,
                         entries::Column::UpdatedAt,
                         entries::Column::SyncedAt,
                     ])
@@ -183,7 +191,46 @@ impl SyncOutbox {
             )
             .exec(&self.connection)
             .await?;
-        for photo in carried {
+        let entry_id = carried.entry_id.clone();
+        // Replaced wholesale rather than merged: the record that just arrived is the writing
+        // device's whole answer for this entry, and a tag it dropped is a tag the owner removed.
+        tags::Entity::delete_many()
+            .filter(tags::Column::EntryId.eq(entry_id.clone()))
+            .exec(&self.connection)
+            .await?;
+        for tag in &carried.tags {
+            tags::Entity::insert(tags::ActiveModel {
+                entry_id: ActiveValue::Set(entry_id.clone()),
+                tag: ActiveValue::Set(tag.clone()),
+            })
+            .on_conflict(
+                OnConflict::columns([tags::Column::EntryId, tags::Column::Tag])
+                    .do_nothing()
+                    .to_owned(),
+            )
+            .exec(&self.connection)
+            .await?;
+        }
+
+        stickers::Entity::delete_many()
+            .filter(stickers::Column::EntryId.eq(entry_id.clone()))
+            .exec(&self.connection)
+            .await?;
+        for sticker in &carried.stickers {
+            stickers::Entity::insert(stickers::ActiveModel {
+                id: ActiveValue::Set(sticker.key.clone()),
+                entry_id: ActiveValue::Set(entry_id.clone()),
+                kind: ActiveValue::Set(sticker.kind.clone()),
+                x: ActiveValue::Set(sticker.x),
+                y: ActiveValue::Set(sticker.y),
+                size: ActiveValue::Set(sticker.size),
+                rotation: ActiveValue::Set(sticker.rotation),
+            })
+            .exec(&self.connection)
+            .await?;
+        }
+
+        for photo in &carried.photos {
             photos::Entity::insert(photos::ActiveModel {
                 id: ActiveValue::Set(photo.id.clone()),
                 entry_id: ActiveValue::Set(photo.entry_id.clone()),
@@ -203,6 +250,24 @@ impl SyncOutbox {
     }
 }
 
+/// Everything an inbound entry brings that does not live in its own row.
+#[derive(Default)]
+pub struct Carried {
+    pub entry_id: String,
+    pub tags: Vec<String>,
+    pub stickers: Vec<InboundSticker>,
+    pub photos: Vec<InboundPhoto>,
+}
+
+pub struct InboundSticker {
+    pub key: String,
+    pub kind: String,
+    pub x: f32,
+    pub y: f32,
+    pub size: f32,
+    pub rotation: f32,
+}
+
 /// A photo an inbound entry names. `path` is where this device will keep the blob once it has
 /// fetched it, which is not where the device that wrote it kept its own copy.
 pub struct InboundPhoto {
@@ -215,12 +280,36 @@ pub struct InboundPhoto {
 /// Written by hand rather than through a json library so the outbox stays buildable without the
 /// sync feature. Nothing here needs escaping: a photo id is a hyphenated uuid, checked on the way
 /// into storage, and an ordinal is an integer.
-fn photo_refs(carried: &[photos::Model]) -> Result<String, CoreError> {
+/// The same hand-written shape as photo_refs, for the same reason: the outbox has to build
+/// without the sync feature. A sticker key is checked on the way in, and every other field is a
+/// number or a fixed enum label.
+pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, CoreError> {
+    let mut refs = String::from("[");
+    for (position, sticker) in placed.iter().enumerate() {
+        if !is_storage_safe(&sticker.id) {
+            return Err(CoreError::Storage(format!(
+                "{ERR_REFERENCES}: {}",
+                sticker.id
+            )));
+        }
+        if position > 0 {
+            refs.push(',');
+        }
+        refs.push_str(&format!(
+            "{{\"key\":\"{}\",\"kind\":\"{}\",\"x\":{},\"y\":{},\"size\":{},\"rotation\":{}}}",
+            sticker.id, sticker.kind, sticker.x, sticker.y, sticker.size, sticker.rotation
+        ));
+    }
+    refs.push(']');
+    Ok(refs)
+}
+
+pub(super) fn photo_refs(carried: &[photos::Model]) -> Result<String, CoreError> {
     let mut refs = String::from("[");
     for (position, photo) in carried.iter().enumerate() {
         if !is_storage_safe(&photo.id) {
             return Err(CoreError::Storage(format!(
-                "{ERR_PHOTO_REFS}: {}",
+                "{ERR_REFERENCES}: {}",
                 photo.id
             )));
         }

@@ -75,6 +75,8 @@ fn record(account_id: Uuid, id: Uuid, device_id: Uuid, at: i64) -> EntryRecord {
         tags: vec!["rain".to_owned()],
         sticker_placements: "[]".to_owned(),
         photo_refs: "[]".to_owned(),
+        weather: None,
+        location: None,
         revision: 0,
         device_updated_at_ms: at,
         deleted_at_ms: None,

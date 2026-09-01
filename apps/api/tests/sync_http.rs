@@ -47,6 +47,8 @@ fn record_carrying(id: Uuid, device_id: Uuid, at: i64, photo_refs: &str) -> Valu
         "tags": ["rain"],
         "sticker_placements": "[]",
         "photo_refs": photo_refs,
+        "weather": "sunny",
+        "location": "home",
         "device_updated_at_ms": at,
         "deleted_at_ms": Value::Null,
         "title": envelope(b"sealed-title", at, device_id),
@@ -330,4 +332,6 @@ async fn a_pushed_record_carries_its_photo_references_back_out() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["data"]["records"][0]["photo_refs"], refs);
+    assert_eq!(body["data"]["records"][0]["weather"], "sunny");
+    assert_eq!(body["data"]["records"][0]["location"], "home");
 }

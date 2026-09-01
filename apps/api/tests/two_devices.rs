@@ -289,6 +289,8 @@ async fn an_entry_written_on_one_device_opens_on_another_and_the_server_holds_no
                     "tags": ["rain"],
                     "sticker_placements": "[]",
                     "photo_refs": "[]",
+                    "weather": "rainy",
+                    "location": "cafe",
                     "device_updated_at_ms": at,
                     "deleted_at_ms": Value::Null,
                     "title": sealed_json(&title, at, device_a),
