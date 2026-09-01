@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.sp
 @Immutable
 data class LeafyTypography(
     val screenTitle: TextStyle,
+    val authTitle: TextStyle,
     val lockTitle: TextStyle,
     val statFigure: TextStyle,
     val monthLabel: TextStyle,
@@ -16,6 +17,7 @@ data class LeafyTypography(
     val cardTitle: TextStyle,
     val metaLabel: TextStyle,
     val buttonLabel: TextStyle,
+    val fieldToggle: TextStyle,
     val body: TextStyle,
     val chipLabel: TextStyle,
 )
@@ -27,6 +29,12 @@ fun leafyTypography(scale: LeafyTypeScale): LeafyTypography = LeafyTypography(
         fontFamily = Rubik,
         fontWeight = FontWeight.W600,
         fontSize = 26.sp,
+        letterSpacing = (-0.01).em,
+    ),
+    authTitle = TextStyle(
+        fontFamily = Rubik,
+        fontWeight = FontWeight.W600,
+        fontSize = 28.sp,
         letterSpacing = (-0.01).em,
     ),
     lockTitle = TextStyle(
@@ -65,6 +73,12 @@ fun leafyTypography(scale: LeafyTypeScale): LeafyTypography = LeafyTypography(
         fontFamily = Rubik,
         fontWeight = FontWeight.W600,
         fontSize = 13.sp,
+        letterSpacing = 0.04.em,
+    ),
+    fieldToggle = TextStyle(
+        fontFamily = Rubik,
+        fontWeight = FontWeight.W600,
+        fontSize = 11.sp,
         letterSpacing = 0.04.em,
     ),
     body = TextStyle(

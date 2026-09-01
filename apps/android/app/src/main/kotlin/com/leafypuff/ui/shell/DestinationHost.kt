@@ -1,10 +1,7 @@
 package com.leafypuff.ui.shell
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import com.leafypuff.data.AppPreferences
 import com.leafypuff.domain.Entry
 import com.leafypuff.ui.calendar.CalendarScreen
@@ -13,6 +10,7 @@ import com.leafypuff.ui.settings.SettingsScreen
 import com.leafypuff.ui.settings.SettingsState
 import com.leafypuff.ui.stats.StatRange
 import com.leafypuff.ui.stats.StatisticsScreen
+import com.leafypuff.ui.stats.StatsSummary
 import kotlinx.datetime.LocalDate
 
 @Composable
@@ -22,19 +20,27 @@ fun DestinationHost(
     today: LocalDate,
     selected: LocalDate,
     visibleMonth: LocalDate,
+    covers: Map<String, ImageBitmap>,
+    statistics: StatsSummary,
+    range: StatRange,
     preferences: AppPreferences,
     versionName: String,
     onSelectDay: (LocalDate) -> Unit,
     onMonthChange: (LocalDate) -> Unit,
     onToday: () -> Unit,
     onCompose: () -> Unit,
+    onOpenEntry: (Entry) -> Unit,
+    onRangeChange: (StatRange) -> Unit,
+    onExport: () -> Unit,
     onPreferencesChange: (AppPreferences) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
-    var range by remember { mutableStateOf(StatRange.SevenDays) }
-
     when (destination) {
-        Destination.Diary -> DiaryScreen(entries)
+        Destination.Diary -> DiaryScreen(
+            entries = entries,
+            covers = covers,
+            onOpen = onOpenEntry,
+        )
 
         Destination.Calendar -> CalendarScreen(
             entries = entries,
@@ -44,12 +50,14 @@ fun DestinationHost(
             onSelect = onSelectDay,
             onToday = onToday,
             onCreateForSelected = onCompose,
+            covers = covers,
+            onOpen = onOpenEntry,
         )
 
         Destination.Statistics -> StatisticsScreen(
-            entries = entries,
+            summary = statistics,
             range = range,
-            onRangeChange = { range = it },
+            onRangeChange = onRangeChange,
         )
 
         Destination.Settings -> SettingsScreen(
@@ -62,7 +70,7 @@ fun DestinationHost(
             onToggleLock = { onPreferencesChange(preferences.copy(lockEnabled = it)) },
             onStickerPackChange = { onPreferencesChange(preferences.copy(stickerPack = it)) },
             onTextSizeChange = { onPreferencesChange(preferences.copy(textSize = it)) },
-            onExport = { },
+            onExport = onExport,
             onDeleteAll = onDeleteAll,
         )
     }

@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 
@@ -36,7 +37,6 @@ private val ChipPaddingX = 12.dp
 private val ChipPaddingY = 6.dp
 private val InputPaddingX = 16.dp
 private val InputPaddingY = 12.dp
-private val InputBorder = 1.dp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -100,7 +100,7 @@ private fun TagInput(value: String, onValueChange: (String) -> Unit, onSubmit: (
             .fillMaxWidth()
             .clip(LeafyShapes.input)
             .background(colors.sheet)
-            .border(InputBorder, colors.line, LeafyShapes.input)
+            .border(LeafyStroke.border, colors.line, LeafyShapes.input)
             .padding(horizontal = InputPaddingX, vertical = InputPaddingY),
         textStyle = textStyle,
         singleLine = true,

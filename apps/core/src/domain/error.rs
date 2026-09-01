@@ -1,3 +1,4 @@
+use super::auth::Rejection;
 use super::crypto::CryptoError;
 
 pub const ERR_ENTRY_NOT_FOUND: &str = "Entry not found";
@@ -39,6 +40,11 @@ pub enum CoreError {
     Invalid(String),
     #[error("Vault is locked")]
     Locked,
+    #[error("{rejection}: {detail}")]
+    Rejected {
+        rejection: Rejection,
+        detail: String,
+    },
 }
 
 impl From<CryptoError> for CoreError {

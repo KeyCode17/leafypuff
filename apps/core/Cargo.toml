@@ -11,10 +11,12 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 default = []
 test-support = []
 sqlite = ["dep:sea-orm", "dep:core-migration", "dep:sea-orm-migration"]
+# The archive writer. Only a build that exports links it.
+export = ["dep:zip", "dep:serde_json"]
 # The sync client is the only reason the device links an http stack. Keeping it behind a feature
 # means a build that never syncs does not carry rustls into the .so.
 sync = ["sqlite", "dep:reqwest", "dep:serde_json"]
-ffi = ["sqlite", "sync", "dep:uniffi", "dep:tokio"]
+ffi = ["sqlite", "sync", "export", "dep:uniffi", "dep:tokio"]
 ffi-bindgen = ["ffi", "uniffi/cli"]
 
 [[bin]]
@@ -30,6 +32,7 @@ sea-orm-migration = { workspace = true, features = ["sqlx-sqlite"] }
 tempfile = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
+zip = { workspace = true }
 
 [dependencies]
 argon2 = { workspace = true }
@@ -52,3 +55,4 @@ tokio = { workspace = true, optional = true }
 uniffi = { workspace = true, optional = true }
 uuid = { workspace = true }
 zeroize = { workspace = true }
+zip = { workspace = true, optional = true }

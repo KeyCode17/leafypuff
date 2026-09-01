@@ -30,6 +30,10 @@ data class CalendarDay(
 
     val showsDot: Boolean get() = entries.isNotEmpty() && !isSelected && !showsPhoto
 
+    /// The design draws one entry per day. Two entries on one date are allowed, so the cell says
+    /// how many rather than silently standing for whichever one happened to sort first.
+    val showsCount: Boolean get() = entries.size > 1
+
     val dotColor: Color
         get() = entries.firstOrNull()?.let { Color(it.mood.dotArgb) } ?: Color.Transparent
 }
@@ -40,11 +44,10 @@ fun CalendarGrid(
     entriesByDate: Map<LocalDate, List<Entry>>,
     today: LocalDate,
     selected: LocalDate,
-    hasPhoto: (Entry) -> Boolean,
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val weeks = monthCells(visibleMonth, entriesByDate, today, selected, hasPhoto)
+    val weeks = monthCells(visibleMonth, entriesByDate, today, selected)
         .chunked(DaysInWeek)
 
     Column(
@@ -77,7 +80,6 @@ private fun monthCells(
     entriesByDate: Map<LocalDate, List<Entry>>,
     today: LocalDate,
     selected: LocalDate,
-    hasPhoto: (Entry) -> Boolean,
 ): List<CalendarDay?> {
     val first = LocalDate(visibleMonth.year, visibleMonth.monthNumber, 1)
     val lead = (first.dayOfWeek.ordinal + 1) % DaysInWeek
@@ -94,7 +96,7 @@ private fun monthCells(
                 entries = dayEntries,
                 isToday = date == today,
                 isSelected = date == selected,
-                photoAvailable = dayEntries.any(hasPhoto),
+                photoAvailable = dayEntries.any { it.coverPhotoId != null },
             ),
         )
     }

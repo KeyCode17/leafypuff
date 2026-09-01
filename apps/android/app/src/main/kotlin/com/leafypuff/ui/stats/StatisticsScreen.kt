@@ -9,15 +9,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 
 private val ScreenGutter = 24.dp
 private val ScrollBottomPadding = 130.dp
@@ -33,14 +28,11 @@ fun rangeMetaLabel(range: StatRange): String = when (range) {
 
 @Composable
 fun StatisticsScreen(
-    entries: List<Entry>,
+    summary: StatsSummary,
     range: StatRange,
     onRangeChange: (StatRange) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    val summary = remember(entries, range, today) { statsSummary(entries, range, today) }
-
     Column(
         modifier = modifier
             .fillMaxSize()

@@ -16,12 +16,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 
-private val CardElevation = 8.dp
 private val CardPaddingH = 24.dp
 private val CardPaddingV = 32.dp
 private val ContentGap = 16.dp
@@ -36,7 +36,7 @@ fun CalendarEmptyState(onCreate: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(CardElevation, LeafyShapes.card)
+            .shadow(LeafyElevation.card, LeafyShapes.card)
             .background(colors.sheet, LeafyShapes.card)
             .clickable(onClick = onCreate)
             .padding(horizontal = CardPaddingH, vertical = CardPaddingV),

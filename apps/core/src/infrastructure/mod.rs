@@ -1,3 +1,5 @@
+#[cfg(feature = "sync")]
+pub mod auth_client;
 pub mod clock;
 #[cfg(feature = "sqlite")]
 pub mod db;
@@ -24,6 +26,8 @@ pub mod vault_sealer;
 pub mod vault_store;
 pub mod xchacha_sealer;
 
+#[cfg(feature = "sync")]
+pub use auth_client::AuthClient;
 pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
 #[cfg(feature = "test-support")]

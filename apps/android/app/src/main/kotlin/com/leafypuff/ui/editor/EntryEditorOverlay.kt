@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.settings.StickerPack
 
 private val SheetEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
 private const val SlideMillis = 260
@@ -29,6 +30,7 @@ fun EntryEditorOverlay(
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
     photos: List<EntryPhoto> = emptyList(),
+    stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -54,6 +56,7 @@ fun EntryEditorOverlay(
             onLocationClick = onLocationClick,
             onAddPhoto = onAddPhoto,
             photos = photos,
+            stickerPack = stickerPack,
         )
     }
 }

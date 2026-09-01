@@ -18,19 +18,29 @@ import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.exifPromptToast
 import com.leafypuff.ui.mood.MoodPickerOverlay
 import com.leafypuff.ui.photo.EntryPhoto
-import com.leafypuff.ui.photo.PhotoImporter
+import com.leafypuff.ui.photo.PhotoLibrary
 import com.leafypuff.ui.photo.rememberPhotoPicker
+import com.leafypuff.ui.popups.DatePopup
+import com.leafypuff.ui.popups.LocationOptions
+import com.leafypuff.ui.popups.OptionPopup
+import com.leafypuff.ui.popups.WeatherOptions
+import com.leafypuff.ui.settings.StickerPack
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+
+private enum class MetaPopup { Date, Weather, Location }
 
 @Composable
 fun EntryComposer(
     open: Boolean,
     today: LocalDate,
-    importer: PhotoImporter,
+    library: PhotoLibrary,
     onClose: () -> Unit,
     onSave: (EntryDraft, List<String>) -> Unit,
     modifier: Modifier = Modifier,
+    existing: EntryDraft? = null,
+    existingPhotos: List<EntryPhoto> = emptyList(),
+    stickerPack: StickerPack = StickerPack.Mixed,
 ) {
     val scope = rememberCoroutineScope()
     val blocker = remember { MutableInteractionSource() }
@@ -40,10 +50,11 @@ fun EntryComposer(
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
     var asking by remember { mutableStateOf(false) }
     var promptedDay by remember { mutableStateOf<LocalDate?>(null) }
+    var popup by remember { mutableStateOf<MetaPopup?>(null) }
 
     val addPhoto = rememberPhotoPicker { bytes ->
         scope.launch {
-            val picked = importer.import(bytes) ?: return@launch
+            val picked = library.import(bytes) ?: return@launch
             photos = photos + picked
             val day = picked.takenOn
             if (day != null) {
@@ -54,12 +65,15 @@ fun EntryComposer(
         }
     }
 
-    LaunchedEffect(open) {
+    LaunchedEffect(open, existing) {
         if (open) {
-            draft = blankDraft(today)
-            editing = false
-            photos = emptyList()
+            draft = existing ?: blankDraft(today)
+            // An entry that already exists has already had its mood chosen; reopening it should
+            // land on the note, not send the writer back through the mood deck.
+            editing = existing != null
+            photos = existingPhotos
             asking = false
+            popup = null
         }
     }
 
@@ -78,7 +92,7 @@ fun EntryComposer(
                 editing = true
             },
             onClose = onClose,
-            onDateClick = { },
+            onDateClick = { popup = MetaPopup.Date },
             modifier = Modifier.statusBarsPadding(),
         )
 
@@ -89,13 +103,23 @@ fun EntryComposer(
             onSave = { onSave(draft, photos.map { photo -> photo.id }) },
             onClose = onClose,
             onMoodClick = { editing = false },
-            onDateClick = { },
-            onWeatherClick = { },
-            onLocationClick = { },
+            onDateClick = { popup = MetaPopup.Date },
+            onWeatherClick = { popup = MetaPopup.Weather },
+            onLocationClick = { popup = MetaPopup.Location },
             onAddPhoto = addPhoto,
             photos = photos,
+            stickerPack = stickerPack,
             modifier = Modifier.statusBarsPadding(),
         )
+
+        if (open) {
+            MetaPopupHost(
+                popup = popup,
+                draft = draft,
+                onDraftChange = { draft = it },
+                onDismiss = { popup = null },
+            )
+        }
 
         ToastOverlay(
             visible = open && asking,
@@ -105,6 +129,49 @@ fun EntryComposer(
                 asking = false
             },
             onDismiss = { asking = false },
+        )
+    }
+}
+
+@Composable
+private fun MetaPopupHost(
+    popup: MetaPopup?,
+    draft: EntryDraft,
+    onDraftChange: (EntryDraft) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    when (popup) {
+        null -> Unit
+
+        MetaPopup.Date -> DatePopup(
+            selected = draft.date,
+            onSelect = {
+                onDraftChange(draft.copy(date = it))
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+
+        MetaPopup.Weather -> OptionPopup(
+            title = "Weather",
+            options = WeatherOptions,
+            selected = draft.weather,
+            onSelect = {
+                onDraftChange(draft.copy(weather = it))
+                onDismiss()
+            },
+            onDismiss = onDismiss,
+        )
+
+        MetaPopup.Location -> OptionPopup(
+            title = "Location",
+            options = LocationOptions,
+            selected = draft.location,
+            onSelect = {
+                onDraftChange(draft.copy(location = it))
+                onDismiss()
+            },
+            onDismiss = onDismiss,
         )
     }
 }

@@ -2,6 +2,7 @@ package com.leafypuff.ui.diary
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +33,12 @@ private val CoverHeight = 158.dp
 private val CoverShape = RoundedCornerShape(18.dp)
 
 @Composable
-fun EntryCard(entry: Entry, cover: ImageBitmap? = null, modifier: Modifier = Modifier) {
+fun EntryCard(
+    entry: Entry,
+    cover: ImageBitmap? = null,
+    onOpen: () -> Unit = { },
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
 
@@ -41,6 +47,7 @@ fun EntryCard(entry: Entry, cover: ImageBitmap? = null, modifier: Modifier = Mod
             .fillMaxWidth()
             .clip(LeafyShapes.card)
             .background(colors.sheet)
+            .clickable(onClick = onOpen)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

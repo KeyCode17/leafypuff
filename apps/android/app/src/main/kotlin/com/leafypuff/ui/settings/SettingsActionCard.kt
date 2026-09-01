@@ -19,10 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.leafypuff.theme.Destructive
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 
-private val Destructive = Color(0xFFEF4E4E)
 private val TrailingGlyphSize = 16.dp
 private val TrailingFontSize = 12.sp
 

@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LocalLeafyColors
@@ -37,7 +38,8 @@ fun CalendarScreen(
     onToday: () -> Unit,
     onCreateForSelected: () -> Unit,
     modifier: Modifier = Modifier,
-    hasPhoto: (Entry) -> Boolean = { false },
+    covers: Map<String, ImageBitmap> = emptyMap(),
+    onOpen: (Entry) -> Unit = { },
 ) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val entriesByDate = remember(entries) { entries.groupBy { it.date } }
@@ -60,13 +62,14 @@ fun CalendarScreen(
             entriesByDate = entriesByDate,
             today = today,
             selected = selected,
-            hasPhoto = hasPhoto,
             onSelect = onSelect,
         )
         SelectedDayBlock(
             selected = selected,
             selectedEntries = entriesByDate[selected].orEmpty(),
+            covers = covers,
             onCreateForSelected = onCreateForSelected,
+            onOpen = onOpen,
         )
     }
 }
@@ -75,7 +78,9 @@ fun CalendarScreen(
 private fun SelectedDayBlock(
     selected: LocalDate,
     selectedEntries: List<Entry>,
+    covers: Map<String, ImageBitmap>,
     onCreateForSelected: () -> Unit,
+    onOpen: (Entry) -> Unit,
 ) {
     val colors = LocalLeafyColors.current
 
@@ -93,7 +98,13 @@ private fun SelectedDayBlock(
         if (selectedEntries.isEmpty()) {
             CalendarEmptyState(onCreate = onCreateForSelected)
         } else {
-            selectedEntries.forEach { entry -> EntryCard(entry) }
+            selectedEntries.forEach { entry ->
+                EntryCard(
+                    entry = entry,
+                    cover = covers[entry.id],
+                    onOpen = { onOpen(entry) },
+                )
+            }
         }
     }
 }

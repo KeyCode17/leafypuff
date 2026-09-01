@@ -61,8 +61,16 @@ android {
         applicationId = "com.leafypuff"
         minSdk = 23
         targetSdk = 35
-        versionCode = 18
-        versionName = "0.17.0"
+        versionCode = 19
+        versionName = "0.18.0"
+
+        // The deployed API. A build field rather than a constant in source so a debug build
+        // can be pointed at a local api without editing Kotlin.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${project.findProperty("leafypuff.apiBaseUrl") ?: "https://leafypuff-api.daffakaryudi.web.id"}\"",
+        )
 
         // JNA ships jnidispatch for mips, mips64, armeabi and x86 — architectures Android
         // dropped years ago. Without this filter they ride along in every APK.
@@ -93,10 +101,12 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.datetime)
     implementation(libs.jna) { artifact { type = "aar" } }
     implementation(libs.kotlinx.coroutines.core)

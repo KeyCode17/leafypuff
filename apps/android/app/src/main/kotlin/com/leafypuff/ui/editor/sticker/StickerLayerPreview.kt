@@ -87,6 +87,6 @@ private fun StickerFrame(dark: Boolean) {
 }
 
 private val PreviewStickers = listOf(
-    PlacedSticker("sk-1", StickerId.BunSleep, 54f, 40f, 72f, 0f),
-    PlacedSticker("sk-2", StickerId.Carrot, 190f, 150f, 62f, 11f),
+    PlacedSticker("sk-1", StickerId.BunSleep, 0.17f, 0.20f, 72f, 0f),
+    PlacedSticker("sk-2", StickerId.Carrot, 0.58f, 0.75f, 62f, 11f),
 )

@@ -2,17 +2,31 @@ package com.leafypuff.data
 
 import com.leafypuff.core.CoreClient
 import com.leafypuff.domain.Entry
+import com.leafypuff.ui.stats.StatRange
+import com.leafypuff.ui.stats.StatsSummary
 import com.leafypuff.ui.editor.EntryDraft
+import kotlinx.datetime.LocalDate
 
-class EntryStore(private val client: CoreClient) {
+data class StoredEntry(val draft: EntryDraft, val photoIds: List<String>)
+
+class EntryStore(internal val client: CoreClient) {
 
     suspend fun list(limit: UInt = DefaultLimit): List<Entry> =
         client.list(limit).map { it.toEntry() }
 
-    suspend fun draftById(id: String): EntryDraft? = client.entryById(id)?.toUiDraft()
+    /// Draft and photo ids in one read. The editor needs both, and the entry row already carries
+    /// them, so asking twice would decrypt the same record twice.
+    suspend fun openForEdit(id: String): StoredEntry? = client.entryById(id)?.let {
+        StoredEntry(draft = it.toUiDraft(), photoIds = it.photoIds())
+    }
 
     suspend fun save(draft: EntryDraft, photoIds: List<String>): Entry =
         client.save(draft.toCoreDraft(photoIds)).toEntry()
+
+    suspend fun statistics(range: StatRange, today: LocalDate): StatsSummary =
+        client.statistics(range.toCore(), today).toSummary()
+
+    suspend fun export(destination: String): String = client.exportDiary(destination)
 
     suspend fun deleteAll() {
         client.deleteAll()

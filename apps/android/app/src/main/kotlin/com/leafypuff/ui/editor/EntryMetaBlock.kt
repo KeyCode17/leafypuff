@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
@@ -35,7 +36,6 @@ private val CalendarGlyphSize = 16.dp
 private val ChevronSize = 14.dp
 private val ChipGap = 8.dp
 private val BunnySize = 24.dp
-private val Hairline = 0.5.dp
 private val MoodChipPadding = PaddingValues(start = 6.dp, top = 5.dp, end = 12.dp, bottom = 5.dp)
 private val OptionChipPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
 
@@ -132,7 +132,7 @@ private fun OptionChip(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .clip(LeafyShapes.chip)
             .background(colors.surface)
-            .border(Hairline, colors.line, LeafyShapes.chip)
+            .border(LeafyStroke.hairline, colors.line, LeafyShapes.chip)
             .clickable(onClick = onClick)
             .padding(OptionChipPadding),
     )

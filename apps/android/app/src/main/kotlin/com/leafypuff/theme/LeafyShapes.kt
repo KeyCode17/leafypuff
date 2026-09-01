@@ -11,6 +11,7 @@ object LeafyShapes {
     val notePhoto: Shape = RoundedCornerShape(18.dp)
     val stickerTrayTile: Shape = RoundedCornerShape(16.dp)
     val input: Shape = RoundedCornerShape(14.dp)
+    val button: Shape = RoundedCornerShape(16.dp)
     val chip: Shape = CircleShape
     val pill: Shape = CircleShape
     val lockIconPlate: Shape = RoundedCornerShape(44.dp)

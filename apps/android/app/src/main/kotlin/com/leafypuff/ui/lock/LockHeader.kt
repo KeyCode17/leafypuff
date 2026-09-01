@@ -15,28 +15,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.leafypuff.R
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.MarkPlate
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 
 private const val AppName = "leafyPuff"
 
-private val PlateColor = Color(0xFFF7FAEF)
 private val PlateSize = 132.dp
-private val PlateElevation = 12.dp
 private val MarkSize = 108.dp
 
-private const val HintEmpty = "Enter your PIN"
-private const val HintTyping = "Keep going"
 
 @Composable
 internal fun LockMarkPlate(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(PlateSize)
-            .shadow(PlateElevation, LeafyShapes.lockIconPlate)
+            .shadow(LeafyElevation.plate, LeafyShapes.lockIconPlate)
             .clip(LeafyShapes.lockIconPlate)
-            .background(PlateColor),
+            .background(MarkPlate),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -59,9 +57,9 @@ internal fun LockTitle(modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun LockHint(pinLength: Int, modifier: Modifier = Modifier) {
+internal fun LockHint(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = if (pinLength > 0) HintTyping else HintEmpty,
+        text = text,
         style = LocalLeafyTypography.current.body,
         color = LocalLeafyColors.current.ink2,
         modifier = modifier,

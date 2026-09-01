@@ -15,12 +15,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 
-private val CardElevation = 8.dp
 private val CardFaceSize = 52.dp
 private val CardTopPadding = 14.dp
 private val CardBottomPadding = 12.dp
@@ -34,7 +34,7 @@ fun MoodCard(mood: Mood, onPick: (Mood) -> Unit, modifier: Modifier = Modifier) 
 
     Column(
         modifier = modifier
-            .shadow(CardElevation, LeafyShapes.card)
+            .shadow(LeafyElevation.card, LeafyShapes.card)
             .clip(LeafyShapes.card)
             .background(colors.sheet)
             .clickable { onPick(mood) }

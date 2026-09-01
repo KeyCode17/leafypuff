@@ -11,13 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 
 private const val DotCount = 4
 
 private val DotSize = 13.dp
 private val DotFillSize = 15.dp
-private val DotRing = 1.5.dp
 private val DotGap = 18.dp
 
 @Composable
@@ -33,7 +33,7 @@ internal fun PinDots(pinLength: Int, modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(DotSize)
-                    .border(DotRing, colors.ink3, CircleShape),
+                    .border(LeafyStroke.pinRing, colors.ink3, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 if (index < pinLength) {

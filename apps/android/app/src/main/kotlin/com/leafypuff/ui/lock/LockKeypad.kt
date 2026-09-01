@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.Inter
 import com.leafypuff.theme.Rubik
@@ -37,7 +38,6 @@ private val KeyWidth = 74.dp
 private val KeyHeight = 64.dp
 private val KeyColumnGap = 22.dp
 private val KeyRowGap = 14.dp
-private val KeyBorder = 1.dp
 
 private val KeyLabelStyle = TextStyle(
     fontFamily = Rubik,
@@ -79,7 +79,7 @@ private fun KeypadKey(label: String, onClick: () -> Unit) {
             .size(KeyWidth, KeyHeight)
             .clip(LeafyShapes.pill)
             .background(colors.key)
-            .border(KeyBorder, colors.keyLine, LeafyShapes.pill)
+            .border(LeafyStroke.border, colors.keyLine, LeafyShapes.pill)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

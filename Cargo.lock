@@ -106,7 +106,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "api-migration"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "sea-orm-migration",
@@ -115,12 +115,21 @@ dependencies = [
 
 [[package]]
 name = "api-testing"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "chrono",
  "leafypuff-api",
  "uuid",
+]
+
+[[package]]
+name = "arbitrary"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
+dependencies = [
+ "derive_arbitrary",
 ]
 
 [[package]]
@@ -1098,7 +1107,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "core-migration"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-trait",
  "sea-orm-migration",
@@ -1258,6 +1267,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cd812cc2bc1d69d4764bd80df88b4317eaef9e773c75226407d9bc0876b211c"
 dependencies = [
  "serde_core",
+]
+
+[[package]]
+name = "derive_arbitrary"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2186,7 +2206,7 @@ dependencies = [
 
 [[package]]
 name = "leafypuff-api"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "api-migration",
  "api-testing",
@@ -2218,7 +2238,7 @@ dependencies = [
 
 [[package]]
 name = "leafypuff-core"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "argon2",
  "chacha20poly1305",
@@ -2242,6 +2262,7 @@ dependencies = [
  "uniffi",
  "uuid",
  "zeroize",
+ "zip",
 ]
 
 [[package]]
@@ -5127,6 +5148,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.4",
+]
+
+[[package]]
+name = "zip"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb2a05c7c36fde6c09b08576c9f7fb4cda705990f73b58fe011abf7dfb24168b"
+dependencies = [
+ "arbitrary",
+ "crc32fast",
+ "indexmap",
+ "memchr",
 ]
 
 [[package]]

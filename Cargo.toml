@@ -3,7 +3,7 @@ resolver = "3"
 members = ["apps/core", "apps/core/migration", "apps/api", "apps/api/migration", "apps/api/testing"]
 
 [workspace.package]
-version = "0.17.0"
+version = "0.18.0"
 license = "MIT"
 
 [workspace.dependencies]
@@ -49,6 +49,9 @@ aws-config = { version = "1", default-features = false, features = ["behavior-ve
 aws-sdk-s3 = { version = "1", default-features = false, features = ["rustls", "rt-tokio", "http-1x"] }
 aws-credential-types = "1"
 aws-smithy-async = { version = "1", features = ["rt-tokio"] }
+# Store-only: the archive holds photos that are already compressed, and deflate would
+# spend cpu on them for nothing. default-features off keeps bzip2 and zstd out.
+zip = { version = "6", default-features = false }
 proptest = "1"
 
 # Thin rather than fat LTO. porto has 1.9 GiB of RAM, and a fat-LTO link of the api binary --

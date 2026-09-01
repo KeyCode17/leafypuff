@@ -50,6 +50,9 @@ impl Sticker {
     }
 }
 
+/// `x` and `y` are fractions of the note the sticker sits on, not dp. The note is not one width,
+/// so a dp coordinate stops meaning the same place the moment it reflows. `size` stays in dp: a
+/// sticker should read the same on a tablet, not grow with the page.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlacedSticker {
     pub key: String,

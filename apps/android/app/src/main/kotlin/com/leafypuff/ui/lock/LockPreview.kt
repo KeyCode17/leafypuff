@@ -37,6 +37,7 @@ private fun LockFrame(dark: Boolean, pinLength: Int) {
     LeafyTheme(darkOverride = dark) {
         LockScreen(
             pinLength = pinLength,
+            hint = lockHint(LockStep.Verify, pinLength, wrong = false),
             onDigit = { },
             onBackspace = { },
             onBiometric = { },

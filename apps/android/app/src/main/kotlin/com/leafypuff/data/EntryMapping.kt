@@ -12,6 +12,7 @@ fun CoreDraft.toEntry(): Entry = Entry(
     title = title,
     body = body,
     tags = tags,
+    coverPhotoId = photos.minByOrNull { it.ordinal }?.id,
 )
 
 fun CoreDraft.toUiDraft(): UiDraft = UiDraft(
@@ -23,7 +24,10 @@ fun CoreDraft.toUiDraft(): UiDraft = UiDraft(
     tags = tags,
     weather = weather?.label(),
     location = location?.label(),
+    stickers = stickers.map { it.toPlaced() },
 )
+
+fun CoreDraft.photoIds(): List<String> = photos.sortedBy { it.ordinal }.map { it.id }
 
 fun UiDraft.toCoreDraft(photoIds: List<String>): CoreDraft = CoreDraft(
     id = id.orEmpty(),
@@ -37,5 +41,5 @@ fun UiDraft.toCoreDraft(photoIds: List<String>): CoreDraft = CoreDraft(
     photos = photoIds.mapIndexed { index, photoId ->
         PhotoDraft(id = photoId, path = "", ordinal = index)
     },
-    stickers = emptyList(),
+    stickers = stickers.map { it.toCoreSticker() },
 )

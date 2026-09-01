@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.editor.sticker.StickerArt
@@ -27,7 +28,6 @@ import com.leafypuff.ui.settings.StickerPack
 private val TileSize = 52.dp
 private val TileArtSize = 34.dp
 private val TileGap = 8.dp
-private val Hairline = 0.5.dp
 
 @Composable
 fun StickerTrayDrawer(
@@ -63,7 +63,7 @@ private fun StickerTrayTile(sticker: StickerId, onClick: () -> Unit) {
             .size(TileSize)
             .clip(LeafyShapes.stickerTrayTile)
             .background(colors.sheet)
-            .border(Hairline, colors.line, LeafyShapes.stickerTrayTile)
+            .border(LeafyStroke.hairline, colors.line, LeafyShapes.stickerTrayTile)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

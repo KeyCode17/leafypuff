@@ -30,6 +30,12 @@ class ToastCopyTest {
     }
 
     @Test
+    fun aSaveNamesWhetherTheEntryIsNewOrReopened() {
+        assertEquals("Entry saved.", saveToast(reopened = false).text)
+        assertEquals("Entry updated.", saveToast(reopened = true).text)
+    }
+
+    @Test
     fun theShortDateDropsTheWeekdayThatTheCardKeeps() {
         val day = LocalDate(2026, 1, 9)
 

@@ -1,10 +1,9 @@
 package com.leafypuff.ui.shell
 
-import androidx.compose.foundation.background
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,43 +11,51 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import com.leafypuff.data.AppPreferences
+import androidx.compose.ui.platform.LocalContext
 import com.leafypuff.data.EntryStore
+import com.leafypuff.data.PreferenceStore
+import com.leafypuff.notify.NotificationPermission
+import com.leafypuff.notify.ReminderScheduler
+import com.leafypuff.notify.needsNotificationConsent
 import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LeafyTheme
 import com.leafypuff.theme.LeafyTypeScale
 import com.leafypuff.theme.LeafyTypeScaleLarge
 import com.leafypuff.theme.LeafyTypeScaleMedium
 import com.leafypuff.theme.LeafyTypeScaleSmall
-import com.leafypuff.theme.LocalLeafyColors
-import com.leafypuff.ui.editor.EntryComposer
-import com.leafypuff.ui.photo.PhotoImporter
+import com.leafypuff.ui.auth.AuthGate
+import com.leafypuff.ui.editor.OpenedEntry
+import com.leafypuff.ui.lock.LockGate
+import com.leafypuff.ui.photo.CorePhotoLibrary
+import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.NoPhotoLibrary
 import com.leafypuff.ui.settings.TextSize
 import kotlinx.coroutines.launch
+import java.io.File
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
 @Composable
 fun LeafyApp(
-    importer: PhotoImporter,
     databasePath: String,
     passphrase: String,
     versionName: String,
+    apiBaseUrl: String,
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val systemDark = isSystemInDarkTheme()
+    val settings = remember(context) { PreferenceStore(context) }
 
     var store by remember { mutableStateOf<EntryStore?>(null) }
     var entries by remember { mutableStateOf(emptyList<Entry>()) }
-    var current by remember { mutableStateOf(Destination.Diary) }
-    var composing by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf(today) }
-    var visibleMonth by remember { mutableStateOf(today) }
-    var preferences by remember { mutableStateOf(AppPreferences(darkMode = systemDark)) }
+    var preferences by remember { mutableStateOf(settings.load(systemDark)) }
+    // Read once. The design words the setting "Ask when opening PawNotes", so a toggle flipped
+    // mid-session takes effect the next time the app opens, not under the owner's hands.
+    val askForPin = remember(settings) { settings.lockEnabled() }
 
     LaunchedEffect(databasePath) {
         val opened = EntryStore.open(databasePath, passphrase)
@@ -56,38 +63,64 @@ fun LeafyApp(
         entries = opened.list()
     }
 
+    val reminders = remember(context) { ReminderScheduler(context) }
+    val askToNotify = rememberLauncherForActivityResult(RequestPermission()) { }
+
+    val library = remember(store) {
+        store?.let { CorePhotoLibrary(it.client) } ?: NoPhotoLibrary
+    }
+
     LeafyTheme(
         darkOverride = preferences.darkMode,
         typeScale = typeScaleFor(preferences.textSize),
     ) {
-        val colors = LocalLeafyColors.current
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.bg),
+        AuthGate(
+            apiBaseUrl = apiBaseUrl,
+            client = store?.client,
+            onSignedIn = { name ->
+                if (name.isNotBlank()) {
+                    val named = preferences.copy(name = name)
+                    preferences = named
+                    settings.save(named)
+                }
+            },
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
-            ) {
-                DestinationHost(
-                    destination = current,
-                    entries = entries,
+            LockGate(enabled = askForPin) {
+                LeafyHome(
+                    library = library,
                     today = today,
-                    selected = selected,
-                    visibleMonth = visibleMonth,
+                    entries = entries,
                     preferences = preferences,
                     versionName = versionName,
-                    onSelectDay = { selected = it },
-                    onMonthChange = { visibleMonth = it },
-                    onToday = {
-                        selected = today
-                        visibleMonth = today
+                    onPreferencesChange = {
+                        preferences = it
+                        settings.save(it)
+                        reminders.apply(it.reminderEnabled, it.reminderTime)
+                        if (it.reminderEnabled && needsNotificationConsent(context)) {
+                            askToNotify.launch(NotificationPermission)
+                        }
                     },
-                    onCompose = { composing = true },
-                    onPreferencesChange = { preferences = it },
+                    onOpenEntry = { entry ->
+                        val stored = store?.openForEdit(entry.id)
+                        stored?.let {
+                            OpenedEntry(
+                                draft = it.draft,
+                                photos = it.photoIds.mapNotNull { photoId ->
+                                    library.thumbnail(photoId)
+                                        ?.let { cover -> EntryPhoto(photoId, cover, null) }
+                                },
+                            )
+                        }
+                    },
+                    onStatistics = { picked -> store?.statistics(picked, today) },
+                    onExport = { store?.export(exportPath(context, today)) },
+                    onSave = { draft, photoIds, onDone ->
+                        scope.launch {
+                            store?.save(draft, photoIds)
+                            entries = store?.list().orEmpty()
+                            onDone()
+                        }
+                    },
                     onDeleteAll = {
                         scope.launch {
                             store?.deleteAll()
@@ -95,32 +128,18 @@ fun LeafyApp(
                         }
                     },
                 )
-
-                BottomNav(
-                    current = current,
-                    onSelect = { current = it },
-                    onCompose = { composing = true },
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
             }
-
-            EntryComposer(
-                open = composing,
-                today = selected,
-                importer = importer,
-                onClose = { composing = false },
-                onSave = { draft, photoIds ->
-                    scope.launch {
-                        store?.save(draft, photoIds)
-                        entries = store?.list().orEmpty()
-                        composing = false
-                        selected = draft.date
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
         }
     }
+}
+
+/**
+ * The archive lands in the app's external files directory, which needs no permission and is what
+ * a file manager shows. Stamping the date keeps a second export from overwriting the first.
+ */
+private fun exportPath(context: Context, today: LocalDate): String {
+    val directory = context.getExternalFilesDir(null) ?: context.filesDir
+    return File(directory, "leafypuff-$today.zip").absolutePath
 }
 
 private fun typeScaleFor(size: TextSize): LeafyTypeScale = when (size) {
