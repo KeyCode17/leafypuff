@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated.accounts/index'
 import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated.audit/index'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.dashboard/index'
 import { Route as AuthenticatedRolesIndexRouteImport } from './routes/_authenticated.roles/index'
@@ -30,6 +31,12 @@ const LoginIndexRoute = LoginIndexRouteImport.update({
   path: '/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountsIndexRoute =
+  AuthenticatedAccountsIndexRouteImport.update({
+    id: '/accounts/',
+    path: '/accounts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
   id: '/audit/',
   path: '/audit/',
@@ -50,6 +57,7 @@ const AuthenticatedRolesIndexRoute = AuthenticatedRolesIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login/': typeof LoginIndexRoute
+  '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/audit/': typeof AuthenticatedAuditIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/roles/': typeof AuthenticatedRolesIndexRoute
@@ -57,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginIndexRoute
+  '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/audit': typeof AuthenticatedAuditIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/roles': typeof AuthenticatedRolesIndexRoute
@@ -66,20 +75,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login/': typeof LoginIndexRoute
+  '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login/' | '/audit/' | '/dashboard/' | '/roles/'
+  fullPaths:
+    '/' | '/login/' | '/accounts/' | '/audit/' | '/dashboard/' | '/roles/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/audit' | '/dashboard' | '/roles'
+  to: '/' | '/login' | '/accounts' | '/audit' | '/dashboard' | '/roles'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login/'
+    | '/_authenticated/accounts/'
     | '/_authenticated/audit/'
     | '/_authenticated/dashboard/'
     | '/_authenticated/roles/'
@@ -114,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/accounts/': {
+      id: '/_authenticated/accounts/'
+      path: '/accounts'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/audit/': {
       id: '/_authenticated/audit/'
       path: '/audit'
@@ -139,12 +158,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedRolesIndexRoute: typeof AuthenticatedRolesIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedRolesIndexRoute: AuthenticatedRolesIndexRoute,

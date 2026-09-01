@@ -9,6 +9,7 @@ pub struct Model {
     pub password_hash: String,
     pub display_name: Option<String>,
     pub email_verified_at: Option<DateTimeWithTimeZone>,
+    pub suspended_at: Option<DateTimeWithTimeZone>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }

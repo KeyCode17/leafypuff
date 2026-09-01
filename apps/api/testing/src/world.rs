@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use chrono::{TimeZone, Utc};
+use leafypuff_api::application::admin::AdminServices;
 use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
@@ -9,6 +10,7 @@ use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
+use crate::admin_repositories::InMemoryDirectory;
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
 use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
@@ -35,6 +37,8 @@ pub struct World {
     pub roles: InMemoryRoles,
     pub audit: InMemoryAudit,
     pub rbac: RbacServices,
+    pub directory: InMemoryDirectory,
+    pub admin: AdminServices,
 }
 
 impl Default for World {
@@ -88,6 +92,13 @@ impl Default for World {
             audit: Arc::new(audit.clone()),
         };
 
+        let directory = InMemoryDirectory::default();
+        let admin = AdminServices {
+            directory: Arc::new(directory.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
         Self {
             accounts,
             credentials,
@@ -106,6 +117,8 @@ impl Default for World {
             roles,
             audit,
             rbac,
+            directory,
+            admin,
         }
     }
 }

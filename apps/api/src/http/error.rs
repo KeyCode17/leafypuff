@@ -3,6 +3,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
 use crate::domain::DomainError;
+use crate::domain::admin::AdminError;
 use crate::domain::iam::IamError;
 use crate::domain::media::MediaError;
 use crate::domain::rbac::RbacError;
@@ -22,6 +23,7 @@ pub const ERR_MALFORMED_BATCH: &str = "MALFORMED_BATCH";
 pub const ERR_OBJECT_NOT_FOUND: &str = "OBJECT_NOT_FOUND";
 pub const ERR_OBJECT_TOO_LARGE: &str = "OBJECT_TOO_LARGE";
 pub const ERR_ROLE_NOT_FOUND: &str = "ROLE_NOT_FOUND";
+pub const ERR_ACCOUNT_NOT_FOUND: &str = "ACCOUNT_NOT_FOUND";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -35,6 +37,7 @@ const DETAIL_OBJECT_NOT_FOUND: &str = "No such object";
 const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
 const DETAIL_NOT_PERMITTED: &str = "You do not have permission to do that";
 const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
+const DETAIL_ACCOUNT_NOT_FOUND: &str = "No such account";
 
 pub struct ApiError {
     status: StatusCode,
@@ -168,6 +171,29 @@ impl From<RbacError> for ApiError {
             ),
             RbacError::Storage(reason) => {
                 tracing::error!(%reason, "an rbac request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<AdminError> for ApiError {
+    fn from(error: AdminError) -> Self {
+        match error {
+            AdminError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
+            }
+            AdminError::AccountNotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_ACCOUNT_NOT_FOUND,
+                DETAIL_ACCOUNT_NOT_FOUND,
+            ),
+            AdminError::Storage(reason) => {
+                tracing::error!(%reason, "an admin request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,

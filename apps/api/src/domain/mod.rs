@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod error;
 pub mod iam;
 pub mod media;
