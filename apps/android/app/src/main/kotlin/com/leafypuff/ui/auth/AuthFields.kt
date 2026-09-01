@@ -26,6 +26,36 @@ internal fun AuthFields(state: AuthFormState, onChange: (AuthFormState) -> Unit)
             onChange = { onChange(state.copy(code = it, error = null)) },
         )
 
+        AuthMode.ResetPassword -> {
+            AuthField(
+                label = "Code",
+                value = state.code,
+                placeholder = "6 digits",
+                keyboard = KeyboardType.NumberPassword,
+                onChange = { onChange(state.copy(code = it, error = null)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            AuthField(
+                label = "New password",
+                value = state.password,
+                placeholder = "At least 12 characters",
+                keyboard = KeyboardType.Password,
+                masked = !state.passwordShown,
+                onToggleMask = { onChange(state.copy(passwordShown = !state.passwordShown)) },
+                onChange = { onChange(state.copy(password = it, error = null)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        AuthMode.ForgotPassword -> AuthField(
+            label = "Email",
+            value = state.email,
+            placeholder = "you@email.com",
+            keyboard = KeyboardType.Email,
+            onChange = { onChange(state.copy(email = it, error = null)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         else -> {
             if (state.mode == AuthMode.Signup) {
                 AuthField(

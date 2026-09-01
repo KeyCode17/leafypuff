@@ -84,6 +84,10 @@ fun AuthScreen(
         ) {
             Text(text = state.mode.title, style = typography.authTitle, color = colors.ink)
             Text(text = state.mode.subtitle(state.email), style = typography.body, color = colors.ink2)
+            val notice = state.mode.notice
+            if (notice != null) {
+                Text(text = notice, style = typography.chipLabel, color = colors.ink3)
+            }
         }
 
         Column(
@@ -116,6 +120,8 @@ fun AuthScreen(
 
         if (state.mode.verifying) {
             AuthResendRow(secondsLeft = resendIn, enabled = !pending, onResend = onResend)
+        }
+        if (state.mode.stepping) {
             AuthBackRow(mode = state.mode, onBack = onBack)
         } else {
             AuthFooterSwitch(mode = state.mode, onSwitch = onSwitchMode)
