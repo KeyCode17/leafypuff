@@ -3,7 +3,6 @@ package com.leafypuff.ui.shell
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,7 +47,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    val systemDark = isSystemInDarkTheme()
     val settings = remember(context) { PreferenceStore(context) }
     val session = remember(context) { SessionStore(context) }
     val reminders = remember(context) { ReminderScheduler(context) }
@@ -58,7 +56,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
 
     var store by remember { mutableStateOf<EntryStore?>(null) }
     var entries by remember { mutableStateOf(emptyList<Entry>()) }
-    var preferences by remember { mutableStateOf(settings.load(systemDark)) }
+    var preferences by remember { mutableStateOf(settings.load()) }
     var signedIn by remember { mutableStateOf(session.signedIn()) }
     var credentials by remember { mutableStateOf<SignedIn?>(null) }
     // Read once. The design words the setting "Ask when opening PawNotes", so a toggle flipped

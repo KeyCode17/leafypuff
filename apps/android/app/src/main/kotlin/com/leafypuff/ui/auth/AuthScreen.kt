@@ -46,7 +46,6 @@ fun AuthScreen(
     onSubmit: () -> Unit,
     onSwitchMode: () -> Unit,
     onForgotPassword: () -> Unit,
-    onProvider: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -109,9 +108,6 @@ fun AuthScreen(
         PrimaryCta(label = state.mode.cta, enabled = !pending, onClick = onSubmit)
 
         if (!state.mode.verifying) {
-            OrDivider()
-            ProviderButton(label = "Continue with Google", onClick = { onProvider("Google") })
-            ProviderButton(label = "Continue with Apple", onClick = { onProvider("Apple") })
             AuthFooterSwitch(mode = state.mode, onSwitch = onSwitchMode)
         }
     }
