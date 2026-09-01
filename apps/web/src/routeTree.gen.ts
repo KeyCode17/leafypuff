@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated.accounts/index'
 import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated.audit/index'
+import { Route as AuthenticatedCatalogIndexRouteImport } from './routes/_authenticated.catalog/index'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.dashboard/index'
 import { Route as AuthenticatedRolesIndexRouteImport } from './routes/_authenticated.roles/index'
 
@@ -42,6 +43,12 @@ const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
   path: '/audit/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCatalogIndexRoute =
+  AuthenticatedCatalogIndexRouteImport.update({
+    id: '/catalog/',
+    path: '/catalog/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/dashboard/',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/audit/': typeof AuthenticatedAuditIndexRoute
+  '/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/roles/': typeof AuthenticatedRolesIndexRoute
 }
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/accounts': typeof AuthenticatedAccountsIndexRoute
   '/audit': typeof AuthenticatedAuditIndexRoute
+  '/catalog': typeof AuthenticatedCatalogIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/roles': typeof AuthenticatedRolesIndexRoute
 }
@@ -77,15 +86,29 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
+  '/_authenticated/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login/' | '/accounts/' | '/audit/' | '/dashboard/' | '/roles/'
+    | '/'
+    | '/login/'
+    | '/accounts/'
+    | '/audit/'
+    | '/catalog/'
+    | '/dashboard/'
+    | '/roles/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/accounts' | '/audit' | '/dashboard' | '/roles'
+  to:
+    | '/'
+    | '/login'
+    | '/accounts'
+    | '/audit'
+    | '/catalog'
+    | '/dashboard'
+    | '/roles'
   id:
     | '__root__'
     | '/'
@@ -93,6 +116,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_authenticated/accounts/'
     | '/_authenticated/audit/'
+    | '/_authenticated/catalog/'
     | '/_authenticated/dashboard/'
     | '/_authenticated/roles/'
   fileRoutesById: FileRoutesById
@@ -140,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/catalog/': {
+      id: '/_authenticated/catalog/'
+      path: '/catalog'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof AuthenticatedCatalogIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
       path: '/dashboard'
@@ -160,6 +191,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
+  AuthenticatedCatalogIndexRoute: typeof AuthenticatedCatalogIndexRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedRolesIndexRoute: typeof AuthenticatedRolesIndexRoute
 }
@@ -167,6 +199,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
+  AuthenticatedCatalogIndexRoute: AuthenticatedCatalogIndexRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedRolesIndexRoute: AuthenticatedRolesIndexRoute,
 }

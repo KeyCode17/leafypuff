@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod auth;
+pub mod catalog;
 pub mod dto;
 pub mod envelope;
 pub mod error;

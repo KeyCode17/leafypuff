@@ -115,9 +115,22 @@ async fn harness() -> Option<Harness> {
         audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
         rbac: rbac.clone(),
     };
+    let catalog = leafypuff_api::application::catalog::CatalogServices {
+        store: Arc::new(api_testing::catalog_repositories::InMemoryCatalog::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
     let probe = DependencyProbe::new(url, "127.0.0.1:3900".to_owned());
     Some(Harness {
-        router: build_router(AppState::new(probe, iam, sync, media, rbac.clone(), admin)),
+        router: build_router(AppState::new(
+            probe,
+            iam,
+            sync,
+            media,
+            rbac.clone(),
+            admin,
+            catalog,
+        )),
         account_id: owner.id,
         token,
         connection,

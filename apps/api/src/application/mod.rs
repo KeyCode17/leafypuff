@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod catalog;
 pub mod check_readiness;
 pub mod iam;
 pub mod media;
