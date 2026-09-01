@@ -8,6 +8,7 @@ use crate::http::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/overview", get(handlers::read_overview))
         .route("/accounts", get(handlers::list_accounts))
         .route("/accounts/{account_id}", get(handlers::read_account))
         .route(

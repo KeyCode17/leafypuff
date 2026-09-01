@@ -2,36 +2,31 @@ import { createFileRoute } from "@tanstack/react-router"
 import type { ReactElement } from "react"
 
 import { Guard } from "#/components/guard"
+import { SectionBoundary } from "#/components/section-boundary"
 import { Typography } from "#/components/typography"
 import { PERMISSION } from "#/constants/permission"
-import { dashboardSummaryQueryOptions } from "#/routes/_authenticated.dashboard/_apis/dashboard-api"
-import { useDashboard } from "#/routes/_authenticated.dashboard/_hooks/use-dashboard"
+import { OverviewFigures } from "#/routes/_authenticated.dashboard/_components/overview-figures"
+import { overviewQueryOptions } from "#/routes/_authenticated.dashboard/_hooks/use-dashboard"
 
-const DashboardPage = (): ReactElement => {
-	const { summary } = useDashboard()
-
-	return (
-		<section
-			aria-labelledby="dashboard-heading"
-			className="flex flex-col gap-6 p-6"
-		>
-			<Typography variant="title" id="dashboard-heading">
-				Dashboard
-			</Typography>
-			<Guard permissions={[PERMISSION.ENTRY_COUNT_READ]}>
-				<dl className="flex flex-col gap-2">
-					<Typography variant="label">Accounts</Typography>
-					<Typography variant="paragraph">{summary.accounts}</Typography>
-					<Typography variant="label">Entries</Typography>
-					<Typography variant="paragraph">{summary.entries}</Typography>
-				</dl>
-			</Guard>
-		</section>
-	)
-}
+const DashboardScreen = (): ReactElement => (
+	<main aria-labelledby="dashboard-heading" className="flex flex-col gap-6 p-8">
+		<Typography variant="title" id="dashboard-heading">
+			Dashboard
+		</Typography>
+		<Typography variant="paragraph">
+			Every figure is a count or a byte total. None of them is derived from
+			anything the server can read.
+		</Typography>
+		<Guard permissions={[PERMISSION.ENTRY_COUNT_READ]}>
+			<SectionBoundary>
+				<OverviewFigures />
+			</SectionBoundary>
+		</Guard>
+	</main>
+)
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
 	loader: ({ context }) =>
-		context.queryClient.ensureQueryData(dashboardSummaryQueryOptions()),
-	component: DashboardPage,
+		context.queryClient.ensureQueryData(overviewQueryOptions),
+	component: DashboardScreen,
 })

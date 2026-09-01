@@ -3,19 +3,33 @@ use std::sync::Arc;
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::domain::admin::{AccountDirectory, AccountSummary, AdminError, DIRECTORY_PAGE_SIZE};
+use crate::domain::admin::{
+    AccountDirectory, AccountSummary, AdminError, DIRECTORY_PAGE_SIZE, ServiceMetrics,
+    ServiceOverview,
+};
 use crate::domain::rbac::{AuditAction, AuditEvent, AuditLog, Permission, RbacError};
 
 use crate::application::rbac::RbacServices;
 
+const ROLLING_DAY_MS: i64 = 24 * 60 * 60 * 1_000;
+
 #[derive(Clone)]
 pub struct AdminServices {
     pub directory: Arc<dyn AccountDirectory>,
+    pub metrics: Arc<dyn ServiceMetrics>,
     pub audit: Arc<dyn AuditLog>,
     pub rbac: RbacServices,
 }
 
 impl AdminServices {
+    /// Sync health is a rolling day: a device that has not exchanged in that window is the
+    /// signal worth surfacing, and a fixed calendar boundary would read as a cliff every midnight.
+    pub async fn overview(&self, actor_id: Uuid) -> Result<ServiceOverview, AdminError> {
+        self.permitted(actor_id, Permission::EntryCountRead).await?;
+        let since = Utc::now().timestamp_millis() - ROLLING_DAY_MS;
+        self.metrics.overview(since).await
+    }
+
     pub async fn list(&self, actor_id: Uuid) -> Result<Vec<AccountSummary>, AdminError> {
         self.permitted(actor_id, Permission::AccountList).await?;
         self.directory.summaries(DIRECTORY_PAGE_SIZE).await

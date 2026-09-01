@@ -16,7 +16,7 @@
       {
         packages.leafypuff-api = pkgs.rustPlatform.buildRustPackage {
           pname = "leafypuff-api";
-          version = "0.10.0";
+          version = "0.11.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           # The workspace also holds the Android-facing core crate; only the API is deployable.

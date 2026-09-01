@@ -4,18 +4,26 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use uuid::Uuid;
 
-use crate::domain::admin::AccountSummary;
+use crate::domain::admin::{AccountSummary, ServiceOverview};
 use crate::http::auth::Authenticated;
 use crate::http::envelope::Envelope;
 use crate::http::error::ApiError;
 use crate::http::state::AppState;
 
-use super::dto::AccountSummaryResponse;
+use super::dto::{AccountSummaryResponse, OverviewResponse};
 
+const MESSAGE_OVERVIEW: &str = "Service overview";
 const MESSAGE_ACCOUNTS: &str = "Accounts";
 const MESSAGE_ACCOUNT: &str = "Account";
 const MESSAGE_SUSPENDED: &str = "Account suspended";
 const MESSAGE_RESTORED: &str = "Account restored";
+
+pub async fn read_overview(State(state): State<AppState>, caller: Authenticated) -> Response {
+    match state.admin.overview(caller.account_id).await {
+        Ok(found) => ok(MESSAGE_OVERVIEW, overview(found)),
+        Err(error) => ApiError::from(error).into_response(),
+    }
+}
 
 pub async fn list_accounts(State(state): State<AppState>, caller: Authenticated) -> Response {
     match state.admin.list(caller.account_id).await {
@@ -62,6 +70,21 @@ pub async fn restore_account(
 
 fn ok<T: serde::Serialize>(message: &str, data: T) -> Response {
     (StatusCode::OK, Json(Envelope::ok(message, data))).into_response()
+}
+
+fn overview(found: ServiceOverview) -> OverviewResponse {
+    OverviewResponse {
+        account_count: found.account_count,
+        verified_account_count: found.verified_account_count,
+        suspended_account_count: found.suspended_account_count,
+        entry_count: found.entry_count,
+        tombstoned_entry_count: found.tombstoned_entry_count,
+        device_count: found.device_count,
+        devices_synced_last_day: found.devices_synced_last_day,
+        field_conflict_count: found.field_conflict_count,
+        media_object_count: found.media_object_count,
+        media_bytes: found.media_bytes,
+    }
 }
 
 fn summary(found: AccountSummary) -> AccountSummaryResponse {
