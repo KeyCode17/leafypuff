@@ -7,6 +7,7 @@ pub mod error;
 pub mod health;
 pub mod iam;
 pub mod media;
+pub mod privacy;
 pub mod rate_limit;
 pub mod rbac;
 pub mod router;

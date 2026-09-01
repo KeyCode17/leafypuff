@@ -11,6 +11,7 @@ mod m20260901_000008_role_grants;
 mod m20260901_000009_audit;
 mod m20260901_000010_account_suspension;
 mod m20260901_000011_catalog;
+mod m20260901_000013_data_requests;
 
 pub struct Migrator;
 
@@ -29,6 +30,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000009_audit::Migration),
             Box::new(m20260901_000010_account_suspension::Migration),
             Box::new(m20260901_000011_catalog::Migration),
+            Box::new(m20260901_000013_data_requests::Migration),
         ]
     }
 }

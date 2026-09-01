@@ -36,6 +36,7 @@ fn router(world: &World) -> Router {
         world.rbac.clone(),
         world.admin.clone(),
         world.catalog.clone(),
+        world.privacy.clone(),
     ))
 }
 

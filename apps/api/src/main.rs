@@ -5,6 +5,7 @@ use leafypuff_api::application::admin::AdminServices;
 use leafypuff_api::application::catalog::CatalogServices;
 use leafypuff_api::application::iam::IamServices;
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::privacy::PrivacyServices;
 use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
@@ -16,6 +17,7 @@ use leafypuff_api::infrastructure::iam::{
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
 };
 use leafypuff_api::infrastructure::media::{PgMediaRepository, S3ObjectStore, build_s3_client};
+use leafypuff_api::infrastructure::privacy::{PgDataRequestStore, PgEraser};
 use leafypuff_api::infrastructure::rbac::{PgAuditLog, PgPermissionReader, PgRoleRepository};
 use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
@@ -84,8 +86,18 @@ async fn main() {
         rbac: rbac.clone(),
     };
 
+    let privacy = PrivacyServices {
+        requests: Arc::new(PgDataRequestStore::new(connection.clone())),
+        eraser: Arc::new(PgEraser::new(connection.clone())),
+        objects: Arc::clone(&media.objects),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
-    let app = build_router(AppState::new(probe, iam, sync, media, rbac, admin, catalog));
+    let app = build_router(AppState::new(
+        probe, iam, sync, media, rbac, admin, catalog, privacy,
+    ));
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)

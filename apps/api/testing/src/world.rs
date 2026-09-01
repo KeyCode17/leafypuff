@@ -7,6 +7,7 @@ use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::privacy::PrivacyServices;
 use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 
@@ -14,6 +15,7 @@ use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, 
 use crate::admin_repositories::{InMemoryDirectory, InMemoryMetrics};
 use crate::catalog_repositories::InMemoryCatalog;
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
+use crate::privacy_repositories::{InMemoryRequests, RecordingEraser};
 use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
 use crate::sync_repositories::{
@@ -44,6 +46,9 @@ pub struct World {
     pub admin: AdminServices,
     pub bundles: InMemoryCatalog,
     pub catalog: CatalogServices,
+    pub requests: InMemoryRequests,
+    pub eraser: RecordingEraser,
+    pub privacy: PrivacyServices,
 }
 
 impl Default for World {
@@ -113,6 +118,16 @@ impl Default for World {
             rbac: rbac.clone(),
         };
 
+        let requests = InMemoryRequests::default();
+        let eraser = RecordingEraser::default();
+        let privacy = PrivacyServices {
+            requests: Arc::new(requests.clone()),
+            eraser: Arc::new(eraser.clone()),
+            objects: Arc::new(objects.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
         Self {
             accounts,
             credentials,
@@ -136,6 +151,9 @@ impl Default for World {
             admin,
             bundles,
             catalog,
+            requests,
+            eraser,
+            privacy,
         }
     }
 }

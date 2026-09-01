@@ -7,6 +7,7 @@ use crate::domain::admin::AdminError;
 use crate::domain::catalog::CatalogError;
 use crate::domain::iam::IamError;
 use crate::domain::media::MediaError;
+use crate::domain::privacy::PrivacyError;
 use crate::domain::rbac::RbacError;
 use crate::domain::sync::SyncError;
 
@@ -28,6 +29,8 @@ pub const ERR_ACCOUNT_NOT_FOUND: &str = "ACCOUNT_NOT_FOUND";
 pub const ERR_BUNDLE_NOT_FOUND: &str = "BUNDLE_NOT_FOUND";
 pub const ERR_NO_CATALOG: &str = "NO_CATALOG_PUBLISHED";
 pub const ERR_MALFORMED_BUNDLE: &str = "MALFORMED_BUNDLE";
+pub const ERR_REQUEST_NOT_FOUND: &str = "DATA_REQUEST_NOT_FOUND";
+pub const ERR_ALREADY_FULFILLED: &str = "ALREADY_FULFILLED";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -44,6 +47,8 @@ const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
 const DETAIL_ACCOUNT_NOT_FOUND: &str = "No such account";
 const DETAIL_BUNDLE_NOT_FOUND: &str = "No such bundle";
 const DETAIL_NO_CATALOG: &str = "No catalog has been published";
+const DETAIL_REQUEST_NOT_FOUND: &str = "No such data request";
+const DETAIL_ALREADY_FULFILLED: &str = "That request was already fulfilled";
 
 pub struct ApiError {
     status: StatusCode,
@@ -231,6 +236,34 @@ impl From<CatalogError> for ApiError {
             ),
             CatalogError::Storage(reason) => {
                 tracing::error!(%reason, "a catalog request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<PrivacyError> for ApiError {
+    fn from(error: PrivacyError) -> Self {
+        match error {
+            PrivacyError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
+            }
+            PrivacyError::NotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_REQUEST_NOT_FOUND,
+                DETAIL_REQUEST_NOT_FOUND,
+            ),
+            PrivacyError::AlreadyFulfilled => Self::new(
+                StatusCode::CONFLICT,
+                ERR_ALREADY_FULFILLED,
+                DETAIL_ALREADY_FULFILLED,
+            ),
+            PrivacyError::Storage(reason) => {
+                tracing::error!(%reason, "a privacy request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,
