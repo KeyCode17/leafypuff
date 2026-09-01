@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The mark carries a white outline around the pencil, baked into the artwork. On a dark
+         launcher background that outline disappears, so the plate is part of the icon rather
+         than something the launcher supplies. Same colour as the plate the lock screen draws. -->
+    <color name="ic_launcher_background">#F7FAEF</color>
+</resources>
