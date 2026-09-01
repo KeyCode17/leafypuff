@@ -120,14 +120,14 @@ impl SyncClient {
         let body: Value = response
             .json()
             .await
-            .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))?;
+            .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
 
         let advanced = body["data"]["cursor"]
             .as_i64()
-            .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))?;
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
         let rows = body["data"]["records"]
             .as_array()
-            .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))?;
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
         let accepted = rows
             .iter()
             .map(inbound)
@@ -163,7 +163,7 @@ fn envelope(ciphertext: &[u8], nonce: &[u8], at_ms: i64, device_id: &str) -> Val
 }
 
 fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
-    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let updated_at_ms = row["title"]["updated_at_ms"].as_i64().ok_or_else(shape)?;
     let updated_at = DateTime::<Utc>::from_timestamp_millis(updated_at_ms)
         .ok_or_else(shape)?
@@ -201,7 +201,7 @@ fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
 /// empty: this device fills it in when it fetches the blob, and an empty one is how the next sync
 /// knows it has not.
 fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, CoreError> {
-    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let Some(encoded) = value.as_str() else {
         return Ok(Vec::new());
     };
@@ -226,7 +226,7 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
 /// own fields. A record that arrives without them is a record with none, not a reason to abandon
 /// the whole pull.
 fn inbound_tags(value: &Value) -> Result<Vec<String>, CoreError> {
-    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let Some(tags) = value.as_array() else {
         return Ok(Vec::new());
     };
@@ -236,7 +236,7 @@ fn inbound_tags(value: &Value) -> Result<Vec<String>, CoreError> {
 }
 
 fn inbound_stickers(value: &Value) -> Result<Vec<InboundSticker>, CoreError> {
-    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let Some(encoded) = value.as_str() else {
         return Ok(Vec::new());
     };
@@ -262,16 +262,16 @@ fn number(value: &Value) -> Result<f32, CoreError> {
     value
         .as_f64()
         .map(|held| held as f32)
-        .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))
+        .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))
 }
 
 fn bytes(value: &Value) -> Result<Vec<u8>, CoreError> {
     let encoded = value
         .as_str()
-        .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))?;
+        .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
     BASE64
         .decode(encoded.as_bytes())
-        .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))
+        .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))
 }
 
 #[cfg(test)]

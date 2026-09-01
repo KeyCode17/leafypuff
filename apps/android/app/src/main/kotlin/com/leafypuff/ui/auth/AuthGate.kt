@@ -149,6 +149,7 @@ private fun readable(mode: AuthMode, failure: Throwable): String = when (failure
     is LeafyPuffCoreException.MailUnavailable -> "We could not send the code. Try again shortly."
     is LeafyPuffCoreException.ServiceUnavailable -> "The service is busy. Try again shortly."
     is LeafyPuffCoreException.Timeout -> "The server is taking too long. Try again."
+    is LeafyPuffCoreException.Unreadable -> "The server answered something we could not read."
     is LeafyPuffCoreException.Storage -> "No connection. Check your network."
     else -> "Something went wrong. Try again."
 }

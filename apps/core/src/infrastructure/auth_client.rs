@@ -100,7 +100,7 @@ impl AuthClient {
         let parsed: Value = response
             .json()
             .await
-            .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))?;
+            .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
 
         if parsed["success"].as_bool() == Some(true) {
             return Ok(parsed);
@@ -122,7 +122,7 @@ fn challenge(body: &Value) -> Result<Challenge, CoreError> {
     Ok(Challenge {
         expires_in_seconds: body["data"]["expires_in"]
             .as_i64()
-            .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))?,
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))?,
     })
 }
 
@@ -132,13 +132,13 @@ fn session(body: &Value) -> Result<Session, CoreError> {
         data[key]
             .as_str()
             .map(str::to_owned)
-            .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))
     };
     Ok(Session {
         access_token: read("access_token")?,
         refresh_token: read("refresh_token")?,
         expires_in_seconds: data["expires_in"]
             .as_i64()
-            .ok_or_else(|| CoreError::Storage(ERR_SHAPE.to_owned()))?,
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))?,
     })
 }
