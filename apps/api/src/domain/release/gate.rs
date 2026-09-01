@@ -34,9 +34,6 @@ pub struct ReleaseGate {
 }
 
 impl ReleaseGate {
-    /// A build below the minimum is only *blocked* when force_update is set. Without it the
-    /// device is told it is behind and keeps working, which is the difference between a nudge and
-    /// an outage.
     pub const fn blocks(&self, build: i32) -> bool {
         self.force_update && build < self.minimum_build
     }

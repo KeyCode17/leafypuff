@@ -47,11 +47,6 @@ private const val Acknowledgement = "I have written it down somewhere safe"
 private const val Copy = "COPY"
 private const val Continue = "CONTINUE"
 
-/**
- * The one moment the recovery code exists. The design does not draw this screen, so it says plainly
- * what it is; the acknowledgement is required because a code the owner skipped past is a diary that
- * cannot be recovered.
- */
 @Composable
 fun RecoveryCodeScreen(
     code: String,

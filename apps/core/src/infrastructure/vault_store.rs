@@ -81,8 +81,6 @@ fn wrapped(nonce: Vec<u8>, ciphertext: Vec<u8>) -> Result<WrappedKey, CoreError>
     })
 }
 
-/// The device-bound copy of the content key. Separate from SqliteVaultStore on purpose: the vault
-/// is what travels to the server, and this row is what must never leave the device.
 pub struct SqliteDeviceSlotStore {
     connection: DatabaseConnection,
 }

@@ -8,8 +8,6 @@ use crate::domain::rbac::{AuditAction, AuditEvent, AuditLog, RbacError};
 use super::entity::audit_events;
 use super::role_repository::storage;
 
-/// Insert and select. There is no update path and no delete path on this adapter, which is what
-/// makes the table evidence rather than something an operator could tidy after the fact.
 pub struct PgAuditLog {
     connection: DatabaseConnection,
 }

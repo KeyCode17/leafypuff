@@ -15,9 +15,6 @@ pub struct CatalogServices {
 }
 
 impl CatalogServices {
-    /// The device path. It carries no permission check on purpose: a signed-in app asking which
-    /// catalog to render is not an operator action, and gating it would make the moods depend on
-    /// a role nobody would think to grant.
     pub async fn published(&self) -> Result<CatalogBundle, CatalogError> {
         self.store.published().await
     }

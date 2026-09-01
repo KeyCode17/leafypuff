@@ -16,8 +16,6 @@ fn label_bytes(label: &str) -> Result<Vec<u8>, CryptoError> {
     Ok(bytes)
 }
 
-/// Seals bytes that no entry owns yet under an opaque label, returning the nonce and the ciphertext
-/// as one blob. Photos are imported before an entry exists, so they cannot bind an entry id.
 pub fn seal_blob(key: &ContentKey, label: &str, plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let sealed = seal_bytes(key, &label_bytes(label)?, plaintext)?;
     let mut blob = Vec::with_capacity(NONCE_LEN + sealed.ciphertext.len());
@@ -26,8 +24,6 @@ pub fn seal_blob(key: &ContentKey, label: &str, plaintext: &[u8]) -> Result<Vec<
     Ok(blob)
 }
 
-/// Opens a blob `seal_blob` produced. A blob shorter than a nonce and a tag is refused before any
-/// slicing, so a truncated file on disk fails closed instead of panicking.
 pub fn open_blob(key: &ContentKey, label: &str, blob: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let (head, ciphertext) = blob
         .split_at_checked(NONCE_LEN)

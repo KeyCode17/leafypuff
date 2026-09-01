@@ -63,8 +63,6 @@ pub struct StatsSummary {
     pub tags: Vec<TagCount>,
 }
 
-/// Every figure the Statistics screen draws, for one range. The streak walks calendar days rather
-/// than entries, so two entries written on one day count once and a skipped day breaks the run.
 pub fn summarise(entries: &[Entry], range: StatsRange, today: NaiveDate) -> StatsSummary {
     let in_range: Vec<&Entry> = entries
         .iter()

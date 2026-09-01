@@ -15,8 +15,6 @@ const ERR_REFERENCES: &str = "Entry references could not be written";
 const ONLY_ROW: i32 = 1;
 const PUSH_BATCH: u64 = 100;
 
-/// The rows a device still owes the server, and the cursor it has reached. Both live beside the
-/// entries themselves so an interrupted exchange resumes rather than restarting.
 pub struct SyncOutbox {
     connection: DatabaseConnection,
 }
@@ -65,8 +63,6 @@ impl SyncOutbox {
         Ok(())
     }
 
-    /// Never synced, or edited since it last was. Comparing the two timestamps rather than
-    /// holding a dirty flag means a crash between the write and the flag cannot lose an edit.
     pub async fn pending(&self) -> Result<Vec<OutboundEntry>, CoreError> {
         let rows =
             entries::Entity::find()
@@ -114,8 +110,6 @@ impl SyncOutbox {
         Ok(outbound)
     }
 
-    /// The photos of every entry still owed to the server. Read before the exchange, because the
-    /// exchange is what clears the debt.
     pub async fn pending_photo_ids(&self) -> Result<Vec<String>, CoreError> {
         let owed = self.pending().await?;
         let ids: Vec<String> = owed.iter().map(|row| row.id.to_text()).collect();
@@ -129,8 +123,6 @@ impl SyncOutbox {
         Ok(carried.into_iter().map(|photo| photo.id).collect())
     }
 
-    /// Photo rows that arrived from another device and have no file behind them yet. An empty
-    /// path is the marker; it is set when the blob lands.
     pub async fn unfetched_photos(&self) -> Result<Vec<String>, CoreError> {
         let waiting = photos::Entity::find()
             .filter(photos::Column::Path.eq(String::new()))
@@ -164,9 +156,6 @@ impl SyncOutbox {
         Ok(())
     }
 
-    /// Writes an entry that came down from the server, plus the photo rows it names. The blob
-    /// each row points at is fetched separately; a row with no file behind it yet is what tells
-    /// the next sync to go and get it.
     pub async fn accept(
         &self,
         inbound: entries::ActiveModel,
@@ -192,8 +181,6 @@ impl SyncOutbox {
             .exec(&self.connection)
             .await?;
         let entry_id = carried.entry_id.clone();
-        // Replaced wholesale rather than merged: the record that just arrived is the writing
-        // device's whole answer for this entry, and a tag it dropped is a tag the owner removed.
         tags::Entity::delete_many()
             .filter(tags::Column::EntryId.eq(entry_id.clone()))
             .exec(&self.connection)
@@ -250,7 +237,6 @@ impl SyncOutbox {
     }
 }
 
-/// Everything an inbound entry brings that does not live in its own row.
 pub struct Carried {
     pub entry_id: String,
     pub tags: Vec<String>,
@@ -267,8 +253,6 @@ pub struct InboundSticker {
     pub rotation: f32,
 }
 
-/// A photo an inbound entry names. `path` is where this device will keep the blob once it has
-/// fetched it, which is not where the device that wrote it kept its own copy.
 pub struct InboundPhoto {
     pub id: String,
     pub entry_id: String,
@@ -276,17 +260,6 @@ pub struct InboundPhoto {
     pub ordinal: i32,
 }
 
-/// Written by hand rather than through a json library so the outbox stays buildable without the
-/// sync feature. Nothing here needs escaping: a photo id is a hyphenated uuid, checked on the way
-/// into storage, and an ordinal is an integer.
-/// The same hand-written shape as photo_refs, for the same reason: the outbox has to build
-/// without the sync feature.
-///
-/// Every field is checked before it is interpolated, and the floats are checked hardest. Rust
-/// prints a non-finite f32 as `NaN` or `inf`, neither of which is JSON. The server stores this
-/// column as an opaque string and would take such a record without complaint -- and then every
-/// device that pulled it would fail to parse it, on every sync, with no way to remove the record
-/// that poisoned them.
 pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, CoreError> {
     let mut refs = String::from("[");
     for (position, sticker) in placed.iter().enumerate() {

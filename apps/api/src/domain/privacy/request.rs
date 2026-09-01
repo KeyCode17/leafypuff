@@ -46,8 +46,6 @@ impl RequestStatus {
     }
 }
 
-/// A request outlives the account it names. An erasure that deleted its own record would leave
-/// nobody able to show the erasure happened.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DataRequest {
     pub id: Uuid,

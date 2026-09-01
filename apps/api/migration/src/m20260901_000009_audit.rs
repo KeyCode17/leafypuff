@@ -62,8 +62,6 @@ impl MigrationTrait for Migration {
                             .big_integer()
                             .not_null(),
                     )
-                    // No cascade. Erasing a person nulls the identity in audit_subjects; the
-                    // event row survives, which is what lets FR-115 and FR-119 both hold.
                     .foreign_key(
                         ForeignKey::create()
                             .from(AuditEvents::Table, AuditEvents::SubjectId)

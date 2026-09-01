@@ -17,10 +17,6 @@ private const val DegreesPerRadian = 180f / PI.toFloat()
 private const val DropColumns = 3
 private const val DropRows = 4
 
-// The note box the design staggers its drops into: a 375dp frame less its 24dp gutters, about
-// 200dp tall. Drops are expressed against it and then divided, so the stagger keeps the design's
-// proportions on a note of any width. The same two numbers convert the rows written before
-// coordinates were fractions -- see the normalise_sticker_coordinates migration.
 private const val NoteReferenceWidth = 327f
 private const val NoteReferenceHeight = 200f
 private const val DropOriginX = 34f / NoteReferenceWidth
@@ -30,8 +26,6 @@ private const val DropStepY = 44f / NoteReferenceHeight
 
 fun clampStickerSize(size: Float): Float = size.coerceIn(StickerMinSize, StickerMaxSize)
 
-/// Clamps a fraction of the layer. Both bounds are computed in dp and divided back, so the
-/// overhang stays the 12dp the design draws rather than 12% of whatever the note happens to be.
 fun clampStickerPosition(value: Float, size: Float, extent: Float): Float {
     if (extent <= 0f) {
         return 0f
@@ -60,8 +54,6 @@ fun dropX(index: Int): Float = DropOriginX + (index % DropColumns) * DropStepX
 
 fun dropY(index: Int): Float = DropOriginY + (index % DropRows) * DropStepY
 
-/// The drag arrives in dp because that is what a pointer moves in; the position it lands on is a
-/// fraction because that is what survives the note changing width.
 fun PlacedSticker.movedBy(
     deltaX: Float,
     deltaY: Float,

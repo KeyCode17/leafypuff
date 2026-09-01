@@ -9,15 +9,12 @@ use super::padding;
 
 pub const NONCE_LEN: usize = 24;
 
-/// One sealed field: the nonce and the ciphertext, stored as the two plaintext columns the sync
-/// contract names. The true plaintext length lives inside the ciphertext, never beside it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SealedField {
     pub nonce: [u8; NONCE_LEN],
     pub ciphertext: Vec<u8>,
 }
 
-/// Pads the plaintext to a 256-byte bucket and seals it with XChaCha20-Poly1305 under a fresh nonce.
 pub fn seal(
     key: &ContentKey,
     context: &FieldContext<'_>,
@@ -48,7 +45,6 @@ pub(crate) fn seal_bytes(
     })
 }
 
-/// Opens a sealed field and strips the padding, returning exactly the bytes `seal` was given.
 pub fn open(
     key: &ContentKey,
     context: &FieldContext<'_>,

@@ -26,7 +26,6 @@ private const val AppName = "leafyPuff"
 private val PlateSize = 132.dp
 private val MarkSize = 108.dp
 
-
 @Composable
 internal fun LockMarkPlate(modifier: Modifier = Modifier) {
     Box(

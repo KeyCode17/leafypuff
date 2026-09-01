@@ -11,8 +11,6 @@ pub struct PhotoRef {
     pub taken_at: Option<DateTime<Utc>>,
 }
 
-/// The two blobs a single picked photo becomes on disk: the bytes as picked,
-/// and the top-anchored 3:2 derivative the diary and the calendar draw.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PhotoKind {
     Original,

@@ -31,11 +31,6 @@ import com.leafypuff.ui.stats.StatsSummary
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
-/**
- * The signed-in, unlocked app: the four destinations, the nav bar and the editor that floats over
- * them. Everything here assumes an account and an open vault, which is what the two gates in front
- * of it guarantee.
- */
 @Composable
 fun LeafyHome(
     library: PhotoLibrary,
@@ -170,12 +165,8 @@ fun LeafyHome(
                 onSave(draft, photoIds) {
                     composing = false
                     selected = draft.date
-                    // The design ends every save on the Diary at that date, whichever tab the
-                    // editor was opened from.
                     current = Destination.Diary
                     toast = saveToast(reopened)
-                    // Push what was just written. A diary that only leaves the handset when the
-                    // owner remembers to ask is a diary that loses the day the handset does.
                     scope.launch { if (onSync()) lastSynced = syncLabel(true) }
                 }
             },
@@ -184,10 +175,6 @@ fun LeafyHome(
     }
 }
 
-/**
- * Only covers not already held are fetched. Redrawing the list after a save would otherwise decode
- * every thumbnail again for the one entry that changed.
- */
 private suspend fun loadCovers(
     library: PhotoLibrary,
     entries: List<Entry>,

@@ -13,10 +13,6 @@ pub const MAX_REQUESTS_PER_WINDOW: u32 = 10;
 pub const WINDOW: Duration = Duration::from_secs(60);
 pub const UNKNOWN_CLIENT: &str = "unknown";
 
-// The zone is proxied through Cloudflare, so nginx's peer is a Cloudflare edge address and the
-// last x-forwarded-for hop puts every user behind one PoP into a single budget. CF-Connecting-IP
-// carries the real client, and the forwarded hop stays as the fallback for a direct origin
-// request. Neither header is trustworthy until the firewall restricts 443 to Cloudflare ranges.
 const CF_CONNECTING_IP: &str = "cf-connecting-ip";
 const FORWARDED_FOR: &str = "x-forwarded-for";
 

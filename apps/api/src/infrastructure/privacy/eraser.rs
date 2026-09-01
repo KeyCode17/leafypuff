@@ -6,9 +6,6 @@ use uuid::Uuid;
 
 use crate::domain::privacy::{Eraser, PrivacyError};
 
-/// Ordered on purpose. The identity in audit_subjects is nulled rather than the row deleted, and
-/// audit_events is never touched at all: FR-119 wants the person unfindable and FR-115 wants the
-/// operator's actions still provable, and only nulling the mapping satisfies both.
 const STEPS: [&str; 4] = [
     "UPDATE audit_subjects SET account_id = NULL, email = NULL WHERE account_id = $1",
     "DELETE FROM wrapped_content_keys WHERE account_id = $1",

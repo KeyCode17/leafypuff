@@ -7,9 +7,6 @@ use uuid::Uuid;
 
 use crate::domain::admin::{AccountDirectory, AccountSummary, AdminError};
 
-/// One query joining counts onto the account row. The projection is the control: there is no
-/// column here that could carry an entry's content, and adding one would be a visible change to
-/// this string rather than a field quietly appearing on a struct.
 const SUMMARY_COLUMNS: &str = "
     a.id AS account_id,
     a.email AS email,

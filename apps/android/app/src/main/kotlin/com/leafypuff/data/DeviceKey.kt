@@ -19,17 +19,7 @@ private const val NonceKey = "passphrase.nonce"
 private const val TagBits = 128
 private const val DeviceKeyBytes = 32
 
-/**
- * The key this handset wraps its copy of the content key under. Generated once, sealed by a
- * hardware-backed Keystore key that never leaves the secure element, and kept beside the database
- * as ciphertext.
- *
- * It is not the vault's passphrase and never was. A key minted per handset can only ever open what
- * that handset sealed, which is why the diary used to die with the phone; the vault itself is
- * opened by the account password and travels with the account.
- */
 class DeviceKey(private val context: Context) {
-
     fun bytes(): ByteArray {
         val preferences = context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
         val stored = preferences.getString(CiphertextKey, null)
@@ -48,8 +38,6 @@ class DeviceKey(private val context: Context) {
         return fresh
     }
 
-    /// Drops the wrapping key. The device slot it sealed becomes unopenable, which is what signing
-    /// out is: the diary stays on disk, sealed, and the account password is the only way back in.
     fun forget() {
         context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
             .edit()

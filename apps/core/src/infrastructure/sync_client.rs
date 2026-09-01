@@ -13,10 +13,6 @@ use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 use super::entity::entries;
 use super::sync_outbox::{Carried, InboundPhoto, InboundSticker, SyncOutbox};
 
-/// A phone leaves wifi mid-request and the socket simply stops answering. Without a deadline the
-/// call waits forever, the screen stays on its spinner, and the owner cannot tell a slow network
-/// from a dead button. These are generous enough for argon2 on a small server and short enough
-/// that a hang becomes an error someone can act on.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -26,8 +22,6 @@ const ERR_UNREACHABLE: &str = "The sync service could not be reached";
 const ERR_REFUSED: &str = "The sync service refused the exchange";
 const ERR_SHAPE: &str = "The sync response is not the expected shape";
 
-/// The device half of the exchange. It uploads the ciphertext it already holds and stores what
-/// comes back without opening it, so a sync never needs the vault to be unlocked.
 pub struct SyncClient {
     client: Client,
     base_url: String,
@@ -197,9 +191,6 @@ fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
     ))
 }
 
-/// The server carries photo references as the JSON string the writing device sent. `path` is left
-/// empty: this device fills it in when it fetches the blob, and an empty one is how the next sync
-/// knows it has not.
 fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, CoreError> {
     let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let Some(encoded) = value.as_str() else {
@@ -222,9 +213,6 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
         .collect()
 }
 
-/// An absent list reads as no tags, the way the photo and sticker parsers beside it treat their
-/// own fields. A record that arrives without them is a record with none, not a reason to abandon
-/// the whole pull.
 fn inbound_tags(value: &Value) -> Result<Vec<String>, CoreError> {
     let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
     let Some(tags) = value.as_array() else {
@@ -337,7 +325,6 @@ mod tests {
         assert_eq!(read.len(), 1);
         assert_eq!(read[0].id, "3f2a91c0-0000-4000-8000-0000000000aa");
         assert_eq!(read[0].ordinal, 0);
-        // The path is deliberately not carried: it named a directory on another handset.
         assert!(read[0].path.is_empty());
     }
 
@@ -346,8 +333,6 @@ mod tests {
         let mut broken = sticker("heart-0", "Heart");
         broken.rotation = f32::NAN;
 
-        // A NaN would print as `NaN`, which is not JSON. The server would store it happily and
-        // every device that pulled it would fail to parse it, forever.
         assert!(sticker_placements(&[broken]).is_err());
     }
 

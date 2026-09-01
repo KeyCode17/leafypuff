@@ -7,12 +7,7 @@ private const val AccessTokenKey = "access.token"
 private const val RefreshTokenKey = "refresh.token"
 private const val EmailKey = "email"
 
-/**
- * The signed-in account. Tokens sit beside the vault's own storage rather than in the entry
- * database, so signing out clears the session without touching a single diary row.
- */
 class SessionStore(private val context: Context) {
-
     fun signedIn(): Boolean = accessToken() != null
 
     fun accessToken(): String? = preferences().getString(AccessTokenKey, null)

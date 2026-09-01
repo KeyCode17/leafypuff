@@ -17,16 +17,7 @@ private const val TextSizeKey = "text.size"
 
 private const val MinutesPerHour = 60
 
-/**
- * Every Settings row, kept across launches.
- *
- * Dark mode opens light and stays light until the owner turns it on. The handoff says to follow
- * the OS, but a diary is a light thing to look at and the switch is one row down in Settings, so
- * the deliberate choice is the only one that darkens it. The companion flag still separates "has
- * not chosen" from "chose light" so the toggle reads correctly the first time it is opened.
- */
 class PreferenceStore(private val context: Context) {
-
     fun load(): AppPreferences {
         val held = preferences()
         val minutes = held.getInt(ReminderMinutesKey, DefaultReminderMinutes)

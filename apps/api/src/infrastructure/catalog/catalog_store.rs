@@ -58,9 +58,6 @@ impl CatalogStore for PgCatalogStore {
         Ok(held)
     }
 
-    /// Unpublish then publish, in one transaction. The partial unique index makes two published
-    /// rows impossible, so doing this in two statements without a transaction would fail rather
-    /// than leave the catalog with none.
     async fn publish(
         &self,
         bundle_id: Uuid,

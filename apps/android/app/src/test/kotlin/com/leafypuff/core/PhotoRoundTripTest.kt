@@ -15,7 +15,6 @@ import kotlinx.datetime.LocalDate
 private const val VaultPassphrase = "a passphrase only this test uses"
 
 class PhotoRoundTripTest {
-
     @Test
     fun anImportedPhotoComesBackAsAThreeByTwoCover() = runBlocking {
         val client = openClient()

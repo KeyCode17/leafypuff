@@ -6,9 +6,6 @@ use crate::domain::{ContentSealer, CoreError, PhotoKind, PhotoStore};
 
 pub const PHOTO_DIR: &str = "photos";
 
-/// App storage for picked photos. Every blob crosses [`ContentSealer`] on the
-/// way in and on the way out, so nothing above this adapter has to know whether
-/// what lands on disk is plaintext or ciphertext.
 pub struct FilePhotoStore<S: ContentSealer> {
     root: PathBuf,
     sealer: S,
@@ -19,7 +16,6 @@ impl<S: ContentSealer> FilePhotoStore<S> {
         Self { root, sealer }
     }
 
-    /// The photo directory the core owns, beside the database file it opened.
     pub fn beside(database: &str, sealer: S) -> Self {
         let root = Path::new(database)
             .parent()
@@ -31,16 +27,12 @@ impl<S: ContentSealer> FilePhotoStore<S> {
         &self.root
     }
 
-    /// The blob exactly as it sits on disk, still sealed. Sync uploads this: the server holds
-    /// ciphertext it has no key for, which is the whole arrangement. Never use it to draw a photo.
     pub fn read_sealed(&self, id: &str, kind: PhotoKind) -> Result<Vec<u8>, CoreError> {
         let path = self.blob_path(id, kind)?;
         fs::read(&path)
             .map_err(|cause| CoreError::Photo(format!("{ERR_PHOTO_MISSING}: {id} ({cause})")))
     }
 
-    /// Stores a blob that is already sealed, as it came down from the server. It is not opened
-    /// here; the first read through [`PhotoStore`] is what proves this device holds the key.
     pub fn write_sealed(&self, id: &str, kind: PhotoKind, sealed: &[u8]) -> Result<(), CoreError> {
         let path = self.blob_path(id, kind)?;
         fs::create_dir_all(&self.root)

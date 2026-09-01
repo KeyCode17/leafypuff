@@ -7,9 +7,6 @@ use crate::domain::crypto::{
 use crate::domain::error::ERR_VAULT_LOCKED;
 use crate::domain::{ContentSealer, CoreError, EntryId, FieldSealer};
 
-/// The one handle every seal and open goes through. Holds the content key once a vault is
-/// unlocked and nothing before that, so a write attempted while locked fails rather than
-/// silently storing plaintext.
 #[derive(Clone, Default)]
 pub struct VaultSealer {
     key: Arc<RwLock<Option<ContentKey>>>,
@@ -36,9 +33,6 @@ impl VaultSealer {
         self.key.read().is_ok_and(|held| held.is_some())
     }
 
-    /// Wraps the held content key under a key the device keeps in hardware. The content key
-    /// itself never leaves this type -- the caller gets ciphertext it cannot open without the
-    /// same device key.
     pub fn seal_for_device(&self, device_key: &[u8; KEY_LEN]) -> Result<WrappedKey, CoreError> {
         self.with_key(|key| Ok(seal_for_device(device_key, key)?))
     }

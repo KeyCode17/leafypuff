@@ -33,14 +33,6 @@ private const val RefusedBody =
         "keeps happening, your recovery code is the way in."
 private const val RefusedAction = "SIGN IN AGAIN"
 
-/**
- * Between signing in and reading the diary. On a handset that has opened this account before the
- * step is silent; on one that has not, the password just typed fetches the account's vault, or
- * creates it when the account has none yet.
- *
- * A stored session with no local copy of the key is not an error state worth inventing a screen
- * for -- it means the password is needed again, and the app already has a screen that asks.
- */
 @Composable
 fun VaultGate(
     access: VaultAccess?,
@@ -79,8 +71,6 @@ fun VaultGate(
             unlocked = true
             onOpened()
         }.onFailure {
-            // Signing out here and saying nothing would spin: the login screen appears, the owner
-            // signs in, the same blob fails to open, and round it goes with no way to tell why.
             refused = true
         }
     }

@@ -7,7 +7,6 @@ private const val Tolerance = 0.001f
 private val Quarters = listOf(0f, 90f, 180f, 270f)
 
 class StickerGeometryTest {
-
     @Test
     fun `four degrees under a quarter turn snaps to it`() {
         Quarters.forEach { quarter ->

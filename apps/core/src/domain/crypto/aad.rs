@@ -7,8 +7,6 @@ pub const FIELD_BODY: &str = "body";
 pub const FIELD_PHOTO: &str = "photo";
 pub const FIELD_COVER: &str = "cover";
 
-/// Identifies one field of one entry at one moment. Encoded into the AEAD associated data, so a
-/// ciphertext moved to another entry, field or timestamp fails to open.
 pub struct FieldContext<'a> {
     pub entry_id: EntryId,
     pub field_name: &'a str,

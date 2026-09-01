@@ -1,10 +1,5 @@
 package com.leafypuff.ui.auth
 
-/**
- * Login and Signup are the two modes the design draws. The two verification steps are what the API
- * adds — the handoff allows for "a verification step if the backend needs one", and this one needs
- * two: registering confirms the address, and every sign-in is then confirmed with its own code.
- */
 enum class AuthMode {
     Login,
     Signup,
@@ -38,8 +33,6 @@ internal val AuthMode.cta: String
         AuthMode.VerifySignIn -> "VERIFY"
     }
 
-/// What the button says while the request is out. The design draws no pending state, and without
-/// one "working" and "broken" look identical: the button greys out and nothing else moves.
 internal val AuthMode.working: String
     get() = when (this) {
         AuthMode.Login -> "SIGNING IN…"

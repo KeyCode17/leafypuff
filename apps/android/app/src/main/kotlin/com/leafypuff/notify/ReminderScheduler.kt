@@ -10,14 +10,7 @@ import kotlinx.datetime.LocalTime
 
 private const val RequestCode = 100
 
-/**
- * The daily nudge. It books one alarm at a time and rebooks from the receiver rather than setting
- * a repeating one, so a changed time takes effect the same day. The alarm is allowed to fire in
- * doze but is not exact: an exact one needs SCHEDULE_EXACT_ALARM, and a reminder is not worth
- * asking the owner for that.
- */
 class ReminderScheduler(private val context: Context) {
-
     fun apply(enabled: Boolean, at: LocalTime) {
         when {
             enabled -> book(at)

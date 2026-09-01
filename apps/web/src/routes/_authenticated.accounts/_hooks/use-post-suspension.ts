@@ -11,8 +11,6 @@ export const ACCOUNT_MUTATION_KEY = {
 	RESTORE: ["post-restore-account"],
 } as const
 
-/// Invalidation lives at hook level rather than at the call site, so it still fires when the row
-/// that started the mutation has already unmounted.
 export const usePostSuspendAccount = () => {
 	const queryClient = useQueryClient()
 	return useMutation({

@@ -18,8 +18,6 @@ pub struct RbacServices {
 }
 
 impl RbacServices {
-    /// The one place a permission is checked. Every handler that changes state calls this as its
-    /// first line, so a route added later cannot forget by omission — it has no other way in.
     pub async fn require(&self, account_id: Uuid, permission: Permission) -> Result<(), RbacError> {
         let granted = self.permissions.granted(account_id).await?;
         if granted.contains(&permission) {

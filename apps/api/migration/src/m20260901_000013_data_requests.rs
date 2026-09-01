@@ -30,8 +30,6 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .primary_key(),
                     )
-                    // No foreign key. An erasure request has to outlive the account it erased,
-                    // or the record of having honoured it would vanish with the person.
                     .col(ColumnDef::new(DataRequests::AccountId).uuid().not_null())
                     .col(ColumnDef::new(DataRequests::Email).text().null())
                     .col(ColumnDef::new(DataRequests::Kind).text().not_null())

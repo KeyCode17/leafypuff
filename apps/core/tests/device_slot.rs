@@ -42,7 +42,6 @@ fn the_device_slot_carries_the_same_content_key_as_the_passphrase_slot() {
         .unlock_with_passphrase(PASSPHRASE)
         .expect("the passphrase slot opens");
 
-    // ContentKey does not print its bytes, so the proof is that both open the same sealed field.
     let context = leafypuff_core::domain::crypto::FieldContext {
         entry_id: leafypuff_core::domain::EntryId::new(),
         field_name: "title",

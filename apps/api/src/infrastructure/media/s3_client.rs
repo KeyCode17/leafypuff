@@ -21,8 +21,6 @@ pub fn build_s3_client(config: &Config) -> Client {
         .region(Region::new(REGION))
         .endpoint_url(endpoint(&config.s3_endpoint))
         .credentials_provider(credentials)
-        // Garage speaks path style only. Virtual-hosted style would resolve a bucket
-        // subdomain that has no DNS record on loopback.
         .force_path_style(true);
     builder.set_sleep_impl(default_async_sleep());
     Client::from_conf(builder.build())

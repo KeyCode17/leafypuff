@@ -11,8 +11,6 @@ pub async fn connect_and_migrate(database_url: &str) -> Result<DatabaseConnectio
     options
         .max_connections(MAX_CONNECTIONS)
         .connect_timeout(CONNECT_TIMEOUT)
-        // SeaORM's statement log prints bound parameters. Every push binds ciphertext, so
-        // leaving it on would copy the entire encrypted corpus into the journal.
         .sqlx_logging(false);
 
     let connection = Database::connect(options).await?;

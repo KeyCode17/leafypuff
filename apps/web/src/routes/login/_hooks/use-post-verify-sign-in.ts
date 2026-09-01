@@ -26,8 +26,5 @@ export const usePostVerifySignIn = (onSignedIn: () => void) =>
 
 const KNOWN: readonly TPermission[] = Object.values(PERMISSION)
 
-/// The server is the authority on what the caller may do; the client only mirrors it to hide
-/// controls. An unknown string is dropped rather than trusted, so a rename on the server cannot
-/// grant a permission the catalog here does not know about.
 const readPermissions = (granted: string[]): readonly TPermission[] =>
 	KNOWN.filter((permission) => granted.includes(permission))

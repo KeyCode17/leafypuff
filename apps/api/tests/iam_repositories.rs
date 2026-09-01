@@ -17,7 +17,7 @@ async fn connect() -> Option<DatabaseConnection> {
     let Ok(url) = std::env::var("TEST_DATABASE_URL") else {
         eprintln!(
             "skipped: TEST_DATABASE_URL is unset. Point it at a throwaway postgres, for example \
-             postgres://leafypuff@127.0.0.1:55432/leafypuff. CI always sets it and fails when it \
+             postgres:
              is missing, so this can never be silently skipped there."
         );
         return None;

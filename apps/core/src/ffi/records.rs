@@ -138,7 +138,6 @@ impl TryFrom<FfiEntry> for Entry {
     }
 }
 
-/// What one exchange did. Counts only: a device reports how much moved, never what.
 #[derive(uniffi::Record)]
 pub struct FfiSyncOutcome {
     pub pushed: u32,

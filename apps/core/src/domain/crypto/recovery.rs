@@ -12,21 +12,18 @@ pub const ENTROPY_LEN: usize = 16;
 pub const CODE_CHARS: usize = 26;
 const RECOVERY_INFO: &[u8] = b"leafypuff:recovery-key:v1";
 
-/// 128 bits of entropy shown to the user once, as 26 base32 characters. Zeroized on drop.
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct RecoveryCode {
     entropy: [u8; ENTROPY_LEN],
 }
 
 impl RecoveryCode {
-    /// Draws a fresh recovery code from the operating system entropy source.
     pub fn generate() -> Result<Self, CryptoError> {
         Ok(Self {
             entropy: random_bytes()?,
         })
     }
 
-    /// Reads a code the user typed, tolerating lowercase, spaces and dashes and nothing else.
     pub fn parse(text: &str) -> Result<Self, CryptoError> {
         let mut normalized: String = text
             .chars()
@@ -46,12 +43,10 @@ impl RecoveryCode {
         Ok(Self { entropy })
     }
 
-    /// Renders the code for the one screen that shows it. The buffer wipes itself when dropped.
     pub fn to_code_string(&self) -> Zeroizing<String> {
         Zeroizing::new(BASE32_NOPAD.encode(&self.entropy))
     }
 
-    /// Derives the wrapping key this code unwraps the recovery slot with.
     pub fn recovery_key(&self) -> Result<RecoveryKey, CryptoError> {
         let hkdf = Hkdf::<Sha256>::new(None, &self.entropy);
         let mut bytes = [0u8; KEY_LEN];

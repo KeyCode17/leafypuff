@@ -40,7 +40,6 @@ class ReminderReceiver : BroadcastReceiver() {
         context.getSystemService(NotificationManager::class.java)
             ?.notify(NotificationId, notification)
 
-        // The alarm is exact and one-shot, so tomorrow's has to be booked as today's fires.
         ReminderScheduler(context).rebook()
     }
 }

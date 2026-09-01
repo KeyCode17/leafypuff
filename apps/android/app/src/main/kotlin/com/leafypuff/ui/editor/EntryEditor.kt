@@ -77,8 +77,6 @@ fun EntryEditor(
                 onLocationClick = onLocationClick,
             )
 
-            // The note and its stickers share one box: the design floats the sticker layer over
-            // the note itself, so it has to grow and scroll with it rather than with the screen.
             Box {
                 EntryNoteCard(
                     title = draft.title,
@@ -166,8 +164,4 @@ fun EntryEditor(
     }
 }
 
-/**
- * A sticker's identity has to survive a drag, so it cannot be the list index. The ordinal it was
- * dropped at is stable for the life of the entry and unique within it.
- */
 private fun stickerKey(sticker: StickerId, ordinal: Int): String = "${sticker.id}-$ordinal"

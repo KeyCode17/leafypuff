@@ -1,9 +1,6 @@
 use crate::domain::crypto::{ContentKey, open_blob, seal_blob};
 use crate::domain::{ContentSealer, CoreError};
 
-/// The [`ContentSealer`] every blob crosses once a vault is unlocked. Holds the content key, seals
-/// with XChaCha20-Poly1305 and binds the caller's label into the associated data, so a file moved
-/// to another photo's name fails to open.
 pub struct XChaChaSealer {
     key: ContentKey,
 }

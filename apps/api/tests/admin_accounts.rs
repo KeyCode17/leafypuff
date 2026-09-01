@@ -12,8 +12,6 @@ use uuid::Uuid;
 
 const BODY_LIMIT: usize = 64 * 1024;
 
-/// The whole point of the admin surface: counts, dates and flags. If a key ever appears outside
-/// this list, someone put a person's diary on an operator's screen.
 const ALLOWED_KEYS: [&str; 9] = [
     "account_id",
     "email",

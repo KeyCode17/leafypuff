@@ -20,8 +20,6 @@ pub struct PrivacyServices {
 }
 
 impl PrivacyServices {
-    /// Anyone signed in may ask about their own data. The permission gates reading other people's
-    /// requests and fulfilling them, which is the operator half.
     pub async fn raise(
         &self,
         account_id: Uuid,

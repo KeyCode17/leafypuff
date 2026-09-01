@@ -23,8 +23,6 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Vault::Table)
                     .if_not_exists()
-                    // One row, always. The device holds exactly one content key, so the primary
-                    // key is a constant rather than a generated id nothing would ever vary.
                     .col(
                         ColumnDef::new(Vault::Id)
                             .integer()

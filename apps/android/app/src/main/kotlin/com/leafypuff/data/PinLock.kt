@@ -9,12 +9,7 @@ private const val PinHashKey = "pin.hash"
 
 const val PinLength = 4
 
-/**
- * The screen lock. Only an argon2id hash of the PIN is ever written; the digits leave memory with
- * the composable that read them.
- */
 class PinLock(private val context: Context) {
-
     fun isSet(): Boolean = stored() != null
 
     fun set(pin: String) {
