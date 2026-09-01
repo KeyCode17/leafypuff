@@ -133,7 +133,6 @@ async fn a_second_arrival_replaces_the_tags_and_stickers_rather_than_adding_to_t
         .await
         .expect("the second arrival");
 
-    // A tag the writing device no longer names is a tag its owner removed.
     assert_eq!(stored_tags(&connection).await, vec!["#home"]);
     assert_eq!(stored_stickers(&connection).await, vec!["star-1"]);
 }

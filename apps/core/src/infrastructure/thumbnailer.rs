@@ -9,8 +9,6 @@ use crate::domain::{CoreError, ThumbnailMaker};
 
 pub const COVER_QUALITY: u8 = 82;
 
-/// Builds the diary cover: a top-anchored 3:2 crop of the picked photo,
-/// downscaled with Lanczos3 and written back as jpeg.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ImageThumbnailer;
 

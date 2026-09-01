@@ -22,8 +22,6 @@ pub struct AdminServices {
 }
 
 impl AdminServices {
-    /// Sync health is a rolling day: a device that has not exchanged in that window is the
-    /// signal worth surfacing, and a fixed calendar boundary would read as a cliff every midnight.
     pub async fn overview(&self, actor_id: Uuid) -> Result<ServiceOverview, AdminError> {
         self.permitted(actor_id, Permission::EntryCountRead).await?;
         let since = Utc::now().timestamp_millis() - ROLLING_DAY_MS;

@@ -17,9 +17,6 @@ const tableStore = createTableStore()
 const formatInstant = (millis: number): string =>
 	new Date(millis).toISOString().replace("T", " ").slice(0, 19)
 
-/// Plain ColumnDef rather than createColumnHelper: the helper narrows TValue per column, and a
-/// heterogeneous set of accessors then refuses to sit in one ColumnDef<TRow, unknown>[] without
-/// a cast. Reading row.original keeps the table honestly typed with no `as`.
 const columns: ColumnDef<TAuditEvent>[] = [
 	{
 		id: "recorded_at_ms",

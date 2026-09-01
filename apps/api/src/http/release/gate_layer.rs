@@ -13,8 +13,6 @@ const PLATFORM_HEADER: &str = "x-app-platform";
 const BUILD_HEADER: &str = "x-app-build";
 const DETAIL_UPDATE_REQUIRED: &str = "This build can no longer sync. Update the app.";
 
-/// Wrapped around /v1/sync and nothing else. A blocked build must still read and write its own
-/// diary; force_update stops the exchange, never the app.
 pub async fn guard(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let Some((platform, build)) = client(request.headers()) else {
         return next.run(request).await;
@@ -27,8 +25,6 @@ pub async fn guard(State(state): State<AppState>, request: Request, next: Next) 
             gate.message.as_deref().unwrap_or(DETAIL_UPDATE_REQUIRED),
         )
         .into_response(),
-        // A gate that cannot be read must not take sync down with it. The device keeps working
-        // and the operator sees the storage error in the log.
         Ok(_) | Err(_) => next.run(request).await,
     }
 }

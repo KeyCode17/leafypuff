@@ -21,7 +21,6 @@ data class LeafyColors(
     val keyLine: Color,
 )
 
-// Fixed colours, outside the theme by design: they read the same in both palettes.
 val Destructive = Color(0xFFEF4E4E)
 val MarkPlate = Color(0xFFF7FAEF)
 

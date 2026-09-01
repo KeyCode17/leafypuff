@@ -27,8 +27,6 @@ const OWNER_GRANTS: [&str; 17] = [
     "data_request:fulfil",
 ];
 
-// Support deliberately lacks role:write, catalog:publish and release:write. Someone who can read
-// every account should not also be able to grant themselves more, or ship a release.
 const SUPPORT_GRANTS: [&str; 8] = [
     "account:list",
     "account:read",

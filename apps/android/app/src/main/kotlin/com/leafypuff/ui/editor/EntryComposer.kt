@@ -68,8 +68,6 @@ fun EntryComposer(
     LaunchedEffect(open, existing) {
         if (open) {
             draft = existing ?: blankDraft(today)
-            // An entry that already exists has already had its mood chosen; reopening it should
-            // land on the note, not send the writer back through the mood deck.
             editing = existing != null
             photos = existingPhotos
             asking = false

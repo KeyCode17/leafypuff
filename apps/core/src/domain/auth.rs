@@ -1,7 +1,5 @@
 use std::fmt;
 
-/// What a signed-in device holds. Debug prints lengths, never the tokens: a session in a crash
-/// report is a working account.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Session {
     pub access_token: String,
@@ -20,16 +18,11 @@ impl fmt::Debug for Session {
     }
 }
 
-/// The API answers a challenge rather than a session for both register and sign-in: a six-digit
-/// code goes out by mail and the caller comes back with it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Challenge {
     pub expires_in_seconds: i64,
 }
 
-/// The API's own error vocabulary, carried as a type. The device shows a different sentence for a
-/// wrong password than for an unconfirmed address, and deciding that from a formatted message is
-/// how a copy edit on the server turns into a wrong screen on the phone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rejection {
     InvalidCredentials,

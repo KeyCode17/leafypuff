@@ -16,14 +16,6 @@ private const val UnlockDelayMillis = 240L
 
 internal enum class LockStep { Choose, Confirm, Verify }
 
-/**
- * The screen the app opens behind when Settings has the lock on. With the lock off it is not a
- * screen at all — the design has no PIN in the way of someone who never asked for one.
- *
- * The first launch after the lock is turned on asks for a PIN twice; after that, once. The 240 ms
- * settle is what makes the fourth digit visible before the screen changes, rather than the keypad
- * appearing to swallow it.
- */
 @Composable
 fun LockGate(
     enabled: Boolean,
@@ -101,10 +93,6 @@ fun LockGate(
     )
 }
 
-/**
- * The design writes only the two hints the unlock screen shows. Choosing and confirming a PIN are
- * screens it never draws, so they say what they are rather than borrowing copy meant for unlocking.
- */
 internal fun lockHint(step: LockStep, pinLength: Int, wrong: Boolean): String = when {
     wrong && step == LockStep.Choose -> "Those did not match. Pick a PIN"
     wrong -> "That is not your PIN"

@@ -11,11 +11,6 @@ private const val PromptSubtitle = "Use your fingerprint or face instead of the 
 private const val PromptCancel = "Use PIN"
 private const val Authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK
 
-/**
- * Opens the platform prompt when the device has an enrolled biometric, and does nothing when it
- * does not. A device without one simply keeps the PIN keypad, which is the only path that always
- * exists.
- */
 fun unlockWithBiometric(context: Context, onUnlocked: () -> Unit) {
     val activity = context as? FragmentActivity ?: return
     if (BiometricManager.from(context).canAuthenticate(Authenticators) !=

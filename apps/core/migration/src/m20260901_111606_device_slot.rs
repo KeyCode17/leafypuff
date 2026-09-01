@@ -12,11 +12,6 @@ enum DeviceSlot {
     CreatedAt,
 }
 
-// A third copy of the content key, wrapped under a key this device keeps in its hardware keystore.
-// It exists so a returning owner is not asked for the account password on every launch. It is
-// deliberately NOT part of the vault: the vault travels to the server so a new device can restore,
-// and this row must never travel anywhere. A new device has no row, which is exactly why it asks
-// for the password.
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
@@ -25,7 +20,6 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(DeviceSlot::Table)
                     .if_not_exists()
-                    // One row, like the vault. A device holds one content key.
                     .col(
                         ColumnDef::new(DeviceSlot::Id)
                             .integer()

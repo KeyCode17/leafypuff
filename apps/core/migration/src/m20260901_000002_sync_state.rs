@@ -26,7 +26,6 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SyncState::Table)
                     .if_not_exists()
-                    // One row, like the vault. A device has one identity and one cursor.
                     .col(
                         ColumnDef::new(SyncState::Id)
                             .integer()
@@ -50,9 +49,6 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Entries::Table)
-                    // Null means the row has never reached the server. Comparing it against
-                    // updated_at is what makes a local edit push again without a dirty flag that
-                    // a crash could leave stale.
                     .add_column_if_not_exists(ColumnDef::new(Entries::SyncedAt).string().null())
                     .to_owned(),
             )

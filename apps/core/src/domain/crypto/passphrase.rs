@@ -9,13 +9,10 @@ pub const MEMORY_KIB: u32 = 65_536;
 pub const ITERATIONS: u32 = 3;
 pub const PARALLELISM: u32 = 1;
 
-/// Draws a fresh argon2id salt. Stored in plaintext beside the wrapped content key.
 pub fn generate_salt() -> Result<[u8; SALT_LEN], CryptoError> {
     random_bytes()
 }
 
-/// Runs argon2id at m=64MiB, t=3, p=1 over the passphrase. Changing any parameter changes every
-/// derived key, which is what the known-answer vector in this module exists to catch.
 pub fn derive_master_key(
     passphrase: &str,
     salt: &[u8; SALT_LEN],

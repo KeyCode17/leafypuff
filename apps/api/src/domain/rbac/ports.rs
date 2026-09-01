@@ -19,8 +19,6 @@ pub trait PermissionReader: Send + Sync {
     async fn granted(&self, account_id: Uuid) -> Result<Vec<Permission>, RbacError>;
 }
 
-/// Insert only. There is no update and no delete, which is what makes the log evidence rather
-/// than a mutable table an operator could tidy.
 #[async_trait]
 pub trait AuditLog: Send + Sync {
     async fn record(&self, event: AuditEvent) -> Result<(), RbacError>;

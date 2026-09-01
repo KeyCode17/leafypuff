@@ -11,9 +11,6 @@ const PHOTO_DIR: &str = "photos";
 const PHOTO_SUFFIX: &str = "jpg";
 const ERR_ARCHIVE: &str = "The archive could not be written";
 
-/// Writes the whole diary as one archive: every entry as JSON plus the original of every photo.
-/// The entries come back decrypted, which is the point of an export — it is the one place the
-/// plaintext is meant to leave the device, and only to a path the owner chose.
 pub struct ExportDiary<R, S> {
     repository: R,
     photos: S,

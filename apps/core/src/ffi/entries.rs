@@ -6,7 +6,6 @@ use super::records::FfiEntry;
 use super::stats_records::{FfiStats, FfiStatsRange};
 use super::{LeafyPuffCore, read_date};
 
-/// Statistics and the export both read the whole diary; neither has another bound.
 const WHOLE_DIARY: u32 = u32::MAX;
 
 const ERR_EXPORT_WRITE: &str = "The archive could not be saved";
@@ -53,8 +52,6 @@ impl LeafyPuffCore {
         Ok(())
     }
 
-    /// Writes the whole diary to `destination` as a zip and answers the path. The bytes are
-    /// plaintext by design: an export the owner cannot open is not an export.
     pub async fn export_diary(&self, destination: String) -> Result<String, LeafyPuffCoreError> {
         let archive = ExportDiary::new(&self.repository, &self.photos)
             .execute(WHOLE_DIARY)
@@ -64,8 +61,6 @@ impl LeafyPuffCore {
         Ok(destination)
     }
 
-    /// Every figure the Statistics screen draws. The definitions live here rather than in Kotlin
-    /// because the streak walks calendar days, which is a rule about the data and not the view.
     pub async fn statistics(
         &self,
         range: FfiStatsRange,

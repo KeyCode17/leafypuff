@@ -2,8 +2,6 @@ use chrono::{DateTime, Utc};
 
 use super::entry::EntryId;
 
-/// One entry's sealed fields exactly as they sit on disk. The device never re-encrypts to push:
-/// the local ciphertext and its nonce are what the server stores, so an upload is a copy.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutboundEntry {
     pub id: EntryId,

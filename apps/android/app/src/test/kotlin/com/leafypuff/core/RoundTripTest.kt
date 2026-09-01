@@ -10,7 +10,6 @@ import kotlinx.datetime.LocalDate
 private const val VaultPassphrase = "a passphrase only this test uses"
 
 class RoundTripTest {
-
     @Test
     fun anEntrySurvivesTheBoundaryUnchanged() = runBlocking {
         val dir = Files.createTempDirectory("leafypuff")

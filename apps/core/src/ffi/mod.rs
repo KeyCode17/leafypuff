@@ -37,8 +37,6 @@ pub(super) fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
         .map_err(|_| CoreError::Invalid(format!("{ERR_DATE_UNREADABLE}: {raw}")))
 }
 
-/// Hashes a screen-lock PIN. The caller stores the returned string and never the digits. Free
-/// rather than a method: the screen lock has nothing to do with the database handle.
 #[uniffi::export]
 pub fn hash_pin(pin: String) -> Result<String, LeafyPuffCoreError> {
     Ok(crypto_hash_pin(&pin).map_err(CoreError::from)?)
@@ -49,7 +47,6 @@ pub fn verify_pin(pin: String, stored: String) -> bool {
     crypto_verify_pin(&pin, &stored)
 }
 
-/// The only handle Kotlin holds. It owns the connection and every adapter behind it.
 #[derive(uniffi::Object)]
 pub struct LeafyPuffCore {
     repository: SqliteEntryRepository<VaultSealer>,
@@ -83,8 +80,6 @@ impl LeafyPuffCore {
         }))
     }
 
-    /// Creates the one vault this device will ever hold and returns the recovery code once.
-    /// The caller must show it and never store it; nothing here writes it down.
     pub async fn create_vault(&self, passphrase: String) -> Result<String, LeafyPuffCoreError> {
         let code = RecoveryCode::generate().map_err(CoreError::from)?;
         let (vault, key) = KeyVault::create(&passphrase, &code).map_err(CoreError::from)?;
@@ -116,7 +111,6 @@ impl LeafyPuffCore {
         Ok(())
     }
 
-    /// Rewraps the content key under a new passphrase. No entry is re-encrypted.
     pub async fn change_passphrase(
         &self,
         current: String,

@@ -358,8 +358,6 @@ async fn a_pull_never_returns_another_accounts_entries() {
     let (status, body) = send(router(&world), pull_request(mine, Uuid::new_v4(), 0)).await;
 
     assert_eq!(status, StatusCode::OK);
-    // Not "no titles leaked" -- no rows at all. A neighbour's entry has no business being
-    // counted, dated or moods-listed here either.
     assert_eq!(body["data"]["records"].as_array().map(Vec::len), Some(0));
 }
 
@@ -404,7 +402,5 @@ async fn a_wrapped_vault_key_is_never_handed_to_another_account() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["data"].as_array().map(Vec::len), Some(0));
-    // The wrapped key is what a diary is sealed under. Handing one to the wrong account is the
-    // one leak that would matter even though the server cannot open it itself.
     assert!(!body.to_string().contains("their-wrapped-content-key"));
 }

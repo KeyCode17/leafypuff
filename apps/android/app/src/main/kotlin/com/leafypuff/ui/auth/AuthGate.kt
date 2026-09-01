@@ -16,10 +16,6 @@ import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.plainToast
 import kotlinx.coroutines.launch
 
-/**
- * The first screen, as the design has it. It stands in front of everything else until the account
- * is signed in; once a session is stored it never renders again.
- */
 @Composable
 fun AuthGate(
     apiBaseUrl: String,
@@ -58,8 +54,6 @@ fun AuthGate(
             val core = client
             when {
                 complaint != null -> state = state.copy(error = complaint)
-                // Tapped before the local database finished opening. Rare and brief, but a
-                // silent no-op here is indistinguishable from a broken button.
                 core == null -> state = state.copy(error = "One moment, still opening your diary.")
                 else -> {
                     pending = true
@@ -81,11 +75,6 @@ fun AuthGate(
     )
 }
 
-/**
- * One submit moves the form one step. Registering only confirms the address, so a fresh account
- * walks the whole chain — register, confirm, request a sign-in code, redeem it — without ever
- * asking for the password a second time.
- */
 private suspend fun advance(
     client: CoreClient,
     apiBaseUrl: String,
@@ -101,9 +90,6 @@ private suspend fun advance(
 
         AuthMode.VerifyEmail -> {
             client.verifyEmail(apiBaseUrl, state.email, state.code)
-            // The address is confirmed from here on, and the code is spent. If asking for the
-            // sign-in code then fails, the form drops back to Login rather than to a Verify
-            // screen whose code no longer works.
             runCatching { client.signIn(apiBaseUrl, state.email, state.password) }.fold(
                 onSuccess = { state.copy(mode = AuthMode.VerifySignIn, code = "", error = null) },
                 onFailure = { failure ->
@@ -124,19 +110,12 @@ private suspend fun advance(
         AuthMode.VerifySignIn -> {
             val issued = client.verifySignIn(apiBaseUrl, state.email, state.code)
             session.start(state.email, issued.accessToken, issued.refreshToken)
-            // The password goes straight on to the vault and is not held anywhere else: it is the
-            // only thing that opens an account's diary on a handset that has never seen it.
             onSignedIn(SignedIn(state.name, state.password, issued.accessToken))
             state
         }
     }
 }.getOrElse { failure -> state.copy(error = readable(state.mode, failure)) }
 
-/**
- * The core raises the API's rejection as a type, so the screen matches on it. The same rejection
- * means different things at different steps: on a password it is a wrong password, on a code it is
- * a wrong code, and the sentence has to say which.
- */
 private fun readable(mode: AuthMode, failure: Throwable): String = when (failure) {
     is LeafyPuffCoreException.InvalidCredentials -> when {
         mode.verifying -> "That code is wrong or has expired."
@@ -154,5 +133,4 @@ private fun readable(mode: AuthMode, failure: Throwable): String = when (failure
     else -> "Something went wrong. Try again."
 }
 
-/// What a completed sign-in hands back. The password travels no further than the vault.
 data class SignedIn(val name: String, val password: String, val accessToken: String)

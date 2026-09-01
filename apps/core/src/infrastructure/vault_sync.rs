@@ -8,10 +8,6 @@ use super::http_error::reached;
 use crate::domain::CoreError;
 use crate::domain::crypto::{KeyVault, WrappedKey};
 
-/// A phone leaves wifi mid-request and the socket simply stops answering. Without a deadline the
-/// call waits forever, the screen stays on its spinner, and the owner cannot tell a slow network
-/// from a dead button. These are generous enough for argon2 on a small server and short enough
-/// that a hang becomes an error someone can act on.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -24,9 +20,6 @@ const ERR_UNREACHABLE: &str = "The sync service could not be reached";
 const ERR_SHAPE: &str = "The sync service answered an unexpected shape";
 const ERR_SLOT: &str = "A stored key slot is the wrong length";
 
-/// The vault as the server holds it: two wrapped copies of one content key and the salt that
-/// derives the passphrase key. None of it opens anything without the password or the recovery
-/// code, which is why it can be stored at all.
 pub struct VaultSync {
     client: Client,
     base_url: String,

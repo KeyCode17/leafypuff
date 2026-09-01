@@ -37,11 +37,6 @@ const readError = (value: unknown): TErrorBody | null => {
 	return { code, detail }
 }
 
-/**
- * The API answers {success, data, message, error} on every route, including failures. A body that
- * does not have that shape came from something other than the API — a proxy error page, most
- * likely — and is reported as such rather than being read as a successful empty response.
- */
 export const readEnvelope = <TData>(
 	status: number,
 	body: unknown,

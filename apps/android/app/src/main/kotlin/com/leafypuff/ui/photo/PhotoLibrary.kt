@@ -17,12 +17,7 @@ object NoPhotoLibrary : PhotoLibrary {
     override suspend fun thumbnail(photoId: String): ImageBitmap? = null
 }
 
-/**
- * Photos go through the same core handle the entries do. A second handle would mean a second
- * database and a second vault, and a photo sealed under one of them is unreadable from the other.
- */
 class CorePhotoLibrary(private val client: CoreClient) : PhotoLibrary {
-
     override suspend fun import(bytes: ByteArray): EntryPhoto? {
         val imported = runCatching { client.importPhoto(bytes) }.getOrNull() ?: return null
         val cover = thumbnail(imported.id) ?: return null

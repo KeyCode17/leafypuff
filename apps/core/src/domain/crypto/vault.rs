@@ -12,14 +12,12 @@ const PASSPHRASE_SLOT: &[u8] = b"leafypuff:wrap:passphrase:v1";
 const RECOVERY_SLOT: &[u8] = b"leafypuff:wrap:recovery:v1";
 const DEVICE_SLOT: &[u8] = b"leafypuff:wrap:device:v1";
 
-/// A content key sealed under a wrapping key. Opaque to the server.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WrappedKey {
     pub nonce: [u8; NONCE_LEN],
     pub ciphertext: Vec<u8>,
 }
 
-/// The two wrapped copies of one content key, plus the argon2id salt. Holds no key material.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct KeyVault {
     pub passphrase_salt: [u8; SALT_LEN],
@@ -70,7 +68,6 @@ fn open_slot(
 }
 
 impl KeyVault {
-    /// Generates a content key and wraps it under both the passphrase and the recovery code.
     pub fn create(
         passphrase: &str,
         code: &RecoveryCode,
@@ -89,13 +86,11 @@ impl KeyVault {
         ))
     }
 
-    /// Recovers the content key from the passphrase. A wrong passphrase returns an error.
     pub fn unlock_with_passphrase(&self, passphrase: &str) -> Result<ContentKey, CryptoError> {
         let master = derive_master_key(passphrase, &self.passphrase_salt)?;
         open_slot(master.as_bytes(), PASSPHRASE_SLOT, &self.passphrase_slot)
     }
 
-    /// Recovers the same content key from the recovery code. A wrong code returns an error.
     pub fn unlock_with_recovery_code(
         &self,
         code: &RecoveryCode,
@@ -104,8 +99,6 @@ impl KeyVault {
         open_slot(recovery.as_bytes(), RECOVERY_SLOT, &self.recovery_slot)
     }
 
-    /// Rewraps the content key under a new passphrase. The content key is unchanged and the recovery
-    /// slot is carried over byte for byte, so no entry is ever re-encrypted.
     pub fn rewrap_passphrase(&self, current: &str, replacement: &str) -> Result<Self, CryptoError> {
         let content = self.unlock_with_passphrase(current)?;
         let passphrase_salt = generate_salt()?;
@@ -118,9 +111,6 @@ impl KeyVault {
     }
 }
 
-/// Wraps the content key under a key this device holds in hardware. The result stays on the device
-/// and is never synced: it saves a returning owner from typing the account password every launch,
-/// and a device that has never been unlocked has none, which is what forces the password there.
 pub fn seal_for_device(
     device_key: &[u8; KEY_LEN],
     content: &ContentKey,

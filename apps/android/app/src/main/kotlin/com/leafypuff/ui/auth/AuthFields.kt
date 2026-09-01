@@ -48,9 +48,6 @@ internal fun AuthFields(state: AuthFormState, onChange: (AuthFormState) -> Unit)
             AuthField(
                 label = "Password",
                 value = state.password,
-                // The design writes "At least 8 characters"; the API refuses anything under twelve.
-                // A placeholder that states a rule the server does not enforce is worse than the
-                // one-word deviation, so it states the real floor.
                 placeholder = "At least 12 characters",
                 keyboard = KeyboardType.Password,
                 masked = !state.passwordShown,

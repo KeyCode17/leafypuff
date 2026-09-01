@@ -13,7 +13,6 @@ private val AcceptOrReject = ToastPrompt(accept = "Accept", reject = "Reject")
 
 fun plainToast(text: String): ToastRequest = ToastRequest(text)
 
-/// The two sentences the design gives a save, verbatim.
 fun saveToast(reopened: Boolean): ToastRequest = when {
     reopened -> plainToast("Entry updated.")
     else -> plainToast("Entry saved.")

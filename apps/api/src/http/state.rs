@@ -8,8 +8,6 @@ use crate::application::release::ReleaseServices;
 use crate::application::sync::SyncServices;
 use crate::infrastructure::DependencyProbe;
 
-/// Built with a struct literal rather than a constructor. Every field is one wired service, and a
-/// positional argument list of that length is a place to transpose two of them silently.
 #[derive(Clone)]
 pub struct AppState {
     pub readiness: DependencyProbe,

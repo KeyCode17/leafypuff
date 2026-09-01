@@ -5,10 +5,6 @@ use reqwest::{Client, StatusCode};
 use super::http_error::reached;
 use crate::domain::{CoreError, PhotoKind};
 
-/// A phone leaves wifi mid-request and the socket simply stops answering. Without a deadline the
-/// call waits forever, the screen stays on its spinner, and the owner cannot tell a slow network
-/// from a dead button. These are generous enough for argon2 on a small server and short enough
-/// that a hang becomes an error someone can act on.
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -18,8 +14,6 @@ const VARIANT_DERIVATIVE: &str = "derivative";
 
 const ERR_UNREACHABLE: &str = "The media service could not be reached";
 
-/// Photo blobs, moved as they sit on disk: already sealed under the content key. The server is a
-/// place to put bytes it cannot read.
 pub struct MediaSync {
     client: Client,
     base_url: String,
@@ -60,8 +54,6 @@ impl MediaSync {
         Err(unreachable(response.status()))
     }
 
-    /// None when the account has no such object. A photo the owner deleted on another device is
-    /// not an error here; it is simply not there.
     pub async fn download(
         &self,
         photo_id: &str,
@@ -92,8 +84,6 @@ impl MediaSync {
     }
 }
 
-/// The core calls the small one a cover; the API calls it a derivative. The two vocabularies meet
-/// here and nowhere else.
 const fn variant(kind: PhotoKind) -> &'static str {
     match kind {
         PhotoKind::Original => VARIANT_ORIGINAL,

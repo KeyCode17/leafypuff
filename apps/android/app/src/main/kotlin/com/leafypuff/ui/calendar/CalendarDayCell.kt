@@ -118,8 +118,6 @@ private fun BoxScope.MoodDot(color: Color) {
 @Composable
 private fun BoxScope.EntryCount(count: Int, onAccentCell: Boolean) {
     val colors = LocalLeafyColors.current
-    // On a selected cell the disc already sits on accent, so the badge swaps to the sheet colour
-    // rather than disappearing into it.
     val fill = when {
         onAccentCell -> colors.sheet
         else -> colors.accent

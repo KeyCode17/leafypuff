@@ -76,9 +76,6 @@ fn a_complete_environment_parses() {
 
 #[test]
 fn a_from_header_with_no_address_is_refused_at_startup() {
-    // systemd splits an unquoted Environment= value on whitespace, which turned
-    // "leafyPuff <no-reply@example.test>" into "leafyPuff" on the way into the service. The
-    // provider would have rejected every send, a long way from the deploy that caused it.
     let mut map = complete();
     map.insert("MAIL_FROM".to_owned(), "leafyPuff".to_owned());
 

@@ -44,8 +44,6 @@ impl AuditAction {
     }
 }
 
-/// One entry in the append-only log. The subject is a pointer into audit_subjects rather than an
-/// address, so erasing a person nulls the mapping and leaves the event itself untouched.
 #[derive(Clone, PartialEq, Eq)]
 pub struct AuditEvent {
     pub id: Uuid,

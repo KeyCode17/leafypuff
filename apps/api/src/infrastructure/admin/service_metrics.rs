@@ -3,8 +3,6 @@ use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, DbErr, State
 
 use crate::domain::admin::{AdminError, ServiceMetrics, ServiceOverview};
 
-/// One round trip. Ten separate counts would each take a connection out of the pool and answer
-/// from a slightly different instant, so the dashboard would show a service that never existed.
 const OVERVIEW: &str = "
     SELECT
         (SELECT count(*) FROM accounts) AS account_count,

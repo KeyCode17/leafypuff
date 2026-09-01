@@ -1,8 +1,5 @@
 use uuid::Uuid;
 
-/// What an operator is allowed to see about someone. Counts and dates, never a title, a body, a
-/// tag, a mood or a storage key — the server could not read the first two even if this said
-/// otherwise, and the rest are the person's, not the operator's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccountSummary {
     pub account_id: Uuid,

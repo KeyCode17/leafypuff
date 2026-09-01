@@ -148,9 +148,6 @@ struct Device {
     outbox: SyncOutbox,
 }
 
-/// A device is a database plus one unlocked vault. The second device is handed the *same* vault
-/// the first built, which is what /v1/sync/keys does for a real second install: the content key
-/// is never regenerated, or the two devices could never read each other.
 async fn device(vault: Option<KeyVault>) -> (Device, KeyVault) {
     let dir = tempfile::tempdir().expect("a temp dir");
     let path = dir

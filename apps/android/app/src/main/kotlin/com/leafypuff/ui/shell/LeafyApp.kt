@@ -59,8 +59,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var preferences by remember { mutableStateOf(settings.load()) }
     var signedIn by remember { mutableStateOf(session.signedIn()) }
     var credentials by remember { mutableStateOf<SignedIn?>(null) }
-    // Read once. The design words the setting "Ask when opening PawNotes", so a toggle flipped
-    // mid-session takes effect the next time the app opens, not under the owner's hands.
     val askForPin = remember(settings) { settings.lockEnabled() }
 
     LaunchedEffect(databasePath) {
@@ -103,8 +101,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                 onOpened = {
                     scope.launch {
                         entries = store?.list().orEmpty()
-                        // First sync of the session. A diary restored onto a new handset is empty
-                        // until this runs, so it runs before the owner can wonder where it went.
                         store?.sync(apiBaseUrl, session.accessToken())
                         entries = store?.list().orEmpty()
                     }
@@ -118,12 +114,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         preferences = preferences,
                         versionName = versionName,
                         onPreferencesChange = {
-                            // Turning the lock off forgets the PIN, so turning it back on asks
-                            // for a new one. That is the change-PIN flow the handoff says is
-                            // undesigned, built out of the two screens that already exist -- and
-                            // without it a forgotten PIN locks the owner out of their own diary
-                            // with no way back. The PIN guards the screen, never the vault, so
-                            // dropping it loses nothing.
                             if (preferences.lockEnabled && !it.lockEnabled) {
                                 pin.clear()
                             }
@@ -169,10 +159,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     }
 }
 
-/**
- * The archive lands in the app's external files directory, which needs no permission and is what
- * a file manager shows. Stamping the date keeps a second export from overwriting the first.
- */
 private fun exportPath(context: Context, today: LocalDate): String {
     val directory = context.getExternalFilesDir(null) ?: context.filesDir
     return File(directory, "leafypuff-$today.zip").absolutePath

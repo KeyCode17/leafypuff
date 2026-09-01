@@ -6,7 +6,6 @@ import kotlin.test.assertNull
 import kotlinx.datetime.LocalDate
 
 class ToastCopyTest {
-
     @Test
     fun theExifPromptReadsExactlyAsTheHandoffWroteIt() {
         assertEquals(

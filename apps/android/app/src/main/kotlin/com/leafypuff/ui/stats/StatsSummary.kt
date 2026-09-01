@@ -17,10 +17,6 @@ data class WeekdayCount(val label: String, val count: Int)
 
 data class TagCount(val tag: String, val count: Int)
 
-/**
- * What the core computed. Nothing here recomputes it: the streak rule walks calendar days, and one
- * definition of that living in two languages is one definition too many.
- */
 data class StatsSummary(
     val daysWritten: Int = 0,
     val longestStreak: Int = 0,

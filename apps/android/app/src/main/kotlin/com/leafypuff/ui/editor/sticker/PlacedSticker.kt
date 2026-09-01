@@ -1,6 +1,5 @@
 package com.leafypuff.ui.editor.sticker
 
-/// `x` and `y` are fractions of the note, `size` is dp. See the core's PlacedSticker for why.
 data class PlacedSticker(
     val key: String,
     val sticker: StickerId,

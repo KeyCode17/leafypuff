@@ -1,8 +1,5 @@
 use uuid::Uuid;
 
-/// A catalog bundle is opaque json the server stores and hands back. The twelve moods and eight
-/// stickers stay compiled into the app; this is how a later addition reaches a device that has
-/// already shipped, not how the built-in set is defined.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CatalogBundle {
     pub id: Uuid,

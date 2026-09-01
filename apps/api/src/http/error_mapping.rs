@@ -51,10 +51,6 @@ impl From<IamError> for ApiError {
             }
             IamError::Mail(reason) => {
                 tracing::error!(%reason, "the mail provider refused the request");
-                // 503, not 502. A CDN in front of this replaces a 502 body with its own error
-                // page, so the envelope never reaches the device and MAIL_UNAVAILABLE arrives as
-                // unparseable text. 503 passes through, and "a dependency is unavailable" is what
-                // this is anyway -- the same status DependencyUnavailable already uses.
                 Self::new(
                     StatusCode::SERVICE_UNAVAILABLE,
                     ERR_MAIL_UNAVAILABLE,

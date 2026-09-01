@@ -8,8 +8,6 @@ use super::records::FfiSyncOutcome;
 
 #[uniffi::export(async_runtime = "tokio")]
 impl LeafyPuffCore {
-    /// Creates the account and mails a six-digit code. The API answers a challenge rather than a
-    /// session, so nothing is signed in until `verify_email` and then `verify_sign_in` run.
     pub async fn register(
         &self,
         base_url: String,
@@ -43,8 +41,6 @@ impl LeafyPuffCore {
         Ok(FfiChallenge::from(client.sign_in(email, password).await?))
     }
 
-    /// The device id is the same one the sync exchange uses, so the refresh credential the server
-    /// issues is scoped to this install rather than to a value the screen invented.
     pub async fn verify_sign_in(
         &self,
         base_url: String,
@@ -58,9 +54,6 @@ impl LeafyPuffCore {
         ))
     }
 
-    /// One exchange: photos this device owes go up first, then the entries that name them, then
-    /// whatever another device wrote comes down, then the blobs those entries are still missing.
-    /// Photos lead on the way up so a record never lands pointing at a blob the server lacks.
     pub async fn sync_now(
         &self,
         base_url: String,
@@ -97,9 +90,6 @@ impl LeafyPuffCore {
         Ok(())
     }
 
-    /// The blob comes down sealed and is written as it arrived. Nothing here opens it: a device
-    /// that cannot open it has the wrong content key, and that is a question for the unlock
-    /// screen rather than for the sync.
     async fn fetch_photo(&self, media: &MediaSync, id: &str) -> Result<(), LeafyPuffCoreError> {
         let Some(original) = media.download(id, PhotoKind::Original).await? else {
             return Ok(());

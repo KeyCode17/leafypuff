@@ -6,12 +6,6 @@ use exif::{Error as ExifError, In, Reader, Tag, Value};
 use crate::domain::error::ERR_EXIF_UNREADABLE;
 use crate::domain::{CoreError, ExifReader};
 
-/// Reads `DateTimeOriginal` out of the bytes the picker handed over.
-///
-/// A file that carries no Exif block, a truncated or malformed block and a
-/// payload that is not an image at all all resolve to `Ok(None)`: the prompt
-/// simply does not fire. Only a read failure of the byte source itself is
-/// reported as [`CoreError::Exif`].
 #[derive(Debug, Default, Clone, Copy)]
 pub struct KamadakExifReader;
 

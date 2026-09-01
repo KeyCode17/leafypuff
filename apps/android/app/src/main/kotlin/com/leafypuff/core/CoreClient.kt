@@ -41,7 +41,6 @@ data class EntryDraft(
 )
 
 class CoreClient private constructor(private val core: LeafyPuffCore) {
-
     suspend fun save(draft: EntryDraft): EntryDraft = withContext(Dispatchers.IO) {
         core.saveEntry(draft.toRecord()).toDraft()
     }
@@ -95,7 +94,6 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
             core.uploadVault(baseUrl, accessToken, updatedAtMs)
         }
 
-    /// False when the account has never stored a vault, which is the signal to create one.
     suspend fun restoreVault(baseUrl: String, accessToken: String): Boolean =
         withContext(Dispatchers.IO) {
             core.restoreVault(baseUrl, accessToken)
@@ -144,8 +142,6 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.deviceId()
     }
 
-    /// Uploads the ciphertext this device already holds and stores what comes back without
-    /// opening it, so an exchange works whether or not the vault is unlocked.
     suspend fun syncNow(baseUrl: String, accessToken: String): SyncSummary =
         withContext(Dispatchers.IO) {
             core.syncNow(baseUrl, accessToken).let {

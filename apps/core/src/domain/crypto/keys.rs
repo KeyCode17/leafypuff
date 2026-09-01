@@ -16,14 +16,12 @@ pub(crate) fn random_bytes<const N: usize>() -> Result<[u8; N], CryptoError> {
     Ok(bytes)
 }
 
-/// The 256-bit key every entry field is sealed under. Zeroized on drop.
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct ContentKey {
     bytes: [u8; KEY_LEN],
 }
 
 impl ContentKey {
-    /// Draws a fresh content key from the operating system entropy source.
     pub fn generate() -> Result<Self, CryptoError> {
         Ok(Self {
             bytes: random_bytes()?,
@@ -45,7 +43,6 @@ impl fmt::Debug for ContentKey {
     }
 }
 
-/// The key an argon2id pass over the passphrase produces. Wraps the content key. Zeroized on drop.
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct MasterKey {
     bytes: [u8; KEY_LEN],
@@ -67,7 +64,6 @@ impl fmt::Debug for MasterKey {
     }
 }
 
-/// The key an HKDF pass over the recovery code produces. Wraps the same content key. Zeroized on drop.
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct RecoveryKey {
     bytes: [u8; KEY_LEN],
