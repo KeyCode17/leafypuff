@@ -3,6 +3,7 @@ pub mod argon;
 pub mod clock;
 pub mod entity;
 pub mod jwt;
+pub mod mail_body;
 pub mod mapper;
 pub mod otp;
 pub mod otp_repository;
