@@ -7,6 +7,8 @@ use crate::application::rbac::RbacServices;
 use crate::application::sync::SyncServices;
 use crate::infrastructure::DependencyProbe;
 
+/// Built with a struct literal rather than a constructor. Every field is one wired service, and a
+/// positional argument list of that length is a place to transpose two of them silently.
 #[derive(Clone)]
 pub struct AppState {
     pub readiness: DependencyProbe,
@@ -17,28 +19,4 @@ pub struct AppState {
     pub admin: AdminServices,
     pub catalog: CatalogServices,
     pub privacy: PrivacyServices,
-}
-
-impl AppState {
-    pub const fn new(
-        readiness: DependencyProbe,
-        iam: IamServices,
-        sync: SyncServices,
-        media: MediaServices,
-        rbac: RbacServices,
-        admin: AdminServices,
-        catalog: CatalogServices,
-        privacy: PrivacyServices,
-    ) -> Self {
-        Self {
-            readiness,
-            iam,
-            sync,
-            media,
-            rbac,
-            admin,
-            catalog,
-            privacy,
-        }
-    }
 }

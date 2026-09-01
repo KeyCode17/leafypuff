@@ -129,16 +129,16 @@ async fn harness() -> Option<Harness> {
     };
     let probe = DependencyProbe::new(url, "127.0.0.1:3900".to_owned());
     Some(Harness {
-        router: build_router(AppState::new(
-            probe,
+        router: build_router(AppState {
+            readiness: probe,
             iam,
             sync,
             media,
-            rbac.clone(),
+            rbac: rbac.clone(),
             admin,
             catalog,
             privacy,
-        )),
+        }),
         account_id: owner.id,
         token,
         connection,

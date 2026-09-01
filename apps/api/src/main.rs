@@ -95,9 +95,16 @@ async fn main() {
     };
 
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
-    let app = build_router(AppState::new(
-        probe, iam, sync, media, rbac, admin, catalog, privacy,
-    ));
+    let app = build_router(AppState {
+        readiness: probe,
+        iam,
+        sync,
+        media,
+        rbac,
+        admin,
+        catalog,
+        privacy,
+    });
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)

@@ -4,6 +4,8 @@ pub mod catalog;
 pub mod dto;
 pub mod envelope;
 pub mod error;
+pub mod error_mapping;
+pub mod error_mapping_admin;
 pub mod health;
 pub mod iam;
 pub mod media;

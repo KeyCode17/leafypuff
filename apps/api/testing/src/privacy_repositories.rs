@@ -49,16 +49,16 @@ impl DataRequestStore for InMemoryRequests {
         at_ms: i64,
     ) -> Result<(), PrivacyError> {
         let mut rows = self.rows.lock().expect("the request lock holds");
-        for row in rows
+        let Some(row) = rows
             .iter_mut()
-            .filter(|row| row.id == request_id && row.status == RequestStatus::Received)
-        {
-            row.status = RequestStatus::Fulfilled;
-            row.fulfilled_at_ms = Some(at_ms);
-            row.fulfilled_by = Some(actor_id);
-            return Ok(());
-        }
-        Err(PrivacyError::AlreadyFulfilled)
+            .find(|row| row.id == request_id && row.status == RequestStatus::Received)
+        else {
+            return Err(PrivacyError::AlreadyFulfilled);
+        };
+        row.status = RequestStatus::Fulfilled;
+        row.fulfilled_at_ms = Some(at_ms);
+        row.fulfilled_by = Some(actor_id);
+        Ok(())
     }
 }
 

@@ -14,16 +14,16 @@ const CIPHERTEXT: &[u8] = b"\x00\x01sealed-photo-bytes\xff";
 
 fn router(world: &World) -> Router {
     let probe = DependencyProbe::new("postgres://unused".to_owned(), "127.0.0.1:3900".to_owned());
-    build_router(AppState::new(
-        probe,
-        world.services.clone(),
-        world.sync.clone(),
-        world.media.clone(),
-        world.rbac.clone(),
-        world.admin.clone(),
-        world.catalog.clone(),
-        world.privacy.clone(),
-    ))
+    build_router(AppState {
+        readiness: probe,
+        iam: world.services.clone(),
+        sync: world.sync.clone(),
+        media: world.media.clone(),
+        rbac: world.rbac.clone(),
+        admin: world.admin.clone(),
+        catalog: world.catalog.clone(),
+        privacy: world.privacy.clone(),
+    })
 }
 
 fn put(account_id: Uuid, entry_id: Uuid, photo_id: Uuid, variant: &str) -> Request<Body> {
