@@ -18,22 +18,21 @@ private const val TextSizeKey = "text.size"
 private const val MinutesPerHour = 60
 
 /**
- * Every Settings row, kept across launches. Dark mode is stored with a companion flag rather than
- * a default, because "the owner has not chosen" and "the owner chose light" are different states:
- * the first follows the system and the second does not.
+ * Every Settings row, kept across launches.
+ *
+ * Dark mode opens light and stays light until the owner turns it on. The handoff says to follow
+ * the OS, but a diary is a light thing to look at and the switch is one row down in Settings, so
+ * the deliberate choice is the only one that darkens it. The companion flag still separates "has
+ * not chosen" from "chose light" so the toggle reads correctly the first time it is opened.
  */
 class PreferenceStore(private val context: Context) {
 
-    fun load(systemDark: Boolean): AppPreferences {
+    fun load(): AppPreferences {
         val held = preferences()
         val minutes = held.getInt(ReminderMinutesKey, DefaultReminderMinutes)
         return AppPreferences(
             name = held.getString(NameKey, "").orEmpty(),
-            darkMode = if (held.getBoolean(DarkModeSetKey, false)) {
-                held.getBoolean(DarkModeKey, systemDark)
-            } else {
-                systemDark
-            },
+            darkMode = held.getBoolean(DarkModeSetKey, false) && held.getBoolean(DarkModeKey, false),
             reminderEnabled = held.getBoolean(ReminderEnabledKey, false),
             reminderTime = LocalTime(minutes / MinutesPerHour, minutes % MinutesPerHour),
             lockEnabled = held.getBoolean(LockEnabledKey, false),

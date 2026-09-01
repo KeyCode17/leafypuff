@@ -26,7 +26,7 @@ class ReminderScheduler(private val context: Context) {
     }
 
     fun rebook() {
-        val held = PreferenceStore(context).load(systemDark = false)
+        val held = PreferenceStore(context).load()
         apply(held.reminderEnabled, held.reminderTime)
     }
 

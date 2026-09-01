@@ -53,7 +53,6 @@ fun AuthGate(
             )
         },
         onForgotPassword = { toast = plainToast("Reset link sent to your email.") },
-        onProvider = { provider -> toast = plainToast("$provider sign-in is not connected yet.") },
         onSubmit = {
             val complaint = state.validate()
             val core = client
