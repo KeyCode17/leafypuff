@@ -20,6 +20,7 @@ import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.plainToast
+import com.leafypuff.ui.common.saveToast
 import com.leafypuff.ui.editor.EntryComposer
 import com.leafypuff.ui.editor.EntryDraft
 import com.leafypuff.ui.editor.OpenedEntry
@@ -155,9 +156,14 @@ fun LeafyHome(
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
             onSave = { draft, photoIds ->
+                val reopened = draft.id != null
                 onSave(draft, photoIds) {
                     composing = false
                     selected = draft.date
+                    // The design ends every save on the Diary at that date, whichever tab the
+                    // editor was opened from.
+                    current = Destination.Diary
+                    toast = saveToast(reopened)
                 }
             },
             modifier = Modifier.fillMaxSize(),
