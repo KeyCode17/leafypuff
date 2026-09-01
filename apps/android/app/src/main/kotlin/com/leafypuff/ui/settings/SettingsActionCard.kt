@@ -30,6 +30,8 @@ private val TrailingFontSize = 12.sp
 internal fun SettingsActionCard(
     entryCount: Int,
     versionName: String,
+    lastSynced: String,
+    onSync: () -> Unit,
     onExport: () -> Unit,
     onDeleteAll: () -> Unit,
     modifier: Modifier = Modifier,
@@ -37,6 +39,17 @@ internal fun SettingsActionCard(
     val colors = LocalLeafyColors.current
 
     SettingsCard(padding = ListCardPadding, modifier = modifier) {
+        ActionRow(onClick = onSync) {
+            RowTitle(text = "Sync now", color = colors.ink)
+            TrailingLabel(text = lastSynced)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = colors.ink3,
+                modifier = Modifier.size(TrailingGlyphSize),
+            )
+        }
+        SettingsDivider()
         ActionRow(onClick = onExport) {
             RowTitle(text = "Export my diary", color = colors.ink)
             TrailingLabel(text = "$entryCount entries")

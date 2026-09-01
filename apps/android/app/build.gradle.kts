@@ -61,8 +61,8 @@ android {
         applicationId = "com.leafypuff"
         minSdk = 23
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.19.0"
+        versionCode = 21
+        versionName = "0.20.0"
 
         // The deployed API. A build field rather than a constant in source so a debug build
         // can be pointed at a local api without editing Kotlin.

@@ -27,7 +27,7 @@ private val SecondaryHeight = 48.dp
 private val DividerGap = 12.dp
 
 @Composable
-internal fun PrimaryCta(
+fun PrimaryCta(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,

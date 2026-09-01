@@ -74,6 +74,33 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.unlockWithRecoveryCode(code)
     }
 
+    suspend fun hasDeviceSlot(): Boolean = withContext(Dispatchers.IO) {
+        core.hasDeviceSlot()
+    }
+
+    suspend fun rememberOnDevice(deviceKey: ByteArray) = withContext(Dispatchers.IO) {
+        core.rememberOnDevice(deviceKey)
+    }
+
+    suspend fun unlockWithDeviceKey(deviceKey: ByteArray) = withContext(Dispatchers.IO) {
+        core.unlockWithDeviceKey(deviceKey)
+    }
+
+    suspend fun forgetDeviceKey() = withContext(Dispatchers.IO) {
+        core.forgetDeviceKey()
+    }
+
+    suspend fun uploadVault(baseUrl: String, accessToken: String, updatedAtMs: Long) =
+        withContext(Dispatchers.IO) {
+            core.uploadVault(baseUrl, accessToken, updatedAtMs)
+        }
+
+    /// False when the account has never stored a vault, which is the signal to create one.
+    suspend fun restoreVault(baseUrl: String, accessToken: String): Boolean =
+        withContext(Dispatchers.IO) {
+            core.restoreVault(baseUrl, accessToken)
+        }
+
     fun isUnlocked(): Boolean = core.isUnlocked()
 
     fun lock() {

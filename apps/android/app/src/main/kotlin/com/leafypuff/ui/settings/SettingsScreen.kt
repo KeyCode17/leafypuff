@@ -33,6 +33,8 @@ fun SettingsScreen(
     onToggleLock: (Boolean) -> Unit,
     onStickerPackChange: (StickerPack) -> Unit,
     onTextSizeChange: (TextSize) -> Unit,
+    lastSynced: String,
+    onSync: () -> Unit,
     onExport: () -> Unit,
     onDeleteAll: () -> Unit,
     modifier: Modifier = Modifier,
@@ -79,6 +81,8 @@ fun SettingsScreen(
         SettingsActionCard(
             entryCount = state.entryCount,
             versionName = versionName,
+            lastSynced = lastSynced,
+            onSync = onSync,
             onExport = onExport,
             onDeleteAll = onDeleteAll,
         )
