@@ -4,6 +4,7 @@ use crate::application::iam::IamServices;
 use crate::application::media::MediaServices;
 use crate::application::privacy::PrivacyServices;
 use crate::application::rbac::RbacServices;
+use crate::application::release::ReleaseServices;
 use crate::application::sync::SyncServices;
 use crate::infrastructure::DependencyProbe;
 
@@ -19,4 +20,5 @@ pub struct AppState {
     pub admin: AdminServices,
     pub catalog: CatalogServices,
     pub privacy: PrivacyServices,
+    pub release: ReleaseServices,
 }

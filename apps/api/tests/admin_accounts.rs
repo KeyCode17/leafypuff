@@ -37,6 +37,7 @@ fn router(world: &World) -> Router {
         admin: world.admin.clone(),
         catalog: world.catalog.clone(),
         privacy: world.privacy.clone(),
+        release: world.release.clone(),
     })
 }
 

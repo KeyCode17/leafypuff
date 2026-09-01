@@ -22,6 +22,7 @@ pub const ERR_NO_CATALOG: &str = "NO_CATALOG_PUBLISHED";
 pub const ERR_MALFORMED_BUNDLE: &str = "MALFORMED_BUNDLE";
 pub const ERR_REQUEST_NOT_FOUND: &str = "DATA_REQUEST_NOT_FOUND";
 pub const ERR_ALREADY_FULFILLED: &str = "ALREADY_FULFILLED";
+pub const ERR_GATE_NOT_FOUND: &str = "RELEASE_GATE_NOT_FOUND";
 
 const MESSAGE_FAILED: &str = "Request failed";
 pub(super) const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -40,6 +41,7 @@ pub(super) const DETAIL_BUNDLE_NOT_FOUND: &str = "No such bundle";
 pub(super) const DETAIL_NO_CATALOG: &str = "No catalog has been published";
 pub(super) const DETAIL_REQUEST_NOT_FOUND: &str = "No such data request";
 pub(super) const DETAIL_ALREADY_FULFILLED: &str = "That request was already fulfilled";
+pub(super) const DETAIL_GATE_NOT_FOUND: &str = "No gate exists for that platform";
 
 pub struct ApiError {
     status: StatusCode,

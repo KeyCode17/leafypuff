@@ -7,6 +7,7 @@ use leafypuff_api::application::iam::IamServices;
 use leafypuff_api::application::media::MediaServices;
 use leafypuff_api::application::privacy::PrivacyServices;
 use leafypuff_api::application::rbac::RbacServices;
+use leafypuff_api::application::release::ReleaseServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
 use leafypuff_api::http::{AppState, build_router};
@@ -19,6 +20,7 @@ use leafypuff_api::infrastructure::iam::{
 use leafypuff_api::infrastructure::media::{PgMediaRepository, S3ObjectStore, build_s3_client};
 use leafypuff_api::infrastructure::privacy::{PgDataRequestStore, PgEraser};
 use leafypuff_api::infrastructure::rbac::{PgAuditLog, PgPermissionReader, PgRoleRepository};
+use leafypuff_api::infrastructure::release::{PgCampaignStore, PgReleaseGateStore};
 use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
 };
@@ -94,6 +96,13 @@ async fn main() {
         rbac: rbac.clone(),
     };
 
+    let release = ReleaseServices {
+        gates: Arc::new(PgReleaseGateStore::new(connection.clone())),
+        campaigns: Arc::new(PgCampaignStore::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
     let app = build_router(AppState {
         readiness: probe,
@@ -104,6 +113,7 @@ async fn main() {
         admin,
         catalog,
         privacy,
+        release,
     });
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
