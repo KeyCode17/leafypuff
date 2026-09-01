@@ -38,11 +38,16 @@ impl Clock for FixedClock {
 #[derive(Clone, Default)]
 pub struct RecordingMailer {
     sent: Arc<Mutex<Vec<(String, OtpPurpose, String)>>>,
+    notices: Arc<Mutex<Vec<String>>>,
 }
 
 impl RecordingMailer {
     pub fn sent(&self) -> Vec<(String, OtpPurpose, String)> {
         self.sent.lock().expect("the mailer lock holds").clone()
+    }
+
+    pub fn notices(&self) -> Vec<String> {
+        self.notices.lock().expect("the mailer lock holds").clone()
     }
 
     pub fn last_code(&self) -> String {
@@ -58,6 +63,12 @@ impl EmailSender for RecordingMailer {
     async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError> {
         let mut sent = self.sent.lock().expect("the mailer lock holds");
         sent.push((to.to_owned(), purpose, code.to_owned()));
+        Ok(())
+    }
+
+    async fn send_existing_account_notice(&self, to: &str) -> Result<(), IamError> {
+        let mut notices = self.notices.lock().expect("the mailer lock holds");
+        notices.push(to.to_owned());
         Ok(())
     }
 }

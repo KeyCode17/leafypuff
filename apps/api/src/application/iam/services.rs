@@ -28,6 +28,7 @@ impl IamServices {
         RegisterAccount::new(
             Arc::clone(&self.accounts),
             Arc::clone(&self.hasher),
+            Arc::clone(&self.mail),
             self.issue_challenge(),
         )
     }

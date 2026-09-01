@@ -95,17 +95,17 @@ async fn registering_again_before_verifying_mails_a_fresh_code() {
 }
 
 #[tokio::test]
-async fn registering_a_verified_address_is_rejected_and_mails_nothing() {
+async fn registering_a_verified_address_mails_the_owner_a_notice_and_no_code() {
     let world = verified_world().await;
 
-    let conflict = world
+    world
         .register()
         .execute(registration())
         .await
-        .expect_err("a verified address must be rejected");
+        .expect("a verified address is answered without disclosing that it is taken");
 
-    assert!(matches!(conflict, IamError::EmailAlreadyRegistered));
     assert_eq!(world.mailer.sent().len(), 1);
+    assert_eq!(world.mailer.notices(), vec![NORMALISED.to_owned()]);
 }
 
 #[tokio::test]

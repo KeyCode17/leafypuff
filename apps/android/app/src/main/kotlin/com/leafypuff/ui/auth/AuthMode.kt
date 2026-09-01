@@ -39,3 +39,9 @@ internal val AuthMode.working: String
         AuthMode.Signup -> "CREATING…"
         AuthMode.VerifyEmail, AuthMode.VerifySignIn -> "CHECKING…"
     }
+
+internal val AuthMode.back: AuthMode
+    get() = when (this) {
+        AuthMode.VerifyEmail -> AuthMode.Signup
+        else -> AuthMode.Login
+    }

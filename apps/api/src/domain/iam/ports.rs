@@ -33,6 +33,8 @@ pub trait OtpGenerator: Send + Sync {
 #[async_trait]
 pub trait EmailSender: Send + Sync {
     async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError>;
+
+    async fn send_existing_account_notice(&self, to: &str) -> Result<(), IamError>;
 }
 
 #[async_trait]

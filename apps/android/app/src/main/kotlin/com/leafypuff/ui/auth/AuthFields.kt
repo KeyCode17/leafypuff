@@ -80,6 +80,25 @@ internal fun AuthResendRow(secondsLeft: Int, enabled: Boolean, onResend: () -> U
 }
 
 @Composable
+internal fun AuthBackRow(mode: AuthMode, onBack: () -> Unit) {
+    val colors = LocalLeafyColors.current
+    val typography = LocalLeafyTypography.current
+    val target = if (mode.back == AuthMode.Login) "log in" else "sign up"
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SwitchGap, Alignment.CenterHorizontally),
+    ) {
+        Text(
+            text = "Back to $target",
+            style = typography.chipLabel,
+            color = colors.ink2,
+            modifier = Modifier.clickable(onClick = onBack),
+        )
+    }
+}
+
+@Composable
 internal fun AuthFooterSwitch(mode: AuthMode, onSwitch: () -> Unit) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current

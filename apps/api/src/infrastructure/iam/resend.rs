@@ -32,22 +32,21 @@ impl ResendEmailSender {
     }
 }
 
-#[async_trait]
-impl EmailSender for ResendEmailSender {
-    async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError> {
-        let body = json!({
+impl ResendEmailSender {
+    async fn deliver(&self, to: &str, body: mail_body::Body) -> Result<(), IamError> {
+        let payload = json!({
             "from": self.from,
             "to": [to],
-            "subject": mail_body::subject(purpose),
-            "text": mail_body::text(code, purpose),
-            "html": mail_body::html(code, purpose),
+            "subject": body.subject,
+            "text": body.text,
+            "html": body.html,
         });
 
         let response = self
             .client
             .post(RESEND_ENDPOINT)
             .bearer_auth(&self.api_key)
-            .json(&body)
+            .json(&payload)
             .send()
             .await
             .map_err(|error| IamError::Mail(error.without_url().to_string()))?;
@@ -57,5 +56,16 @@ impl EmailSender for ResendEmailSender {
             return Ok(());
         }
         Err(IamError::Mail(format!("Resend answered {status}")))
+    }
+}
+
+#[async_trait]
+impl EmailSender for ResendEmailSender {
+    async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError> {
+        self.deliver(to, mail_body::code(code, purpose)).await
+    }
+
+    async fn send_existing_account_notice(&self, to: &str) -> Result<(), IamError> {
+        self.deliver(to, mail_body::existing_account()).await
     }
 }

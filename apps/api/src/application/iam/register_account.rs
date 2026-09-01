@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::domain::iam::{Account, AccountRepository, IamError, OtpPurpose, PasswordHasher, email};
+use crate::domain::iam::{
+    Account, AccountRepository, EmailSender, IamError, OtpPurpose, PasswordHasher, email,
+};
 
 use super::issue_challenge::IssueChallenge;
 
@@ -15,6 +17,7 @@ pub struct RegisterInput {
 pub struct RegisterAccount {
     accounts: Arc<dyn AccountRepository>,
     hasher: Arc<dyn PasswordHasher>,
+    mail: Arc<dyn EmailSender>,
     challenge: IssueChallenge,
 }
 
@@ -22,11 +25,13 @@ impl RegisterAccount {
     pub const fn new(
         accounts: Arc<dyn AccountRepository>,
         hasher: Arc<dyn PasswordHasher>,
+        mail: Arc<dyn EmailSender>,
         challenge: IssueChallenge,
     ) -> Self {
         Self {
             accounts,
             hasher,
+            mail,
             challenge,
         }
     }
@@ -46,7 +51,12 @@ impl RegisterAccount {
 
         let stored = match attempt {
             Ok(account) => account,
-            Err(IamError::EmailAlreadyRegistered) => self.awaiting_verification(&address).await?,
+            Err(IamError::EmailAlreadyRegistered) => {
+                match self.awaiting_verification(&address).await? {
+                    Some(account) => account,
+                    None => return self.mail.send_existing_account_notice(&address).await,
+                }
+            }
             Err(error) => return Err(error),
         };
 
@@ -55,15 +65,15 @@ impl RegisterAccount {
             .await
     }
 
-    async fn awaiting_verification(&self, address: &str) -> Result<Account, IamError> {
+    async fn awaiting_verification(&self, address: &str) -> Result<Option<Account>, IamError> {
         let account = self
             .accounts
             .by_email(address)
             .await?
             .ok_or(IamError::EmailAlreadyRegistered)?;
         if account.is_verified() {
-            return Err(IamError::EmailAlreadyRegistered);
+            return Ok(None);
         }
-        Ok(account)
+        Ok(Some(account))
     }
 }
