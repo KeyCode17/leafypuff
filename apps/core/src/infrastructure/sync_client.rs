@@ -210,12 +210,15 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
         .collect()
 }
 
+/// An absent list reads as no tags, the way the photo and sticker parsers beside it treat their
+/// own fields. A record that arrives without them is a record with none, not a reason to abandon
+/// the whole pull.
 fn inbound_tags(value: &Value) -> Result<Vec<String>, CoreError> {
     let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
-    value
-        .as_array()
-        .ok_or_else(shape)?
-        .iter()
+    let Some(tags) = value.as_array() else {
+        return Ok(Vec::new());
+    };
+    tags.iter()
         .map(|tag| tag.as_str().map(str::to_owned).ok_or_else(shape))
         .collect()
 }
@@ -324,6 +327,25 @@ mod tests {
         assert_eq!(read[0].ordinal, 0);
         // The path is deliberately not carried: it named a directory on another handset.
         assert!(read[0].path.is_empty());
+    }
+
+    #[test]
+    fn a_sticker_the_device_could_not_write_is_refused_rather_than_shipped() {
+        let mut broken = sticker("heart-0", "Heart");
+        broken.rotation = f32::NAN;
+
+        // A NaN would print as `NaN`, which is not JSON. The server would store it happily and
+        // every device that pulled it would fail to parse it, forever.
+        assert!(sticker_placements(&[broken]).is_err());
+    }
+
+    #[test]
+    fn a_record_with_no_tag_list_reads_as_no_tags() {
+        assert!(
+            inbound_tags(&serde_json::Value::Null)
+                .expect("it reads")
+                .is_empty()
+        );
     }
 
     #[test]

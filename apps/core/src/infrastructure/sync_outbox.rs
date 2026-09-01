@@ -251,7 +251,6 @@ impl SyncOutbox {
 }
 
 /// Everything an inbound entry brings that does not live in its own row.
-#[derive(Default)]
 pub struct Carried {
     pub entry_id: String,
     pub tags: Vec<String>,
@@ -281,12 +280,22 @@ pub struct InboundPhoto {
 /// sync feature. Nothing here needs escaping: a photo id is a hyphenated uuid, checked on the way
 /// into storage, and an ordinal is an integer.
 /// The same hand-written shape as photo_refs, for the same reason: the outbox has to build
-/// without the sync feature. A sticker key is checked on the way in, and every other field is a
-/// number or a fixed enum label.
+/// without the sync feature.
+///
+/// Every field is checked before it is interpolated, and the floats are checked hardest. Rust
+/// prints a non-finite f32 as `NaN` or `inf`, neither of which is JSON. The server stores this
+/// column as an opaque string and would take such a record without complaint -- and then every
+/// device that pulled it would fail to parse it, on every sync, with no way to remove the record
+/// that poisoned them.
 pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, CoreError> {
     let mut refs = String::from("[");
     for (position, sticker) in placed.iter().enumerate() {
-        if !is_storage_safe(&sticker.id) {
+        let sound = is_storage_safe(&sticker.id)
+            && is_storage_safe(&sticker.kind)
+            && [sticker.x, sticker.y, sticker.size, sticker.rotation]
+                .iter()
+                .all(|number| number.is_finite());
+        if !sound {
             return Err(CoreError::Storage(format!(
                 "{ERR_REFERENCES}: {}",
                 sticker.id
