@@ -4,6 +4,7 @@ use axum::response::{IntoResponse, Response};
 
 use crate::domain::DomainError;
 use crate::domain::admin::AdminError;
+use crate::domain::catalog::CatalogError;
 use crate::domain::iam::IamError;
 use crate::domain::media::MediaError;
 use crate::domain::rbac::RbacError;
@@ -24,6 +25,9 @@ pub const ERR_OBJECT_NOT_FOUND: &str = "OBJECT_NOT_FOUND";
 pub const ERR_OBJECT_TOO_LARGE: &str = "OBJECT_TOO_LARGE";
 pub const ERR_ROLE_NOT_FOUND: &str = "ROLE_NOT_FOUND";
 pub const ERR_ACCOUNT_NOT_FOUND: &str = "ACCOUNT_NOT_FOUND";
+pub const ERR_BUNDLE_NOT_FOUND: &str = "BUNDLE_NOT_FOUND";
+pub const ERR_NO_CATALOG: &str = "NO_CATALOG_PUBLISHED";
+pub const ERR_MALFORMED_BUNDLE: &str = "MALFORMED_BUNDLE";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -38,6 +42,8 @@ const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
 const DETAIL_NOT_PERMITTED: &str = "You do not have permission to do that";
 const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
 const DETAIL_ACCOUNT_NOT_FOUND: &str = "No such account";
+const DETAIL_BUNDLE_NOT_FOUND: &str = "No such bundle";
+const DETAIL_NO_CATALOG: &str = "No catalog has been published";
 
 pub struct ApiError {
     status: StatusCode,
@@ -194,6 +200,37 @@ impl From<AdminError> for ApiError {
             ),
             AdminError::Storage(reason) => {
                 tracing::error!(%reason, "an admin request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<CatalogError> for ApiError {
+    fn from(error: CatalogError) -> Self {
+        match error {
+            CatalogError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
+            }
+            CatalogError::NotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_BUNDLE_NOT_FOUND,
+                DETAIL_BUNDLE_NOT_FOUND,
+            ),
+            CatalogError::NonePublished => {
+                Self::new(StatusCode::NOT_FOUND, ERR_NO_CATALOG, DETAIL_NO_CATALOG)
+            }
+            CatalogError::Malformed(detail) => Self::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                ERR_MALFORMED_BUNDLE,
+                &detail,
+            ),
+            CatalogError::Storage(reason) => {
+                tracing::error!(%reason, "a catalog request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,

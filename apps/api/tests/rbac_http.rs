@@ -20,6 +20,7 @@ fn router(world: &World) -> Router {
         world.media.clone(),
         world.rbac.clone(),
         world.admin.clone(),
+        world.catalog.clone(),
     ))
 }
 

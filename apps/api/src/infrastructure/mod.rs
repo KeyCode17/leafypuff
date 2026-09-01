@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod catalog;
 pub mod config;
 pub mod db;
 pub mod dependency_probe;

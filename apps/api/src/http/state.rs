@@ -1,4 +1,5 @@
 use crate::application::admin::AdminServices;
+use crate::application::catalog::CatalogServices;
 use crate::application::iam::IamServices;
 use crate::application::media::MediaServices;
 use crate::application::rbac::RbacServices;
@@ -13,6 +14,7 @@ pub struct AppState {
     pub media: MediaServices,
     pub rbac: RbacServices,
     pub admin: AdminServices,
+    pub catalog: CatalogServices,
 }
 
 impl AppState {
@@ -23,6 +25,7 @@ impl AppState {
         media: MediaServices,
         rbac: RbacServices,
         admin: AdminServices,
+        catalog: CatalogServices,
     ) -> Self {
         Self {
             readiness,
@@ -31,6 +34,7 @@ impl AppState {
             media,
             rbac,
             admin,
+            catalog,
         }
     }
 }
