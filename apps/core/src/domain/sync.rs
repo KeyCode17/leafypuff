@@ -11,6 +11,7 @@ pub struct OutboundEntry {
     pub mood: String,
     pub tags: Vec<String>,
     pub sticker_placements: String,
+    pub photo_refs: String,
     pub device_updated_at_ms: i64,
     pub deleted_at_ms: Option<i64>,
     pub title_ciphertext: Vec<u8>,

@@ -9,6 +9,8 @@ pub mod exif_reader;
 #[cfg(feature = "sqlite")]
 pub mod mapper;
 #[cfg(feature = "sync")]
+#[cfg(feature = "sync")]
+pub mod media_sync;
 #[cfg(feature = "test-support")]
 pub mod memory;
 pub mod photo_store;
@@ -17,6 +19,7 @@ pub mod sealer;
 pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
 mod sqlite_hydrate;
+#[cfg(feature = "sync")]
 pub mod sync_client;
 #[cfg(feature = "sqlite")]
 pub mod sync_outbox;
@@ -33,12 +36,14 @@ pub use auth_client::AuthClient;
 pub use clock::SystemClock;
 pub use exif_reader::KamadakExifReader;
 #[cfg(feature = "sync")]
+pub use media_sync::MediaSync;
 #[cfg(feature = "test-support")]
 pub use memory::{FixedClock, InMemoryEntryRepository};
 pub use photo_store::FilePhotoStore;
 pub use sealer::PlaintextSealer;
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
+#[cfg(feature = "sync")]
 pub use sync_client::SyncClient;
 #[cfg(feature = "sqlite")]
 pub use sync_outbox::SyncOutbox;

@@ -11,6 +11,7 @@ pub mod entries {
         pub mood: String,
         pub tags: Json,
         pub sticker_placements: String,
+        pub photo_refs: String,
         pub revision: i64,
         pub device_updated_at: i64,
         pub deleted_at: Option<i64>,

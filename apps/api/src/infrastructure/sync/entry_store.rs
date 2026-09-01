@@ -89,6 +89,7 @@ impl EntryStore for PgEntryStore {
                         entries::Column::Mood,
                         entries::Column::Tags,
                         entries::Column::StickerPlacements,
+                        entries::Column::PhotoRefs,
                         entries::Column::Revision,
                         entries::Column::DeviceUpdatedAt,
                         entries::Column::DeletedAt,

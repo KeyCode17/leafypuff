@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 
 use super::entity::entries;
-use super::sync_outbox::SyncOutbox;
+use super::sync_outbox::{InboundPhoto, SyncOutbox};
 
 const PULL_PATH: &str = "/v1/sync/pull";
 const PUSH_PATH: &str = "/v1/sync/push";
@@ -50,8 +50,8 @@ impl SyncClient {
         let cursor = outbox.cursor().await?;
         let (records, advanced) = self.pull(&device_id, cursor).await?;
         let pulled = u32::try_from(records.len()).unwrap_or(u32::MAX);
-        for record in records {
-            outbox.accept(record).await?;
+        for (record, carried) in records {
+            outbox.accept(record, &carried).await?;
         }
         outbox.advance(advanced).await?;
 
@@ -90,7 +90,7 @@ impl SyncClient {
         &self,
         device_id: &str,
         cursor: i64,
-    ) -> Result<(Vec<entries::ActiveModel>, i64), CoreError> {
+    ) -> Result<(Vec<(entries::ActiveModel, Vec<InboundPhoto>)>, i64), CoreError> {
         let response = self
             .client
             .get(format!("{}{PULL_PATH}?cursor={cursor}", self.base_url))
@@ -119,7 +119,7 @@ impl SyncClient {
         let accepted = rows
             .iter()
             .map(inbound)
-            .collect::<Result<Vec<entries::ActiveModel>, CoreError>>()?;
+            .collect::<Result<Vec<(entries::ActiveModel, Vec<InboundPhoto>)>, CoreError>>()?;
         Ok((accepted, advanced))
     }
 }
@@ -131,6 +131,7 @@ fn record(row: &OutboundEntry, device_id: &str) -> Result<Value, CoreError> {
         "mood": row.mood,
         "tags": row.tags,
         "sticker_placements": row.sticker_placements,
+        "photo_refs": row.photo_refs,
         "device_updated_at_ms": row.device_updated_at_ms,
         "deleted_at_ms": row.deleted_at_ms,
         "title": envelope(&row.title_ciphertext, &row.title_nonce, row.device_updated_at_ms, device_id),
@@ -147,28 +148,59 @@ fn envelope(ciphertext: &[u8], nonce: &[u8], at_ms: i64, device_id: &str) -> Val
     })
 }
 
-fn inbound(row: &Value) -> Result<entries::ActiveModel, CoreError> {
+fn inbound(row: &Value) -> Result<(entries::ActiveModel, Vec<InboundPhoto>), CoreError> {
     let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
     let updated_at_ms = row["title"]["updated_at_ms"].as_i64().ok_or_else(shape)?;
     let updated_at = DateTime::<Utc>::from_timestamp_millis(updated_at_ms)
         .ok_or_else(shape)?
         .to_rfc3339();
 
-    Ok(entries::ActiveModel {
-        id: ActiveValue::Set(row["id"].as_str().ok_or_else(shape)?.to_owned()),
-        date: ActiveValue::Set(row["date"].as_str().ok_or_else(shape)?.to_owned()),
-        mood: ActiveValue::Set(row["mood"].as_str().ok_or_else(shape)?.to_owned()),
-        title: ActiveValue::Set(bytes(&row["title"]["ciphertext"])?),
-        title_nonce: ActiveValue::Set(Some(bytes(&row["title"]["nonce"])?)),
-        body: ActiveValue::Set(bytes(&row["body"]["ciphertext"])?),
-        body_nonce: ActiveValue::Set(Some(bytes(&row["body"]["nonce"])?)),
-        revision: ActiveValue::Set(0),
-        weather: ActiveValue::Set(None),
-        location: ActiveValue::Set(None),
-        created_at: ActiveValue::Set(updated_at.clone()),
-        updated_at: ActiveValue::Set(updated_at.clone()),
-        synced_at: ActiveValue::Set(Some(updated_at)),
-    })
+    let entry_id = row["id"].as_str().ok_or_else(shape)?.to_owned();
+    let carried = inbound_photos(&row["photo_refs"], &entry_id)?;
+
+    Ok((
+        entries::ActiveModel {
+            id: ActiveValue::Set(entry_id),
+            date: ActiveValue::Set(row["date"].as_str().ok_or_else(shape)?.to_owned()),
+            mood: ActiveValue::Set(row["mood"].as_str().ok_or_else(shape)?.to_owned()),
+            title: ActiveValue::Set(bytes(&row["title"]["ciphertext"])?),
+            title_nonce: ActiveValue::Set(Some(bytes(&row["title"]["nonce"])?)),
+            body: ActiveValue::Set(bytes(&row["body"]["ciphertext"])?),
+            body_nonce: ActiveValue::Set(Some(bytes(&row["body"]["nonce"])?)),
+            revision: ActiveValue::Set(0),
+            weather: ActiveValue::Set(None),
+            location: ActiveValue::Set(None),
+            created_at: ActiveValue::Set(updated_at.clone()),
+            updated_at: ActiveValue::Set(updated_at.clone()),
+            synced_at: ActiveValue::Set(Some(updated_at)),
+        },
+        carried,
+    ))
+}
+
+/// The server carries photo references as the JSON string the writing device sent. `path` is left
+/// empty: this device fills it in when it fetches the blob, and an empty one is how the next sync
+/// knows it has not.
+fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, CoreError> {
+    let shape = || CoreError::Storage(ERR_SHAPE.to_owned());
+    let Some(encoded) = value.as_str() else {
+        return Ok(Vec::new());
+    };
+    let parsed: Value = serde_json::from_str(encoded).map_err(|_| shape())?;
+    parsed
+        .as_array()
+        .ok_or_else(shape)?
+        .iter()
+        .map(|photo| {
+            Ok(InboundPhoto {
+                id: photo["id"].as_str().ok_or_else(shape)?.to_owned(),
+                entry_id: entry_id.to_owned(),
+                path: String::new(),
+                ordinal: i32::try_from(photo["ordinal"].as_i64().ok_or_else(shape)?)
+                    .map_err(|_| shape())?,
+            })
+        })
+        .collect()
 }
 
 fn bytes(value: &Value) -> Result<Vec<u8>, CoreError> {

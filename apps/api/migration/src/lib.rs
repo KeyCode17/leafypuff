@@ -13,6 +13,7 @@ mod m20260901_000010_account_suspension;
 mod m20260901_000011_catalog;
 mod m20260901_000013_data_requests;
 mod m20260901_000014_release_and_campaigns;
+mod m20260901_112525_entry_photo_refs;
 
 pub struct Migrator;
 
@@ -33,6 +34,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000011_catalog::Migration),
             Box::new(m20260901_000013_data_requests::Migration),
             Box::new(m20260901_000014_release_and_campaigns::Migration),
+            Box::new(m20260901_112525_entry_photo_refs::Migration),
         ]
     }
 }
