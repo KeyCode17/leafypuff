@@ -9,9 +9,15 @@ pre-commit:
       glob: "*.{ts,tsx,json}"
       run: pnpm exec biome check --write {staged_files} && git add {staged_files}
 
-# Lefthook skips pre-push commands when it computes no changed push files, and the
-# override is a CLI flag (--force) with no config equivalent. These therefore fire
-# unreliably; .github/workflows/ci.yml is the gate that actually blocks.
+# git opens the connection to the remote and sends git-receive-pack BEFORE it runs this
+# hook -- GIT_TRACE shows the connection two seconds ahead of the hook. A hook that then
+# runs for eleven minutes leaves that connection idle until the remote closes it, and the
+# push dies writing to a dead socket with SIGPIPE, exit 141, after every check has passed.
+# So pre-push stays under three minutes and .github/workflows/ci.yml runs the full matrix,
+# including the two feature combinations that used to live here.
+#
+# Lefthook also skips pre-push commands when it computes no changed push files, and the
+# override is a CLI flag (--force) with no config equivalent.
 pre-push:
   parallel: false
   commands:
@@ -19,12 +25,8 @@ pre-push:
       run: cargo fmt --all --check
     rust-clippy:
       run: cargo clippy --workspace --all-targets -- -D warnings
-    rust-test:
-      run: cargo test --workspace
     rust-clippy-all-features:
       run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-    rust-test-all-features:
-      run: cargo test --workspace --all-features
     rust-test-no-default:
       run: cargo test -p leafypuff-core --no-default-features
     rust-layering:
