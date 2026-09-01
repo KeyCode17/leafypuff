@@ -2,14 +2,6 @@ use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
-use crate::domain::DomainError;
-use crate::domain::admin::AdminError;
-use crate::domain::catalog::CatalogError;
-use crate::domain::iam::IamError;
-use crate::domain::media::MediaError;
-use crate::domain::rbac::RbacError;
-use crate::domain::sync::SyncError;
-
 use super::envelope::Envelope;
 
 pub const ERR_DEPENDENCY_UNAVAILABLE: &str = "DEPENDENCY_UNAVAILABLE";
@@ -28,22 +20,26 @@ pub const ERR_ACCOUNT_NOT_FOUND: &str = "ACCOUNT_NOT_FOUND";
 pub const ERR_BUNDLE_NOT_FOUND: &str = "BUNDLE_NOT_FOUND";
 pub const ERR_NO_CATALOG: &str = "NO_CATALOG_PUBLISHED";
 pub const ERR_MALFORMED_BUNDLE: &str = "MALFORMED_BUNDLE";
+pub const ERR_REQUEST_NOT_FOUND: &str = "DATA_REQUEST_NOT_FOUND";
+pub const ERR_ALREADY_FULFILLED: &str = "ALREADY_FULFILLED";
 
 const MESSAGE_FAILED: &str = "Request failed";
-const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
-const DETAIL_EMAIL_NOT_VERIFIED: &str = "Email is not verified";
-const DETAIL_EMAIL_TAKEN: &str = "Email already registered";
-const DETAIL_TOO_MANY_ATTEMPTS: &str = "Too many attempts";
-const DETAIL_MAIL_UNAVAILABLE: &str = "The mail provider is unavailable";
-const DETAIL_INTERNAL: &str = "Something went wrong";
-const DETAIL_FORBIDDEN: &str = "That entry belongs to another account";
-const DETAIL_OBJECT_NOT_FOUND: &str = "No such object";
-const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
-const DETAIL_NOT_PERMITTED: &str = "You do not have permission to do that";
-const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
-const DETAIL_ACCOUNT_NOT_FOUND: &str = "No such account";
-const DETAIL_BUNDLE_NOT_FOUND: &str = "No such bundle";
-const DETAIL_NO_CATALOG: &str = "No catalog has been published";
+pub(super) const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
+pub(super) const DETAIL_EMAIL_NOT_VERIFIED: &str = "Email is not verified";
+pub(super) const DETAIL_EMAIL_TAKEN: &str = "Email already registered";
+pub(super) const DETAIL_TOO_MANY_ATTEMPTS: &str = "Too many attempts";
+pub(super) const DETAIL_MAIL_UNAVAILABLE: &str = "The mail provider is unavailable";
+pub(super) const DETAIL_INTERNAL: &str = "Something went wrong";
+pub(super) const DETAIL_FORBIDDEN: &str = "That entry belongs to another account";
+pub(super) const DETAIL_OBJECT_NOT_FOUND: &str = "No such object";
+pub(super) const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
+pub(super) const DETAIL_NOT_PERMITTED: &str = "You do not have permission to do that";
+pub(super) const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
+pub(super) const DETAIL_ACCOUNT_NOT_FOUND: &str = "No such account";
+pub(super) const DETAIL_BUNDLE_NOT_FOUND: &str = "No such bundle";
+pub(super) const DETAIL_NO_CATALOG: &str = "No catalog has been published";
+pub(super) const DETAIL_REQUEST_NOT_FOUND: &str = "No such data request";
+pub(super) const DETAIL_ALREADY_FULFILLED: &str = "That request was already fulfilled";
 
 pub struct ApiError {
     status: StatusCode,
@@ -57,186 +53,6 @@ impl ApiError {
             status,
             code,
             detail: detail.to_owned(),
-        }
-    }
-}
-
-impl From<DomainError> for ApiError {
-    fn from(error: DomainError) -> Self {
-        match error {
-            DomainError::DependencyUnavailable(detail) => Self::new(
-                StatusCode::SERVICE_UNAVAILABLE,
-                ERR_DEPENDENCY_UNAVAILABLE,
-                &detail,
-            ),
-        }
-    }
-}
-
-impl From<IamError> for ApiError {
-    fn from(error: IamError) -> Self {
-        match error {
-            IamError::InvalidCredentials | IamError::InvalidCode | IamError::ChallengeUnusable => {
-                Self::new(
-                    StatusCode::UNAUTHORIZED,
-                    ERR_INVALID_CREDENTIALS,
-                    DETAIL_INVALID_CREDENTIALS,
-                )
-            }
-            IamError::EmailNotVerified => Self::new(
-                StatusCode::FORBIDDEN,
-                ERR_EMAIL_NOT_VERIFIED,
-                DETAIL_EMAIL_NOT_VERIFIED,
-            ),
-            IamError::TooManyAttempts => Self::new(
-                StatusCode::TOO_MANY_REQUESTS,
-                ERR_TOO_MANY_ATTEMPTS,
-                DETAIL_TOO_MANY_ATTEMPTS,
-            ),
-            IamError::EmailAlreadyRegistered => {
-                Self::new(StatusCode::CONFLICT, ERR_EMAIL_TAKEN, DETAIL_EMAIL_TAKEN)
-            }
-            IamError::Mail(reason) => {
-                tracing::error!(%reason, "the mail provider refused the request");
-                Self::new(
-                    StatusCode::BAD_GATEWAY,
-                    ERR_MAIL_UNAVAILABLE,
-                    DETAIL_MAIL_UNAVAILABLE,
-                )
-            }
-            IamError::Storage(reason) => {
-                tracing::error!(%reason, "an iam request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
-        }
-    }
-}
-
-impl From<SyncError> for ApiError {
-    fn from(error: SyncError) -> Self {
-        match error {
-            SyncError::Forbidden => {
-                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_FORBIDDEN)
-            }
-            SyncError::Malformed(detail) => Self::new(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                ERR_MALFORMED_BATCH,
-                &detail,
-            ),
-            SyncError::Storage(reason) => {
-                tracing::error!(%reason, "a sync request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
-        }
-    }
-}
-
-impl From<MediaError> for ApiError {
-    fn from(error: MediaError) -> Self {
-        match error {
-            MediaError::NotFound => Self::new(
-                StatusCode::NOT_FOUND,
-                ERR_OBJECT_NOT_FOUND,
-                DETAIL_OBJECT_NOT_FOUND,
-            ),
-            MediaError::TooLarge => Self::new(
-                StatusCode::PAYLOAD_TOO_LARGE,
-                ERR_OBJECT_TOO_LARGE,
-                DETAIL_OBJECT_TOO_LARGE,
-            ),
-            MediaError::Storage(reason) => {
-                tracing::error!(%reason, "an object storage request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
-        }
-    }
-}
-
-impl From<RbacError> for ApiError {
-    fn from(error: RbacError) -> Self {
-        match error {
-            RbacError::Forbidden => {
-                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
-            }
-            RbacError::RoleNotFound => Self::new(
-                StatusCode::NOT_FOUND,
-                ERR_ROLE_NOT_FOUND,
-                DETAIL_ROLE_NOT_FOUND,
-            ),
-            RbacError::Storage(reason) => {
-                tracing::error!(%reason, "an rbac request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
-        }
-    }
-}
-
-impl From<AdminError> for ApiError {
-    fn from(error: AdminError) -> Self {
-        match error {
-            AdminError::Forbidden => {
-                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
-            }
-            AdminError::AccountNotFound => Self::new(
-                StatusCode::NOT_FOUND,
-                ERR_ACCOUNT_NOT_FOUND,
-                DETAIL_ACCOUNT_NOT_FOUND,
-            ),
-            AdminError::Storage(reason) => {
-                tracing::error!(%reason, "an admin request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
-        }
-    }
-}
-
-impl From<CatalogError> for ApiError {
-    fn from(error: CatalogError) -> Self {
-        match error {
-            CatalogError::Forbidden => {
-                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
-            }
-            CatalogError::NotFound => Self::new(
-                StatusCode::NOT_FOUND,
-                ERR_BUNDLE_NOT_FOUND,
-                DETAIL_BUNDLE_NOT_FOUND,
-            ),
-            CatalogError::NonePublished => {
-                Self::new(StatusCode::NOT_FOUND, ERR_NO_CATALOG, DETAIL_NO_CATALOG)
-            }
-            CatalogError::Malformed(detail) => Self::new(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                ERR_MALFORMED_BUNDLE,
-                &detail,
-            ),
-            CatalogError::Storage(reason) => {
-                tracing::error!(%reason, "a catalog request failed");
-                Self::new(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ERR_INTERNAL,
-                    DETAIL_INTERNAL,
-                )
-            }
         }
     }
 }

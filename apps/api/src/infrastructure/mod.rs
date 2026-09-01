@@ -5,6 +5,7 @@ pub mod db;
 pub mod dependency_probe;
 pub mod iam;
 pub mod media;
+pub mod privacy;
 pub mod rbac;
 pub mod sync;
 
