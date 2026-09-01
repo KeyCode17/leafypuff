@@ -137,3 +137,21 @@ impl TryFrom<FfiEntry> for Entry {
         })
     }
 }
+
+/// What one exchange did. Counts only: a device reports how much moved, never what.
+#[derive(uniffi::Record)]
+pub struct FfiSyncOutcome {
+    pub pushed: u32,
+    pub pulled: u32,
+    pub cursor: i64,
+}
+
+impl From<crate::domain::SyncOutcome> for FfiSyncOutcome {
+    fn from(outcome: crate::domain::SyncOutcome) -> Self {
+        Self {
+            pushed: outcome.pushed,
+            pulled: outcome.pulled,
+            cursor: outcome.cursor,
+        }
+    }
+}

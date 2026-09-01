@@ -30,6 +30,7 @@ async fn entities_round_trip_against_the_migrated_schema() {
         location: Set(Some("home".to_owned())),
         created_at: Set("2026-08-31T08:00:00Z".to_owned()),
         updated_at: Set("2026-08-31T08:00:00Z".to_owned()),
+        synced_at: Set(None),
     }
     .insert(&connection)
     .await

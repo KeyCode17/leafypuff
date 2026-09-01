@@ -6,6 +6,7 @@ pub mod mood;
 pub mod photo;
 pub mod ports;
 pub mod sticker;
+pub mod sync;
 pub mod weather;
 
 pub use crop::{COVER_MAX_HEIGHT, COVER_MAX_WIDTH, CropBox, cover_size, top_anchored_cover};
@@ -17,4 +18,5 @@ pub use ports::{
     Clock, ContentSealer, EntryRepository, ExifReader, FieldSealer, PhotoStore, ThumbnailMaker,
 };
 pub use sticker::{PlacedSticker, STICKER_MAX_SIZE, STICKER_MIN_SIZE, Sticker};
+pub use sync::{OutboundEntry, SyncOutcome};
 pub use weather::{Location, Weather};

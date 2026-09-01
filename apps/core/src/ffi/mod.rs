@@ -13,11 +13,11 @@ use crate::domain::error::ERR_DATE_UNREADABLE;
 use crate::domain::{CoreError, Entry, EntryId, EntryRepository};
 use crate::infrastructure::{
     FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteEntryRepository, SqliteVaultStore,
-    SystemClock, VaultSealer, db,
+    SyncClient, SyncOutbox, SystemClock, VaultSealer, db,
 };
 
 pub use error::LeafyPuffCoreError;
-pub use records::{FfiEntry, FfiPhoto, FfiPlacedSticker};
+pub use records::{FfiEntry, FfiPhoto, FfiPlacedSticker, FfiSyncOutcome};
 
 use records::ISO_DATE;
 
@@ -31,6 +31,7 @@ fn read_date(raw: &str) -> Result<NaiveDate, CoreError> {
 pub struct LeafyPuffCore {
     repository: SqliteEntryRepository<VaultSealer>,
     vault: SqliteVaultStore,
+    outbox: SyncOutbox,
     sealer: VaultSealer,
     clock: SystemClock,
     photos: FilePhotoStore<VaultSealer>,
@@ -47,7 +48,8 @@ impl LeafyPuffCore {
         let sealer = VaultSealer::new();
         Ok(Arc::new(Self {
             repository: SqliteEntryRepository::new(connection.clone(), sealer.clone()),
-            vault: SqliteVaultStore::new(connection),
+            vault: SqliteVaultStore::new(connection.clone()),
+            outbox: SyncOutbox::new(connection),
             sealer: sealer.clone(),
             clock: SystemClock,
             photos: FilePhotoStore::beside(&db_path, sealer),
@@ -110,6 +112,22 @@ impl LeafyPuffCore {
 
     pub fn is_unlocked(&self) -> bool {
         self.sealer.is_unlocked()
+    }
+
+    /// Exchanges with the server. The device uploads the ciphertext it already holds and stores
+    /// what comes back without opening it, so this works whether or not the vault is unlocked.
+    pub async fn sync_now(
+        &self,
+        base_url: String,
+        access_token: String,
+    ) -> Result<FfiSyncOutcome, LeafyPuffCoreError> {
+        let client = SyncClient::new(base_url, access_token)?;
+        let outcome = client.exchange(&self.outbox).await?;
+        Ok(FfiSyncOutcome::from(outcome))
+    }
+
+    pub async fn device_id(&self) -> Result<String, LeafyPuffCoreError> {
+        Ok(self.outbox.device_id().await?)
     }
 
     pub async fn save_entry(&self, entry: FfiEntry) -> Result<FfiEntry, LeafyPuffCoreError> {

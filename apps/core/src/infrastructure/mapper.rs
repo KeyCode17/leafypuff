@@ -146,6 +146,7 @@ pub fn entry_row(
         location: Set(entry.location.map(|value| value.as_str().to_owned())),
         created_at: Set(entry.created_at.to_rfc3339()),
         updated_at: Set(entry.updated_at.to_rfc3339()),
+        synced_at: Set(None),
     })
 }
 
