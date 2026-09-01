@@ -3,7 +3,7 @@ resolver = "3"
 members = ["apps/core", "apps/core/migration", "apps/api", "apps/api/migration", "apps/api/testing"]
 
 [workspace.package]
-version = "0.16.0"
+version = "0.16.1"
 license = "MIT"
 
 [workspace.dependencies]
@@ -46,14 +46,18 @@ aws-config = { version = "1", default-features = false, features = ["behavior-ve
 # rt-tokio brings the default async sleep. Without it the client panics on its first request
 # with "an async sleep implementation is required for retry to work", at runtime rather than
 # at construction. http-1x is what the tokio runtime's body type needs.
-aws-sdk-s3 = { version = "1", default-features = false, features = ["rustls", "rt-tokio", "http-1x", "default-https-client"] }
+aws-sdk-s3 = { version = "1", default-features = false, features = ["rustls", "rt-tokio", "http-1x"] }
 aws-credential-types = "1"
 aws-smithy-async = { version = "1", features = ["rt-tokio"] }
 proptest = "1"
 
+# Thin rather than fat LTO. porto has 1.9 GiB of RAM, and a fat-LTO link of the api binary --
+# which now pulls the aws sdk and rustls -- killed the nix daemon mid-build. Thin LTO keeps most
+# of the size win at a fraction of the peak memory, and the android .so is what the size mattered
+# for in the first place.
 [profile.release]
 strip = "symbols"
-lto = true
+lto = "thin"
 codegen-units = 1
 
 # argon2 at m=64MiB is unusably slow when built unoptimised; the test gate runs it eleven times.
