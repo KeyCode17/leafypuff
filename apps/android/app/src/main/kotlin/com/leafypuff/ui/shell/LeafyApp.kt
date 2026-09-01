@@ -87,12 +87,19 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     settings.save(named)
                 }
             },
+            onPasswordReset = {
+                scope.launch { vault?.signOut() }
+                session.clear()
+                credentials = null
+                signedIn = false
+            },
         ) {
             VaultGate(
                 access = vault,
                 signedIn = credentials,
                 apiBaseUrl = apiBaseUrl,
                 onSignedOut = {
+                    scope.launch { vault?.signOut() }
                     session.clear()
                     credentials = null
                     signedIn = false

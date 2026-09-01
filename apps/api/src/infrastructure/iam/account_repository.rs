@@ -74,4 +74,21 @@ impl AccountRepository for PgAccountRepository {
             .map_err(mapper::storage)?;
         Ok(())
     }
+
+    async fn update_password(
+        &self,
+        id: Uuid,
+        password_hash: String,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let stamp = at.fixed_offset();
+        accounts::Entity::update_many()
+            .col_expr(accounts::Column::PasswordHash, password_hash.into())
+            .col_expr(accounts::Column::UpdatedAt, stamp.into())
+            .filter(accounts::Column::Id.eq(id))
+            .exec(&self.connection)
+            .await
+            .map_err(mapper::storage)?;
+        Ok(())
+    }
 }

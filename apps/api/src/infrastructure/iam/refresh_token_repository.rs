@@ -70,4 +70,15 @@ impl RefreshTokenRepository for PgRefreshTokenRepository {
             .map_err(mapper::storage)?;
         Ok(())
     }
+
+    async fn revoke_all(&self, account_id: Uuid, at: DateTime<Utc>) -> Result<(), IamError> {
+        refresh_tokens::Entity::update_many()
+            .col_expr(refresh_tokens::Column::RevokedAt, at.fixed_offset().into())
+            .filter(refresh_tokens::Column::AccountId.eq(account_id))
+            .filter(refresh_tokens::Column::RevokedAt.is_null())
+            .exec(&self.connection)
+            .await
+            .map_err(mapper::storage)?;
+        Ok(())
+    }
 }

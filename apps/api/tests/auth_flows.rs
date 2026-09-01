@@ -2,7 +2,8 @@ use api_testing::World;
 use chrono::Duration;
 use leafypuff_api::application::iam::Session;
 use leafypuff_api::application::iam::{
-    CompleteSignInInput, RefreshInput, RegisterInput, StartSignInInput, VerifyEmailInput,
+    CompleteSignInInput, RefreshInput, RegisterInput, ResetPasswordInput, StartPasswordResetInput,
+    StartSignInInput, VerifyEmailInput,
 };
 use leafypuff_api::domain::iam::policy::OTP_TTL_SECONDS;
 use leafypuff_api::domain::iam::{IamError, OtpCode, OtpPurpose};
@@ -358,4 +359,196 @@ async fn a_credential_from_another_device_is_refused() {
     );
 
     assert!(matches!(rejected, IamError::InvalidCredentials));
+}
+
+const NEW_PASSWORD: &str = "a different passphrase entirely";
+
+fn forgetting() -> StartPasswordResetInput {
+    StartPasswordResetInput {
+        email: EMAIL.to_owned(),
+    }
+}
+
+#[tokio::test]
+async fn forgetting_a_password_mails_a_reset_code_to_a_verified_address() {
+    let world = verified_world().await;
+    world.generator.queue("654321");
+
+    world
+        .start_password_reset()
+        .execute(forgetting())
+        .await
+        .expect("a verified address may ask for a reset");
+
+    let (to, purpose, code) = world
+        .mailer
+        .sent()
+        .last()
+        .cloned()
+        .expect("a reset code must have been mailed");
+    assert_eq!(to, NORMALISED);
+    assert_eq!(purpose, OtpPurpose::ResetPassword);
+    assert_eq!(code, "654321");
+}
+
+#[tokio::test]
+async fn forgetting_a_password_for_an_unknown_address_mails_nothing_and_says_nothing() {
+    let world = World::default();
+
+    world
+        .start_password_reset()
+        .execute(StartPasswordResetInput {
+            email: "nobody@example.test".to_owned(),
+        })
+        .await
+        .expect("an unknown address is answered the same way as a known one");
+
+    assert!(world.mailer.sent().is_empty());
+}
+
+#[tokio::test]
+async fn forgetting_a_password_before_verifying_the_address_mails_nothing() {
+    let world = World::default();
+    world.generator.queue("123456");
+    world
+        .register()
+        .execute(registration())
+        .await
+        .expect("registration succeeds");
+
+    world
+        .start_password_reset()
+        .execute(forgetting())
+        .await
+        .expect("an unverified address is answered the same way");
+
+    assert_eq!(world.mailer.sent().len(), 1);
+    assert_eq!(world.mailer.sent()[0].1, OtpPurpose::VerifyEmail);
+}
+
+#[tokio::test]
+async fn a_reset_replaces_the_password_and_kills_every_live_credential() {
+    let world = verified_world().await;
+    world.generator.queue("654321");
+    world
+        .start_sign_in()
+        .execute(StartSignInInput {
+            email: EMAIL.to_owned(),
+            password: PASSWORD.to_owned(),
+        })
+        .await
+        .expect("the password check passes");
+    let session = world
+        .complete_sign_in()
+        .execute(CompleteSignInInput {
+            email: EMAIL.to_owned(),
+            code: world.mailer.last_code(),
+            device_id: DEVICE.to_owned(),
+        })
+        .await
+        .expect("the sign-in completes");
+
+    world.generator.queue("111222");
+    world
+        .start_password_reset()
+        .execute(forgetting())
+        .await
+        .expect("a reset code is issued");
+    world
+        .reset_password()
+        .execute(ResetPasswordInput {
+            email: EMAIL.to_owned(),
+            code: "111222".to_owned(),
+            password: NEW_PASSWORD.to_owned(),
+        })
+        .await
+        .expect("the reset completes");
+
+    assert!(
+        world
+            .credentials
+            .snapshot()
+            .iter()
+            .all(|row| row.revoked_at.is_some()),
+        "a reset must leave no live credential behind"
+    );
+
+    let replayed = refused(
+        world
+            .refresh()
+            .execute(RefreshInput {
+                refresh_secret: session.refresh_secret,
+                device_id: DEVICE.to_owned(),
+            })
+            .await,
+        "a credential minted before the reset must be dead",
+    );
+    assert!(matches!(replayed, IamError::InvalidCredentials));
+
+    world.generator.queue("333444");
+    world
+        .start_sign_in()
+        .execute(StartSignInInput {
+            email: EMAIL.to_owned(),
+            password: NEW_PASSWORD.to_owned(),
+        })
+        .await
+        .expect("the new password is the one that works now");
+}
+
+#[tokio::test]
+async fn the_old_password_stops_working_after_a_reset() {
+    let world = verified_world().await;
+    world.generator.queue("111222");
+    world
+        .start_password_reset()
+        .execute(forgetting())
+        .await
+        .expect("a reset code is issued");
+    world
+        .reset_password()
+        .execute(ResetPasswordInput {
+            email: EMAIL.to_owned(),
+            code: "111222".to_owned(),
+            password: NEW_PASSWORD.to_owned(),
+        })
+        .await
+        .expect("the reset completes");
+
+    let rejected = world
+        .start_sign_in()
+        .execute(StartSignInInput {
+            email: EMAIL.to_owned(),
+            password: PASSWORD.to_owned(),
+        })
+        .await
+        .expect_err("the password that was replaced must be refused");
+
+    assert!(matches!(rejected, IamError::InvalidCredentials));
+}
+
+#[tokio::test]
+async fn a_reset_code_from_another_purpose_is_refused() {
+    let world = verified_world().await;
+    world.generator.queue("654321");
+    world
+        .start_sign_in()
+        .execute(StartSignInInput {
+            email: EMAIL.to_owned(),
+            password: PASSWORD.to_owned(),
+        })
+        .await
+        .expect("a sign-in code is issued");
+
+    let rejected = world
+        .reset_password()
+        .execute(ResetPasswordInput {
+            email: EMAIL.to_owned(),
+            code: "654321".to_owned(),
+            password: NEW_PASSWORD.to_owned(),
+        })
+        .await
+        .expect_err("a sign-in code must not reset a password");
+
+    assert!(matches!(rejected, IamError::ChallengeUnusable));
 }

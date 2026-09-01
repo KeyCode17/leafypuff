@@ -31,6 +31,28 @@ impl LeafyPuffCore {
         Ok(())
     }
 
+    pub async fn forgot_password(
+        &self,
+        base_url: String,
+        email: String,
+    ) -> Result<FfiChallenge, LeafyPuffCoreError> {
+        let client = AuthClient::new(base_url)?;
+        Ok(FfiChallenge::from(client.forgot_password(email).await?))
+    }
+
+    pub async fn reset_password(
+        &self,
+        base_url: String,
+        email: String,
+        code: String,
+        password: String,
+    ) -> Result<(), LeafyPuffCoreError> {
+        AuthClient::new(base_url)?
+            .reset_password(email, code, password)
+            .await?;
+        Ok(())
+    }
+
     pub async fn sign_in(
         &self,
         base_url: String,

@@ -7,6 +7,7 @@ import com.leafypuff.data.SessionStore
 internal const val NoticeEmailConfirmed =
     "Email confirmed. We sent a sign-in code — check your inbox again."
 internal const val NoticeCodeResent = "New code sent. The previous one no longer works."
+internal const val NoticePasswordChanged = "Password changed. Sign in with the new one."
 
 data class SignedIn(val name: String, val password: String, val accessToken: String)
 
@@ -46,6 +47,17 @@ internal suspend fun advance(
             state.copy(mode = AuthMode.VerifySignIn, code = "", error = null)
         }
 
+        AuthMode.ForgotPassword -> {
+            client.forgotPassword(apiBaseUrl, state.email)
+            state.copy(mode = AuthMode.ResetPassword, code = "", password = "", error = null)
+        }
+
+        AuthMode.ResetPassword -> {
+            client.resetPassword(apiBaseUrl, state.email, state.code, state.password)
+            onNotice(NoticePasswordChanged)
+            state.copy(mode = AuthMode.Login, code = "", password = "", error = null)
+        }
+
         AuthMode.VerifySignIn -> {
             val issued = client.verifySignIn(apiBaseUrl, state.email, state.code)
             session.start(state.email, issued.accessToken, issued.refreshToken)
@@ -61,10 +73,10 @@ internal suspend fun resend(
     state: AuthFormState,
     onNotice: (String) -> Unit,
 ): AuthFormState = runCatching {
-    if (state.mode == AuthMode.VerifyEmail) {
-        client.register(apiBaseUrl, state.email, state.password, state.name)
-    } else {
-        client.signIn(apiBaseUrl, state.email, state.password)
+    when (state.mode) {
+        AuthMode.VerifyEmail -> client.register(apiBaseUrl, state.email, state.password, state.name)
+        AuthMode.ResetPassword -> client.forgotPassword(apiBaseUrl, state.email)
+        else -> client.signIn(apiBaseUrl, state.email, state.password)
     }
     onNotice(NoticeCodeResent)
     state.copy(code = "", error = null)

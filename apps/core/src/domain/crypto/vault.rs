@@ -99,15 +99,22 @@ impl KeyVault {
         open_slot(recovery.as_bytes(), RECOVERY_SLOT, &self.recovery_slot)
     }
 
-    pub fn rewrap_passphrase(&self, current: &str, replacement: &str) -> Result<Self, CryptoError> {
-        let content = self.unlock_with_passphrase(current)?;
+    pub fn rewrap_with(
+        &self,
+        content: &ContentKey,
+        replacement: &str,
+    ) -> Result<Self, CryptoError> {
         let passphrase_salt = generate_salt()?;
         let master = derive_master_key(replacement, &passphrase_salt)?;
         Ok(Self {
             passphrase_salt,
-            passphrase_slot: wrap_content_key(master.as_bytes(), PASSPHRASE_SLOT, &content)?,
+            passphrase_slot: wrap_content_key(master.as_bytes(), PASSPHRASE_SLOT, content)?,
             recovery_slot: self.recovery_slot.clone(),
         })
+    }
+
+    pub fn rewrap_passphrase(&self, current: &str, replacement: &str) -> Result<Self, CryptoError> {
+        self.rewrap_with(&self.unlock_with_passphrase(current)?, replacement)
     }
 }
 
@@ -123,4 +130,61 @@ pub fn open_for_device(
     wrapped: &WrappedKey,
 ) -> Result<ContentKey, CryptoError> {
     open_slot(device_key, DEVICE_SLOT, wrapped)
+}
+
+#[cfg(test)]
+#[allow(clippy::expect_used)]
+mod tests {
+    use super::KeyVault;
+    use crate::domain::crypto::recovery::RecoveryCode;
+
+    const PASSPHRASE: &str = "the passphrase it was born with";
+    const REPLACEMENT: &str = "a different passphrase entirely";
+
+    #[test]
+    fn a_recovery_code_reseals_the_vault_under_a_new_passphrase() {
+        let code = RecoveryCode::generate().expect("a code generates");
+        let (vault, _) = KeyVault::create(PASSPHRASE, &code).expect("a vault is created");
+
+        let content = vault
+            .unlock_with_recovery_code(&code)
+            .expect("the recovery code opens the vault");
+        let resealed = vault
+            .rewrap_with(&content, REPLACEMENT)
+            .expect("the vault reseals");
+
+        resealed
+            .unlock_with_passphrase(REPLACEMENT)
+            .expect("the replacement passphrase opens the resealed vault");
+    }
+
+    #[test]
+    fn a_resealed_vault_forgets_the_passphrase_it_replaced() {
+        let code = RecoveryCode::generate().expect("a code generates");
+        let (vault, _) = KeyVault::create(PASSPHRASE, &code).expect("a vault is created");
+        let content = vault
+            .unlock_with_recovery_code(&code)
+            .expect("the recovery code opens the vault");
+        let resealed = vault
+            .rewrap_with(&content, REPLACEMENT)
+            .expect("the vault reseals");
+
+        assert!(resealed.unlock_with_passphrase(PASSPHRASE).is_err());
+    }
+
+    #[test]
+    fn resealing_leaves_the_recovery_code_working() {
+        let code = RecoveryCode::generate().expect("a code generates");
+        let (vault, _) = KeyVault::create(PASSPHRASE, &code).expect("a vault is created");
+        let content = vault
+            .unlock_with_recovery_code(&code)
+            .expect("the recovery code opens the vault");
+        let resealed = vault
+            .rewrap_with(&content, REPLACEMENT)
+            .expect("the vault reseals");
+
+        resealed
+            .unlock_with_recovery_code(&code)
+            .expect("the recovery code still opens the resealed vault");
+    }
 }

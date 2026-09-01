@@ -4,7 +4,8 @@ use chrono::{TimeZone, Utc};
 use leafypuff_api::application::admin::AdminServices;
 use leafypuff_api::application::catalog::CatalogServices;
 use leafypuff_api::application::iam::{
-    CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
+    CompleteSignIn, IamServices, RefreshSession, RegisterAccount, ResetPassword,
+    StartPasswordReset, StartSignIn, VerifyEmail,
 };
 use leafypuff_api::application::media::MediaServices;
 use leafypuff_api::application::privacy::PrivacyServices;
@@ -190,6 +191,14 @@ impl World {
 
     pub fn complete_sign_in(&self) -> CompleteSignIn {
         self.services.complete_sign_in()
+    }
+
+    pub fn start_password_reset(&self) -> StartPasswordReset {
+        self.services.start_password_reset()
+    }
+
+    pub fn reset_password(&self) -> ResetPassword {
+        self.services.reset_password()
     }
 
     pub fn refresh(&self) -> RefreshSession {

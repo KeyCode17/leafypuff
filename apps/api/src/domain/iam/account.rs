@@ -36,6 +36,7 @@ impl RefreshToken {
 pub enum OtpPurpose {
     VerifyEmail,
     SignIn,
+    ResetPassword,
 }
 
 impl OtpPurpose {
@@ -43,6 +44,7 @@ impl OtpPurpose {
         match self {
             Self::VerifyEmail => "verify_email",
             Self::SignIn => "sign_in",
+            Self::ResetPassword => "reset_password",
         }
     }
 
@@ -50,6 +52,7 @@ impl OtpPurpose {
         match value {
             "verify_email" => Some(Self::VerifyEmail),
             "sign_in" => Some(Self::SignIn),
+            "reset_password" => Some(Self::ResetPassword),
             _ => None,
         }
     }

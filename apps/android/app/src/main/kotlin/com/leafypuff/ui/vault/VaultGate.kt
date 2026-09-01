@@ -1,37 +1,31 @@
 package com.leafypuff.ui.vault
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.leafypuff.data.VaultAccess
 import com.leafypuff.data.VaultOpened
 import com.leafypuff.theme.LocalLeafyColors
-import com.leafypuff.theme.LocalLeafyTypography
-import com.leafypuff.ui.auth.PrimaryCta
 import com.leafypuff.ui.auth.RecoveryCodeScreen
 import com.leafypuff.ui.auth.SignedIn
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.plainToast
+import kotlinx.coroutines.launch
 
-private val TopPadding = 76.dp
-private val SidePadding = 32.dp
-private val BlockGap = 18.dp
-
-private const val RefusedTitle = "This diary would not open"
-private const val RefusedAction = "SIGN IN AGAIN"
+private data class RecoveryAttempt(
+    val code: String = "",
+    val pending: Boolean = false,
+    val error: String? = null,
+)
 
 @Composable
 fun VaultGate(
@@ -43,10 +37,12 @@ fun VaultGate(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     var unlocked by remember { mutableStateOf(false) }
-    var recoveryCode by remember { mutableStateOf<String?>(null) }
+    var freshCode by remember { mutableStateOf<String?>(null) }
     var acknowledged by remember { mutableStateOf(false) }
-    var refusal by remember { mutableStateOf<String?>(null) }
+    var refusal by remember { mutableStateOf<Refusal?>(null) }
+    var recovery by remember { mutableStateOf<RecoveryAttempt?>(null) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
 
     LaunchedEffect(access, signedIn) {
@@ -72,30 +68,71 @@ fun VaultGate(
             )
         }.onSuccess { outcome ->
             if (outcome is VaultOpened.Created) {
-                recoveryCode = outcome.recoveryCode
+                freshCode = outcome.recoveryCode
             }
             unlocked = true
             onOpened()
         }.onFailure { failure -> refusal = refusalOf(failure) }
     }
 
-    val code = recoveryCode
+    val attempt = recovery
     val reason = refusal
+    val shown = freshCode
     when {
-        reason != null -> VaultRefused(
-            reason = reason,
-            onSignIn = {
-                refusal = null
-                onSignedOut()
+        attempt != null -> RecoveryUnlockScreen(
+            code = attempt.code,
+            pending = attempt.pending,
+            error = attempt.error,
+            onChange = { recovery = attempt.copy(code = it, error = null) },
+            onSubmit = {
+                val vault = access
+                val credentials = signedIn
+                if (vault != null && credentials != null && !attempt.pending) {
+                    recovery = attempt.copy(pending = true, error = null)
+                    scope.launch {
+                        runCatching {
+                            vault.resealWithRecoveryCode(
+                                apiBaseUrl = apiBaseUrl,
+                                accessToken = credentials.accessToken,
+                                code = attempt.code,
+                                password = credentials.password,
+                                onKeepFailed = { keep, _ ->
+                                    toast = plainToast(keepFailureOf(keep))
+                                },
+                            )
+                        }.onSuccess {
+                            recovery = null
+                            refusal = null
+                            unlocked = true
+                            onOpened()
+                        }.onFailure { failure ->
+                            recovery = attempt.copy(pending = false, error = recoveryFailureOf(failure))
+                        }
+                    }
+                }
             },
             modifier = modifier,
         )
 
-        code != null -> RecoveryCodeScreen(
-            code = code,
+        reason != null -> VaultRefusedScreen(
+            reason = reason.reason,
+            onSignIn = {
+                refusal = null
+                onSignedOut()
+            },
+            onRecover = if (reason.recoverable) {
+                { recovery = RecoveryAttempt() }
+            } else {
+                null
+            },
+            modifier = modifier,
+        )
+
+        shown != null -> RecoveryCodeScreen(
+            code = shown,
             acknowledged = acknowledged,
             onAcknowledge = { acknowledged = it },
-            onContinue = { recoveryCode = null },
+            onContinue = { freshCode = null },
             modifier = modifier,
         )
 
@@ -114,22 +151,4 @@ fun VaultGate(
         onAccept = { toast = null },
         onDismiss = { toast = null },
     )
-}
-
-@Composable
-private fun VaultRefused(reason: String, onSignIn: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = LocalLeafyColors.current
-    val typography = LocalLeafyTypography.current
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.bg)
-            .padding(start = SidePadding, top = TopPadding, end = SidePadding),
-        verticalArrangement = Arrangement.spacedBy(BlockGap),
-    ) {
-        Text(text = RefusedTitle, style = typography.authTitle, color = colors.ink)
-        Text(text = reason, style = typography.body, color = colors.ink2)
-        PrimaryCta(label = RefusedAction, enabled = true, onClick = onSignIn)
-    }
 }

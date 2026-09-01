@@ -27,6 +27,7 @@ fun AuthGate(
     client: CoreClient?,
     signedIn: Boolean,
     onSignedIn: (SignedIn) -> Unit,
+    onPasswordReset: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -62,7 +63,10 @@ fun AuthGate(
                 email = state.email,
             )
         },
-        onForgotPassword = { toast = plainToast("Reset link sent to your email.") },
+        onForgotPassword = {
+            cooldown = 0
+            state = state.copy(mode = AuthMode.ForgotPassword, code = "", error = null)
+        },
         onBack = {
             cooldown = 0
             state = state.copy(mode = state.mode.back, code = "", error = null)
@@ -86,9 +90,13 @@ fun AuthGate(
                 core == null -> state = state.copy(error = "One moment, still opening your diary.")
                 else -> {
                     pending = true
+                    val before = state.mode
                     scope.launch {
                         state = advance(core, apiBaseUrl, state, session, onSignedIn) {
                             toast = plainToast(it)
+                        }
+                        if (before == AuthMode.ResetPassword && state.error == null) {
+                            onPasswordReset()
                         }
                         pending = false
                     }

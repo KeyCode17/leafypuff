@@ -66,6 +66,24 @@ class VaultAccess(private val client: CoreClient, private val deviceKey: DeviceK
         return outcome
     }
 
+    suspend fun resealWithRecoveryCode(
+        apiBaseUrl: String,
+        accessToken: String,
+        code: String,
+        password: String,
+        onKeepFailed: (VaultKeep, Throwable) -> Unit,
+    ) {
+        client.resealWithRecoveryCode(
+            baseUrl = apiBaseUrl,
+            accessToken = accessToken,
+            code = code,
+            passphrase = password,
+            updatedAtMs = Clock.System.now().toEpochMilliseconds(),
+        )
+        runCatching { client.rememberOnDevice(deviceKey.bytes()) }
+            .onFailure { failure -> onKeepFailed(VaultKeep.OnThisDevice, failure) }
+    }
+
     suspend fun signOut() {
         client.forgetDeviceKey()
         client.lock()
