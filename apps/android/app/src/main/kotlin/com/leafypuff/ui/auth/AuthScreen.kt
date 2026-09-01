@@ -48,6 +48,7 @@ fun AuthScreen(
     onSwitchMode: () -> Unit,
     onForgotPassword: () -> Unit,
     onResend: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -115,6 +116,7 @@ fun AuthScreen(
 
         if (state.mode.verifying) {
             AuthResendRow(secondsLeft = resendIn, enabled = !pending, onResend = onResend)
+            AuthBackRow(mode = state.mode, onBack = onBack)
         } else {
             AuthFooterSwitch(mode = state.mode, onSwitch = onSwitchMode)
         }

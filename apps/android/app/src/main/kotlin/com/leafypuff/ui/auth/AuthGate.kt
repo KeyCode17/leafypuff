@@ -63,6 +63,10 @@ fun AuthGate(
             )
         },
         onForgotPassword = { toast = plainToast("Reset link sent to your email.") },
+        onBack = {
+            cooldown = 0
+            state = state.copy(mode = state.mode.back, code = "", error = null)
+        },
         onResend = {
             val core = client
             if (core != null && !pending && cooldown == 0) {
