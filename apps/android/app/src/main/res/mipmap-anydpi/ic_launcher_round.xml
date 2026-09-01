@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The pre-26 path. Android 8 and up take the adaptive icon from mipmap-anydpi-v26; minSdk is
+     23, so these two releases need an icon that is simply the plate with the mark on top. The
+     foreground is the same drawable the adaptive icon uses, so the inset is defined once. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item android:drawable="@drawable/ic_launcher_foreground" />
+</layer-list>

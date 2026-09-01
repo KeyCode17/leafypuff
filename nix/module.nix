@@ -127,7 +127,10 @@ in
         EnvironmentFile = cfg.environmentFile;
         Environment = [
           "PORT=${toString cfg.port}"
-          "MAIL_FROM=${cfg.mailFrom}"
+          # Quoted because systemd splits an Environment= value on whitespace. Unquoted, a From
+          # header of "leafyPuff <no-reply@example>" reached the service as "leafyPuff" alone and
+          # every mail would have been rejected for having no address in it.
+          "MAIL_FROM=\"${cfg.mailFrom}\""
         ];
         User = "leafypuff";
         Group = "leafypuff";

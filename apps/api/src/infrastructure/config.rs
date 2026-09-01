@@ -11,6 +11,20 @@ pub enum ConfigError {
     Invalid(String, String),
 }
 
+/// A From header with no address in it is accepted by nothing and rejected by the mail provider
+/// on the first send, which is a long way from the deploy that caused it. systemd splits an
+/// unquoted Environment= value on whitespace, and "leafyPuff <no-reply@example>" arrived here as
+/// "leafyPuff" alone -- so this refuses to start rather than mailing nobody.
+fn sender(raw: &str) -> Result<String, ConfigError> {
+    if raw.contains('@') {
+        return Ok(raw.to_owned());
+    }
+    Err(ConfigError::Invalid(
+        "MAIL_FROM".to_owned(),
+        "carries no address".to_owned(),
+    ))
+}
+
 #[derive(Clone)]
 pub struct Config {
     pub database_url: String,
@@ -41,7 +55,7 @@ impl Config {
             s3_secret_key: required("S3_SECRET_KEY")?,
             resend_api_key: required("RESEND_API_KEY")?,
             jwt_signing_secret: signing_secret(required("JWT_SIGNING_SECRET")?)?,
-            mail_from: required("MAIL_FROM")?,
+            mail_from: sender(&required("MAIL_FROM")?)?,
             otp_pepper: pepper(&required("OTP_PEPPER")?)?,
             port,
         })

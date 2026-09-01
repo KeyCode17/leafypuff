@@ -73,3 +73,16 @@ fn a_complete_environment_parses() {
     assert_eq!(config.s3_bucket, "leafypuff");
     assert_eq!(config.otp_pepper, [0u8; 32]);
 }
+
+#[test]
+fn a_from_header_with_no_address_is_refused_at_startup() {
+    // systemd splits an unquoted Environment= value on whitespace, which turned
+    // "leafyPuff <no-reply@example.test>" into "leafyPuff" on the way into the service. The
+    // provider would have rejected every send, a long way from the deploy that caused it.
+    let mut map = complete();
+    map.insert("MAIL_FROM".to_owned(), "leafyPuff".to_owned());
+
+    let error = rejection(map, "a from header with no address must fail");
+
+    assert!(matches!(error, ConfigError::Invalid(ref key, _) if key == "MAIL_FROM"));
+}

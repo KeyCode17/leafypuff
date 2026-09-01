@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An adaptive icon is 108dp and only the middle 72dp is guaranteed visible; a launcher may
+     crop, round or animate the rest. The inset keeps the mark inside that safe circle. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/leafypuff_mark"
+    android:insetLeft="18%"
+    android:insetTop="18%"
+    android:insetRight="18%"
+    android:insetBottom="18%" />
