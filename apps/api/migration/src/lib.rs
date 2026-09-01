@@ -9,6 +9,7 @@ mod m20260901_000006_media_objects;
 mod m20260901_000007_rbac;
 mod m20260901_000008_role_grants;
 mod m20260901_000009_audit;
+mod m20260901_000010_account_suspension;
 
 pub struct Migrator;
 
@@ -25,6 +26,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000007_rbac::Migration),
             Box::new(m20260901_000008_role_grants::Migration),
             Box::new(m20260901_000009_audit::Migration),
+            Box::new(m20260901_000010_account_suspension::Migration),
         ]
     }
 }

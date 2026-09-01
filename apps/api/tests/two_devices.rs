@@ -109,9 +109,14 @@ async fn harness() -> Option<Harness> {
         permissions: Arc::new(api_testing::rbac_repositories::InMemoryRoles::default()),
         audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
     };
+    let admin = leafypuff_api::application::admin::AdminServices {
+        directory: Arc::new(api_testing::admin_repositories::InMemoryDirectory::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
     let probe = DependencyProbe::new(url, "127.0.0.1:3900".to_owned());
     Some(Harness {
-        router: build_router(AppState::new(probe, iam, sync, media, rbac)),
+        router: build_router(AppState::new(probe, iam, sync, media, rbac.clone(), admin)),
         account_id: owner.id,
         token,
         connection,
