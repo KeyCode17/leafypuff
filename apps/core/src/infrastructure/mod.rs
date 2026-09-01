@@ -14,6 +14,10 @@ pub mod sealer;
 pub mod sqlite_entry_repository;
 #[cfg(feature = "sqlite")]
 mod sqlite_hydrate;
+#[cfg(feature = "sync")]
+pub mod sync_client;
+#[cfg(feature = "sqlite")]
+pub mod sync_outbox;
 pub mod thumbnailer;
 pub mod vault_sealer;
 #[cfg(feature = "sqlite")]
@@ -28,6 +32,10 @@ pub use photo_store::FilePhotoStore;
 pub use sealer::PlaintextSealer;
 #[cfg(feature = "sqlite")]
 pub use sqlite_entry_repository::SqliteEntryRepository;
+#[cfg(feature = "sync")]
+pub use sync_client::SyncClient;
+#[cfg(feature = "sqlite")]
+pub use sync_outbox::SyncOutbox;
 pub use thumbnailer::ImageThumbnailer;
 pub use vault_sealer::VaultSealer;
 #[cfg(feature = "sqlite")]

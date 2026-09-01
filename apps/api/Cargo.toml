@@ -39,6 +39,10 @@ aws-smithy-async = { workspace = true }
 
 [dev-dependencies]
 api-migration = { path = "migration" }
+# The device half of the exchange, so the round trip is driven by the real client rather than by
+# a second hand-written one that could agree with the server for the wrong reason.
+leafypuff-core = { path = "../core", features = ["sync"] }
+tempfile = { workspace = true }
 api-testing = { path = "testing" }
 tokio = { workspace = true }
 tower = { version = "0.5", features = ["util"] }

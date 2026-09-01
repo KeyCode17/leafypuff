@@ -8,6 +8,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+data class SyncSummary(val pushed: UInt, val pulled: UInt, val cursor: Long)
+
 data class PhotoDraft(val id: String, val path: String, val ordinal: Int)
 
 data class ImportedPhoto(val id: String, val path: String, val takenOn: LocalDate?)
@@ -73,6 +75,19 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
     fun lock() {
         core.lock()
     }
+
+    suspend fun deviceId(): String = withContext(Dispatchers.IO) {
+        core.deviceId()
+    }
+
+    /// Uploads the ciphertext this device already holds and stores what comes back without
+    /// opening it, so an exchange works whether or not the vault is unlocked.
+    suspend fun syncNow(baseUrl: String, accessToken: String): SyncSummary =
+        withContext(Dispatchers.IO) {
+            core.syncNow(baseUrl, accessToken).let {
+                SyncSummary(pushed = it.pushed, pulled = it.pulled, cursor = it.cursor)
+            }
+        }
 
     suspend fun importPhoto(bytes: ByteArray): ImportedPhoto = withContext(Dispatchers.IO) {
         core.importPhoto(bytes).toImported()

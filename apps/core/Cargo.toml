@@ -11,7 +11,10 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 default = []
 test-support = []
 sqlite = ["dep:sea-orm", "dep:core-migration", "dep:sea-orm-migration"]
-ffi = ["sqlite", "dep:uniffi", "dep:tokio"]
+# The sync client is the only reason the device links an http stack. Keeping it behind a feature
+# means a build that never syncs does not carry rustls into the .so.
+sync = ["sqlite", "dep:reqwest", "dep:serde_json"]
+ffi = ["sqlite", "sync", "dep:uniffi", "dep:tokio"]
 ffi-bindgen = ["ffi", "uniffi/cli"]
 
 [[bin]]
@@ -38,9 +41,11 @@ hkdf = { workspace = true }
 image = { workspace = true }
 kamadak-exif = { workspace = true }
 rand = { workspace = true }
+reqwest = { workspace = true, optional = true }
 sea-orm = { workspace = true, features = ["sqlx-sqlite"], optional = true }
 sea-orm-migration = { workspace = true, features = ["sqlx-sqlite"], optional = true }
 serde = { workspace = true }
+serde_json = { workspace = true, optional = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, optional = true }
