@@ -36,6 +36,8 @@ private val TodayDashOn = 4.dp
 private val TodayDashOff = 3.dp
 private val MoodDotSize = 6.dp
 private val MoodDotBottom = 2.dp
+private val CountBadgeSize = 13.dp
+private val CountNumeralSize = 8.sp
 private val PhotoScrim = Color(0x57242D35)
 private val PhotoNumeral = Color(0xFFFFFFFF)
 
@@ -76,6 +78,7 @@ fun CalendarDayCell(
         }
         DayNumeral(day)
         if (day.showsDot) MoodDot(day.dotColor)
+        if (day.showsCount) EntryCount(day.entries.size, day.isSelected)
     }
 }
 
@@ -110,6 +113,39 @@ private fun BoxScope.MoodDot(color: Color) {
             .clip(CircleShape)
             .background(color),
     )
+}
+
+@Composable
+private fun BoxScope.EntryCount(count: Int, onAccentCell: Boolean) {
+    val colors = LocalLeafyColors.current
+    // On a selected cell the disc already sits on accent, so the badge swaps to the sheet colour
+    // rather than disappearing into it.
+    val fill = when {
+        onAccentCell -> colors.sheet
+        else -> colors.accent
+    }
+    val ink = when {
+        onAccentCell -> colors.accentDeep
+        else -> colors.onAccent
+    }
+
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .size(CountBadgeSize)
+            .clip(CircleShape)
+            .background(fill),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = count.toString(),
+            style = LocalLeafyTypography.current.metaLabel.copy(
+                fontSize = CountNumeralSize,
+                fontWeight = FontWeight.W600,
+            ),
+            color = ink,
+        )
+    }
 }
 
 private fun DrawScope.drawTodayRing(color: Color) {

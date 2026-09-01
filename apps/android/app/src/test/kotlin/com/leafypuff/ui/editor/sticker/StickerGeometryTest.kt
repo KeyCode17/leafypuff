@@ -46,38 +46,59 @@ class StickerGeometryTest {
     }
 
     @Test
-    fun `position clamps to the layer plus the overhang`() {
-        assertEquals(-StickerOverhang, clampStickerPosition(-90f, 64f, 300f), Tolerance)
-        assertEquals(248f, clampStickerPosition(900f, 64f, 300f), Tolerance)
-        assertEquals(120f, clampStickerPosition(120f, 64f, 300f), Tolerance)
+    fun `position clamps to the layer plus the overhang, as a fraction of it`() {
+        assertEquals(-StickerOverhang / 300f, clampStickerPosition(-3f, 64f, 300f), Tolerance)
+        assertEquals(248f / 300f, clampStickerPosition(3f, 64f, 300f), Tolerance)
+        assertEquals(0.4f, clampStickerPosition(0.4f, 64f, 300f), Tolerance)
     }
 
     @Test
-    fun `an unmeasured layer pins the sticker to the overhang`() {
-        assertEquals(-StickerOverhang, clampStickerPosition(40f, 64f, 0f), Tolerance)
+    fun `an unmeasured layer has no fraction to clamp into`() {
+        assertEquals(0f, clampStickerPosition(0.4f, 64f, 0f), Tolerance)
+    }
+
+    @Test
+    fun `a drag moves by the fraction of the layer the pointer covered`() {
+        val placed = PlacedSticker("k", StickerId.Heart, 0.5f, 0.5f, 64f, 0f)
+
+        val moved = placed.movedBy(deltaX = 30f, deltaY = 50f, layerWidth = 300f, layerHeight = 500f)
+
+        assertEquals(0.6f, moved.x, Tolerance)
+        assertEquals(0.6f, moved.y, Tolerance)
     }
 
     @Test
     fun `a drag is clamped on both axes`() {
-        val placed = PlacedSticker("k", StickerId.Heart, 240f, 10f, 64f, 0f)
+        val placed = PlacedSticker("k", StickerId.Heart, 0.8f, 0.02f, 64f, 0f)
 
         val moved = placed.movedBy(deltaX = 90f, deltaY = -60f, layerWidth = 300f, layerHeight = 500f)
 
-        assertEquals(248f, moved.x, Tolerance)
-        assertEquals(-StickerOverhang, moved.y, Tolerance)
+        assertEquals(248f / 300f, moved.x, Tolerance)
+        assertEquals(-StickerOverhang / 500f, moved.y, Tolerance)
     }
 
     @Test
-    fun `a drop lands on the stagger at sixty four`() {
+    fun `a placement keeps its spot when the note changes width`() {
+        val placed = PlacedSticker("k", StickerId.Heart, 0.5f, 0.5f, 64f, 0f)
+
+        val onNarrow = placed.movedBy(0f, 0f, layerWidth = 300f, layerHeight = 500f)
+        val onWide = placed.movedBy(0f, 0f, layerWidth = 600f, layerHeight = 900f)
+
+        assertEquals(onNarrow.x, onWide.x, Tolerance)
+        assertEquals(onNarrow.y, onWide.y, Tolerance)
+    }
+
+    @Test
+    fun `a drop lands on the design stagger, scaled to the note`() {
         val first = dropSticker(StickerId.Star, 0, "a")
         val fourth = dropSticker(StickerId.Star, 3, "b")
 
-        assertEquals(34f, first.x, Tolerance)
-        assertEquals(60f, first.y, Tolerance)
+        assertEquals(34f / 327f, first.x, Tolerance)
+        assertEquals(60f / 200f, first.y, Tolerance)
         assertEquals(StickerDropSize, first.size, Tolerance)
         assertEquals(0f, first.rotation, Tolerance)
-        assertEquals(34f, fourth.x, Tolerance)
-        assertEquals(192f, fourth.y, Tolerance)
+        assertEquals(34f / 327f, fourth.x, Tolerance)
+        assertEquals(192f / 200f, fourth.y, Tolerance)
     }
 
     @Test

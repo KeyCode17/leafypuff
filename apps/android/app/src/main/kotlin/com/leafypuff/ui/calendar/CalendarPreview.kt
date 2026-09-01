@@ -41,6 +41,12 @@ private fun CalendarDarkPreview() {
     CalendarFrame(dark = true)
 }
 
+@Preview(name = "Calendar with two entries on one day", widthDp = FrameWidth, heightDp = FrameHeight)
+@Composable
+private fun CalendarBusyDayPreview() {
+    CalendarFrame(dark = false, selected = LocalDate(2026, 8, 30))
+}
+
 @Preview(name = "Calendar with a photo day", widthDp = FrameWidth, heightDp = FrameHeight)
 @Composable
 private fun CalendarPhotoDayPreview() {
@@ -48,12 +54,16 @@ private fun CalendarPhotoDayPreview() {
 }
 
 @Composable
-private fun CalendarFrame(dark: Boolean, entries: List<Entry> = PreviewEntries) {
+private fun CalendarFrame(
+    dark: Boolean,
+    entries: List<Entry> = PreviewEntries,
+    selected: LocalDate = PreviewSelected,
+) {
     LeafyTheme(darkOverride = dark) {
         CalendarScreen(
             entries = entries,
             visibleMonth = PreviewMonth,
-            selected = PreviewSelected,
+            selected = selected,
             onMonthChange = { },
             onSelect = { },
             onToday = { },

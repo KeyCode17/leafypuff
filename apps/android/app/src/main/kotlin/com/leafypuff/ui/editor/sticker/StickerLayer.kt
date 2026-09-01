@@ -76,7 +76,10 @@ private fun PlacedStickerBox(
 
     Box(
         modifier = Modifier
-            .offset(sticker.x.dp - HandleInset, sticker.y.dp - HandleInset)
+            .offset(
+                (sticker.x * layerWidth).dp - HandleInset,
+                (sticker.y * layerHeight).dp - HandleInset,
+            )
             .size(sticker.size.dp + HandleInset * 2)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onSelect(current.key) })

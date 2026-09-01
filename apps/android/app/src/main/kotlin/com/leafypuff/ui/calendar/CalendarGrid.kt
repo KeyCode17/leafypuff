@@ -30,6 +30,10 @@ data class CalendarDay(
 
     val showsDot: Boolean get() = entries.isNotEmpty() && !isSelected && !showsPhoto
 
+    /// The design draws one entry per day. Two entries on one date are allowed, so the cell says
+    /// how many rather than silently standing for whichever one happened to sort first.
+    val showsCount: Boolean get() = entries.size > 1
+
     val dotColor: Color
         get() = entries.firstOrNull()?.let { Color(it.mood.dotArgb) } ?: Color.Transparent
 }
