@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.formatEntryDate
@@ -41,7 +42,6 @@ private val GridGap = 12.dp
 private val CloseButtonSize = 36.dp
 private val CloseGlyphSize = 18.dp
 private val ChevronSize = 14.dp
-private val Hairline = 0.5.dp
 private val DateGlyphGap = 6.dp
 
 @Composable
@@ -104,7 +104,7 @@ private fun CloseButton(onClose: () -> Unit) {
             .size(CloseButtonSize)
             .clip(LeafyShapes.pill)
             .background(colors.surface)
-            .border(Hairline, colors.line, LeafyShapes.pill)
+            .border(LeafyStroke.hairline, colors.line, LeafyShapes.pill)
             .clickable(onClick = onClose),
         contentAlignment = Alignment.Center,
     ) {

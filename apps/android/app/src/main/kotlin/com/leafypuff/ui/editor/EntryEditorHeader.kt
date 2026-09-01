@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 
@@ -27,7 +28,6 @@ private val HeaderTopPadding = 16.dp
 private val HeaderBottomPadding = 20.dp
 private val CloseButtonSize = 36.dp
 private val CloseGlyphSize = 18.dp
-private val Hairline = 0.5.dp
 private val HeaderTitleSize = 14.sp
 
 @Composable
@@ -52,7 +52,7 @@ fun EntryEditorHeader(
                 .size(CloseButtonSize)
                 .clip(LeafyShapes.pill)
                 .background(colors.surface)
-                .border(Hairline, colors.line, LeafyShapes.pill)
+                .border(LeafyStroke.hairline, colors.line, LeafyShapes.pill)
                 .clickable(onClick = onClose),
             contentAlignment = Alignment.Center,
         ) {

@@ -4,6 +4,7 @@ kotlin = "2.1.0"
 composeBom = "2024.12.01"
 activityCompose = "1.9.3"
 biometric = "1.1.0"
+coreKtx = "1.15.0"
 kotlinxDatetime = "0.6.1"
 jna = "5.15.0"
 kotlinxCoroutines = "1.9.0"
@@ -11,9 +12,13 @@ kotlinxCoroutines = "1.9.0"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+# The design names notes, calendar, camera, chart and tag glyphs. The core icon set carries a
+# handful of those; the extended set carries all of them, and R8 drops what the app never draws.
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }

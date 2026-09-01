@@ -9,4 +9,5 @@ data class Entry(
     val title: String,
     val body: String,
     val tags: List<String>,
+    val coverPhotoId: String? = null,
 )

@@ -2,13 +2,17 @@ package com.leafypuff.core
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 data class SyncSummary(val pushed: UInt, val pulled: UInt, val cursor: Long)
+
+data class IssuedSession(
+    val accessToken: String,
+    val refreshToken: String,
+    val expiresInSeconds: Long,
+)
+
+data class MailedChallenge(val expiresInSeconds: Long)
 
 data class PhotoDraft(val id: String, val path: String, val ordinal: Int)
 
@@ -76,6 +80,39 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.lock()
     }
 
+    suspend fun register(
+        baseUrl: String,
+        email: String,
+        password: String,
+        displayName: String,
+    ): MailedChallenge = withContext(Dispatchers.IO) {
+        core.register(baseUrl, email, password, displayName.ifBlank { null }).toChallenge()
+    }
+
+    suspend fun verifyEmail(baseUrl: String, email: String, code: String) =
+        withContext(Dispatchers.IO) {
+            core.verifyEmail(baseUrl, email, code)
+        }
+
+    suspend fun signIn(baseUrl: String, email: String, password: String): MailedChallenge =
+        withContext(Dispatchers.IO) {
+            core.signIn(baseUrl, email, password).toChallenge()
+        }
+
+    suspend fun verifySignIn(baseUrl: String, email: String, code: String): IssuedSession =
+        withContext(Dispatchers.IO) {
+            core.verifySignIn(baseUrl, email, code).toIssued()
+        }
+
+    suspend fun statistics(range: FfiStatsRange, today: LocalDate): FfiStats =
+        withContext(Dispatchers.IO) {
+            core.statistics(range, today.toString())
+        }
+
+    suspend fun exportDiary(destination: String): String = withContext(Dispatchers.IO) {
+        core.exportDiary(destination)
+    }
+
     suspend fun deviceId(): String = withContext(Dispatchers.IO) {
         core.deviceId()
     }
@@ -107,44 +144,3 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         }
     }
 }
-
-private fun EntryDraft.toRecord(): FfiEntry {
-    val stamp = Clock.System.now().toString()
-    return FfiEntry(
-        id = id,
-        date = date.toString(),
-        mood = mood,
-        title = title,
-        body = body,
-        tags = tags,
-        weather = weather,
-        location = location,
-        photos = photos.map { FfiPhoto(it.id, it.path, it.ordinal, null) },
-        stickers = stickers.map {
-            FfiPlacedSticker(it.key, it.sticker, it.x, it.y, it.size, it.rotation)
-        },
-        createdAt = stamp,
-        updatedAt = stamp,
-    )
-}
-
-private fun FfiEntry.toDraft(): EntryDraft = EntryDraft(
-    id = id,
-    date = LocalDate.parse(date),
-    mood = mood,
-    title = title,
-    body = body,
-    tags = tags,
-    weather = weather,
-    location = location,
-    photos = photos.map { PhotoDraft(it.id, it.path, it.ordinal) },
-    stickers = stickers.map {
-        StickerDraft(it.key, it.sticker, it.x, it.y, it.size, it.rotation)
-    },
-)
-
-private fun FfiPhoto.toImported(): ImportedPhoto = ImportedPhoto(
-    id = id,
-    path = path,
-    takenOn = takenAt?.let { Instant.parse(it).toLocalDateTime(TimeZone.UTC).date },
-)

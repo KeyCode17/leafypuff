@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
@@ -39,9 +40,7 @@ private val Scrim = Color(0x59242D35)
 private val PopupGutter = 40.dp
 private val PopupPadding = 20.dp
 private val PopupGap = 16.dp
-private val PopupElevation = 18.dp
 private val DoneHeight = 44.dp
-private val DoneElevation = 12.dp
 
 @Composable
 fun ReminderTimePopup(
@@ -85,7 +84,7 @@ private fun PopupCard(time: LocalTime, onTimeChange: (LocalTime) -> Unit, onDone
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(PopupElevation, LeafyShapes.popup)
+            .shadow(LeafyElevation.popup, LeafyShapes.popup)
             .clip(LeafyShapes.popup)
             .background(colors.sheet)
             .noRippleClick { }
@@ -132,7 +131,7 @@ private fun DoneButton(onDone: () -> Unit) {
             .fillMaxWidth()
             .height(DoneHeight)
             .shadow(
-                elevation = DoneElevation,
+                elevation = LeafyElevation.glow,
                 shape = LeafyShapes.input,
                 ambientColor = colors.accent,
                 spotColor = colors.accent,

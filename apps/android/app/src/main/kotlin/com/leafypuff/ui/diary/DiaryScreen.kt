@@ -27,6 +27,7 @@ import com.leafypuff.ui.common.formatMonthYear
 fun DiaryScreen(
     entries: List<Entry>,
     covers: Map<String, ImageBitmap> = emptyMap(),
+    onOpen: (Entry) -> Unit = { },
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -57,7 +58,9 @@ fun DiaryScreen(
             }
         }
 
-        items(entries, key = { it.id }) { entry -> EntryCard(entry, covers[entry.id]) }
+        items(entries, key = { it.id }) { entry ->
+            EntryCard(entry = entry, cover = covers[entry.id], onOpen = { onOpen(entry) })
+        }
 
         item {
             Text(

@@ -22,6 +22,13 @@ private val PreviewEntries: List<Entry> = SampleEntries + Entry(
     tags = listOf("#night"),
 )
 
+private val PhotoDayEntries: List<Entry> = PreviewEntries.map { entry ->
+    when (entry.date) {
+        PreviewSelected -> entry.copy(coverPhotoId = "preview-cover")
+        else -> entry
+    }
+}
+
 @Preview(name = "Calendar on light", widthDp = FrameWidth, heightDp = FrameHeight)
 @Composable
 private fun CalendarLightPreview() {
@@ -37,21 +44,20 @@ private fun CalendarDarkPreview() {
 @Preview(name = "Calendar with a photo day", widthDp = FrameWidth, heightDp = FrameHeight)
 @Composable
 private fun CalendarPhotoDayPreview() {
-    CalendarFrame(dark = false, hasPhoto = { it.id == "e3" })
+    CalendarFrame(dark = false, entries = PhotoDayEntries)
 }
 
 @Composable
-private fun CalendarFrame(dark: Boolean, hasPhoto: (Entry) -> Boolean = { false }) {
+private fun CalendarFrame(dark: Boolean, entries: List<Entry> = PreviewEntries) {
     LeafyTheme(darkOverride = dark) {
         CalendarScreen(
-            entries = PreviewEntries,
+            entries = entries,
             visibleMonth = PreviewMonth,
             selected = PreviewSelected,
             onMonthChange = { },
             onSelect = { },
             onToday = { },
             onCreateForSelected = { },
-            hasPhoto = hasPhoto,
         )
     }
 }

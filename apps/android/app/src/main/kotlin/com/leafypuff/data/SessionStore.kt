@@ -1,0 +1,36 @@
+package com.leafypuff.data
+
+import android.content.Context
+
+private const val PreferencesName = "leafypuff.session"
+private const val AccessTokenKey = "access.token"
+private const val RefreshTokenKey = "refresh.token"
+private const val EmailKey = "email"
+
+/**
+ * The signed-in account. Tokens sit beside the vault's own storage rather than in the entry
+ * database, so signing out clears the session without touching a single diary row.
+ */
+class SessionStore(private val context: Context) {
+
+    fun signedIn(): Boolean = accessToken() != null
+
+    fun accessToken(): String? = preferences().getString(AccessTokenKey, null)
+
+    fun email(): String = preferences().getString(EmailKey, "").orEmpty()
+
+    fun start(email: String, accessToken: String, refreshToken: String) {
+        preferences().edit()
+            .putString(EmailKey, email)
+            .putString(AccessTokenKey, accessToken)
+            .putString(RefreshTokenKey, refreshToken)
+            .apply()
+    }
+
+    fun clear() {
+        preferences().edit().clear().apply()
+    }
+
+    private fun preferences() =
+        context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)
+}

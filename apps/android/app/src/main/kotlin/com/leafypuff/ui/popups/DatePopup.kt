@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,7 +76,7 @@ private fun DateHeader(visibleMonth: LocalDate, onPrevious: () -> Unit, onNext: 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NavButton(
-            glyph = Icons.Filled.KeyboardArrowLeft,
+            glyph = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             label = "Previous month",
             onClick = onPrevious,
         )
@@ -86,7 +86,7 @@ private fun DateHeader(visibleMonth: LocalDate, onPrevious: () -> Unit, onNext: 
             color = colors.ink,
         )
         NavButton(
-            glyph = Icons.Filled.KeyboardArrowRight,
+            glyph = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             label = "Next month",
             onClick = onNext,
         )

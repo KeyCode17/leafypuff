@@ -20,7 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LocalLeafyColors
+import com.leafypuff.ui.editor.sticker.StickerId
+import com.leafypuff.ui.editor.sticker.StickerLayer
+import com.leafypuff.ui.editor.sticker.dropSticker
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.settings.StickerPack
 
 private val ScreenGutter = 24.dp
 private val ScrollBottomPadding = 210.dp
@@ -37,10 +41,12 @@ fun EntryEditor(
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
     photos: List<EntryPhoto> = emptyList(),
+    stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
     var tool by remember { mutableStateOf<EditorTool?>(null) }
     var lastTool by remember { mutableStateOf(EditorTool.Hashtag) }
+    var selectedSticker by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -71,19 +77,45 @@ fun EntryEditor(
                 onLocationClick = onLocationClick,
             )
 
-            EntryNoteCard(
-                title = draft.title,
-                body = draft.body,
-                tags = draft.tags,
-                photos = photos,
-                onTitleChange = { onDraftChange(draft.copy(title = it)) },
-                onBodyChange = { onDraftChange(draft.copy(body = it)) },
-                onRemoveTag = { index ->
-                    onDraftChange(
-                        draft.copy(tags = draft.tags.filterIndexed { at, _ -> at != index }),
-                    )
-                },
-            )
+            // The note and its stickers share one box: the design floats the sticker layer over
+            // the note itself, so it has to grow and scroll with it rather than with the screen.
+            Box {
+                EntryNoteCard(
+                    title = draft.title,
+                    body = draft.body,
+                    tags = draft.tags,
+                    photos = photos,
+                    onTitleChange = { onDraftChange(draft.copy(title = it)) },
+                    onBodyChange = { onDraftChange(draft.copy(body = it)) },
+                    onRemoveTag = { index ->
+                        onDraftChange(
+                            draft.copy(tags = draft.tags.filterIndexed { at, _ -> at != index }),
+                        )
+                    },
+                )
+
+                StickerLayer(
+                    stickers = draft.stickers,
+                    selectedKey = selectedSticker,
+                    onSelect = { selectedSticker = it },
+                    onChange = { moved ->
+                        onDraftChange(
+                            draft.copy(
+                                stickers = draft.stickers.map { placed ->
+                                    when (placed.key) {
+                                        moved.key -> moved
+                                        else -> placed
+                                    }
+                                },
+                            ),
+                        )
+                    },
+                    onRemove = { key ->
+                        onDraftChange(draft.copy(stickers = draft.stickers.filter { it.key != key }))
+                    },
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
         }
 
         Column(
@@ -103,7 +135,18 @@ fun EntryEditor(
                 ),
             ) {
                 when (lastTool) {
-                    EditorTool.Sticker -> StickerTrayDrawer()
+                    EditorTool.Sticker -> StickerTrayDrawer(
+                        pack = stickerPack,
+                        onPick = { picked ->
+                            val dropped = dropSticker(
+                                sticker = picked,
+                                index = draft.stickers.size,
+                                key = stickerKey(picked, draft.stickers.size),
+                            )
+                            onDraftChange(draft.copy(stickers = draft.stickers + dropped))
+                            selectedSticker = dropped.key
+                        },
+                    )
                     EditorTool.Hashtag -> HashtagPanel(
                         selected = draft.tags,
                         onAddTag = { tag -> onDraftChange(draft.copy(tags = draft.tags + tag)) },
@@ -122,3 +165,9 @@ fun EntryEditor(
         }
     }
 }
+
+/**
+ * A sticker's identity has to survive a drag, so it cannot be the list index. The ordinal it was
+ * dropped at is stable for the life of the entry and unique within it.
+ */
+private fun stickerKey(sticker: StickerId, ordinal: Int): String = "${sticker.id}-$ordinal"

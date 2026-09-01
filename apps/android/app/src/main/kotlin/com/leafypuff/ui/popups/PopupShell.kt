@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 
@@ -30,7 +31,6 @@ private val Scrim = Color(0x59242D35)
 private val PopupGutter = 44.dp
 private val PopupPadding = 16.dp
 private val PopupGap = 2.dp
-private val PopupElevation = 18.dp
 
 @Composable
 internal fun PopupShell(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
@@ -61,7 +61,7 @@ private fun PopupCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(PopupElevation, LeafyShapes.popup)
+            .shadow(LeafyElevation.popup, LeafyShapes.popup)
             .clip(LeafyShapes.popup)
             .background(colors.sheet)
             .noRippleClick { }

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
@@ -29,13 +30,13 @@ private val DotsGapBelow = 32.dp
 private val BiometricGap = 26.dp
 
 private const val BiometricLabel = "Use Face ID"
-private val BiometricElevation = 12.dp
 private val BiometricPaddingH = 24.dp
 private val BiometricPaddingV = 13.dp
 
 @Composable
 fun LockScreen(
     pinLength: Int,
+    hint: String,
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
     onBiometric: () -> Unit,
@@ -57,7 +58,7 @@ fun LockScreen(
         Spacer(Modifier.height(TitleGap))
         LockTitle()
         Spacer(Modifier.height(HintGap))
-        LockHint(pinLength)
+        LockHint(hint)
         Spacer(Modifier.height(DotsGapAbove))
         PinDots(pinLength)
         Spacer(Modifier.height(DotsGapBelow))
@@ -77,7 +78,7 @@ private fun BiometricButton(onBiometric: () -> Unit) {
         color = colors.onAccent,
         modifier = Modifier
             .shadow(
-                elevation = BiometricElevation,
+                elevation = LeafyElevation.glow,
                 shape = LeafyShapes.pill,
                 ambientColor = colors.accent,
                 spotColor = colors.accent,

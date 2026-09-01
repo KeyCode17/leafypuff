@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.formatMonthYear
@@ -38,7 +39,6 @@ private val NavGap = 10.dp
 private val NavButtonSize = 32.dp
 private val NavGlyphSize = 16.dp
 private val MonthLabelMinWidth = 132.dp
-private val Hairline = 0.5.dp
 private val PillPaddingH = 14.dp
 private val PillPaddingV = 8.dp
 private val TodayLabelSize = 12.sp
@@ -68,7 +68,7 @@ fun CalendarHeader(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NavButton(
-                glyph = Icons.Filled.KeyboardArrowLeft,
+                glyph = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 label = "Previous month",
                 onClick = { onMonthChange(visibleMonth.minus(1, DateTimeUnit.MONTH)) },
             )
@@ -79,7 +79,7 @@ fun CalendarHeader(
                 modifier = Modifier.widthIn(min = MonthLabelMinWidth),
             )
             NavButton(
-                glyph = Icons.Filled.KeyboardArrowRight,
+                glyph = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 label = "Next month",
                 onClick = { onMonthChange(visibleMonth.plus(1, DateTimeUnit.MONTH)) },
             )
@@ -120,7 +120,7 @@ private fun NavButton(glyph: ImageVector, label: String, onClick: () -> Unit) {
             .size(NavButtonSize)
             .clip(LeafyShapes.pill)
             .background(colors.surface)
-            .border(Hairline, colors.line, LeafyShapes.pill)
+            .border(LeafyStroke.hairline, colors.line, LeafyShapes.pill)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
+import com.leafypuff.theme.LeafyElevation
 import com.leafypuff.theme.LeafyShapes
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 
 internal val CardSpacing = 18.dp
@@ -22,9 +24,6 @@ internal val CardRowPaddingV = 16.dp
 internal val CardContentGap = 14.dp
 internal val ListCardPadding = PaddingValues(horizontal = 18.dp, vertical = 6.dp)
 internal val BlockCardPadding = PaddingValues(18.dp)
-
-private val CardElevation = 8.dp
-private val Hairline = 0.5.dp
 
 @Composable
 internal fun SettingsCard(
@@ -38,7 +37,7 @@ internal fun SettingsCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(CardElevation, LeafyShapes.card)
+            .shadow(LeafyElevation.card, LeafyShapes.card)
             .clip(LeafyShapes.card)
             .background(colors.sheet)
             .padding(padding),
@@ -52,7 +51,7 @@ internal fun SettingsDivider(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(Hairline)
+            .height(LeafyStroke.hairline)
             .background(LocalLeafyColors.current.line),
     )
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 
@@ -27,7 +28,6 @@ enum class EditorTool { Sticker, Hashtag }
 private val ToolbarHeight = 78.dp
 private val ToolbarPaddingX = 20.dp
 private val ToolbarPaddingTop = 14.dp
-private val Hairline = 0.5.dp
 private val SlotWidth = 44.dp
 private val SlotHeight = 40.dp
 private val CameraSize = 22.dp
@@ -51,7 +51,7 @@ fun EntryToolbar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(Hairline)
+                .height(LeafyStroke.hairline)
                 .background(colors.line),
         )
 
