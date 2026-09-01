@@ -19,6 +19,7 @@ fn router(world: &World) -> Router {
         world.services.clone(),
         world.sync.clone(),
         world.media.clone(),
+        world.rbac.clone(),
     ))
 }
 

@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Response};
 use crate::domain::DomainError;
 use crate::domain::iam::IamError;
 use crate::domain::media::MediaError;
+use crate::domain::rbac::RbacError;
 use crate::domain::sync::SyncError;
 
 use super::envelope::Envelope;
@@ -20,6 +21,7 @@ pub const ERR_FORBIDDEN: &str = "FORBIDDEN";
 pub const ERR_MALFORMED_BATCH: &str = "MALFORMED_BATCH";
 pub const ERR_OBJECT_NOT_FOUND: &str = "OBJECT_NOT_FOUND";
 pub const ERR_OBJECT_TOO_LARGE: &str = "OBJECT_TOO_LARGE";
+pub const ERR_ROLE_NOT_FOUND: &str = "ROLE_NOT_FOUND";
 
 const MESSAGE_FAILED: &str = "Request failed";
 const DETAIL_INVALID_CREDENTIALS: &str = "Invalid credentials";
@@ -31,6 +33,8 @@ const DETAIL_INTERNAL: &str = "Something went wrong";
 const DETAIL_FORBIDDEN: &str = "That entry belongs to another account";
 const DETAIL_OBJECT_NOT_FOUND: &str = "No such object";
 const DETAIL_OBJECT_TOO_LARGE: &str = "Object is larger than the ceiling";
+const DETAIL_NOT_PERMITTED: &str = "You do not have permission to do that";
+const DETAIL_ROLE_NOT_FOUND: &str = "No such role";
 
 pub struct ApiError {
     status: StatusCode,
@@ -141,6 +145,29 @@ impl From<MediaError> for ApiError {
             ),
             MediaError::Storage(reason) => {
                 tracing::error!(%reason, "an object storage request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<RbacError> for ApiError {
+    fn from(error: RbacError) -> Self {
+        match error {
+            RbacError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
+            }
+            RbacError::RoleNotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_ROLE_NOT_FOUND,
+                DETAIL_ROLE_NOT_FOUND,
+            ),
+            RbacError::Storage(reason) => {
+                tracing::error!(%reason, "an rbac request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,

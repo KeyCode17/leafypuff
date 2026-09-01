@@ -5,10 +5,12 @@ use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
+use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
 use crate::sync_repositories::{
     InMemoryCheckpoints, InMemoryConflicts, InMemoryEntries, InMemoryIdempotency,
@@ -30,6 +32,9 @@ pub struct World {
     pub sync: SyncServices,
     pub objects: InMemoryObjects,
     pub media: MediaServices,
+    pub roles: InMemoryRoles,
+    pub audit: InMemoryAudit,
+    pub rbac: RbacServices,
 }
 
 impl Default for World {
@@ -75,6 +80,14 @@ impl Default for World {
             media: Arc::new(InMemoryMedia::default()),
         };
 
+        let roles = InMemoryRoles::default();
+        let audit = InMemoryAudit::default();
+        let rbac = RbacServices {
+            roles: Arc::new(roles.clone()),
+            permissions: Arc::new(roles.clone()),
+            audit: Arc::new(audit.clone()),
+        };
+
         Self {
             accounts,
             credentials,
@@ -90,6 +103,9 @@ impl Default for World {
             sync,
             objects,
             media,
+            roles,
+            audit,
+            rbac,
         }
     }
 }

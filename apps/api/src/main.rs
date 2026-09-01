@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use leafypuff_api::application::iam::IamServices;
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
 use leafypuff_api::http::{AppState, build_router};
@@ -11,6 +12,7 @@ use leafypuff_api::infrastructure::iam::{
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
 };
 use leafypuff_api::infrastructure::media::{PgMediaRepository, S3ObjectStore, build_s3_client};
+use leafypuff_api::infrastructure::rbac::{PgAuditLog, PgPermissionReader, PgRoleRepository};
 use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
 };
@@ -59,8 +61,14 @@ async fn main() {
         media: Arc::new(PgMediaRepository::new(connection.clone())),
     };
 
+    let rbac = RbacServices {
+        roles: Arc::new(PgRoleRepository::new(connection.clone())),
+        permissions: Arc::new(PgPermissionReader::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+    };
+
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
-    let app = build_router(AppState::new(probe, iam, sync, media));
+    let app = build_router(AppState::new(probe, iam, sync, media, rbac));
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)

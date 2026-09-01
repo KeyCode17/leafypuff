@@ -3,7 +3,7 @@ use axum::{Router, middleware};
 
 use super::rate_limit::{RateLimiter, guard};
 use super::state::AppState;
-use super::{health, iam, media, sync};
+use super::{health, iam, media, rbac, sync};
 
 pub fn build_router(state: AppState) -> Router {
     let limiter = RateLimiter::new();
@@ -18,5 +18,6 @@ pub fn build_router(state: AppState) -> Router {
         .nest("/v1/auth", auth)
         .nest("/v1/sync", sync::router())
         .nest("/v1/media", media::router())
+        .nest("/v1/admin", rbac::router())
         .with_state(state)
 }

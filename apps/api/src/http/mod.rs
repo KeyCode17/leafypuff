@@ -6,6 +6,7 @@ pub mod health;
 pub mod iam;
 pub mod media;
 pub mod rate_limit;
+pub mod rbac;
 pub mod router;
 pub mod state;
 pub mod sync;
