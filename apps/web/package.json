@@ -1,6 +1,6 @@
 {
 	"name": "leafypuff-web",
-	"version": "0.20.5",
+	"version": "0.20.6",
 	"private": true,
 	"type": "module",
 	"packageManager": "pnpm@9.15.0",
