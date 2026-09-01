@@ -104,9 +104,48 @@ async fn harness() -> Option<Harness> {
         media: Arc::new(PgMediaRepository::new(connection.clone())),
     };
 
+    let rbac = leafypuff_api::application::rbac::RbacServices {
+        roles: Arc::new(api_testing::rbac_repositories::InMemoryRoles::default()),
+        permissions: Arc::new(api_testing::rbac_repositories::InMemoryRoles::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+    };
+    let admin = leafypuff_api::application::admin::AdminServices {
+        directory: Arc::new(api_testing::admin_repositories::InMemoryDirectory::default()),
+        metrics: Arc::new(api_testing::admin_repositories::InMemoryMetrics::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
+    let catalog = leafypuff_api::application::catalog::CatalogServices {
+        store: Arc::new(api_testing::catalog_repositories::InMemoryCatalog::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
+    let privacy = leafypuff_api::application::privacy::PrivacyServices {
+        requests: Arc::new(api_testing::privacy_repositories::InMemoryRequests::default()),
+        eraser: Arc::new(api_testing::privacy_repositories::RecordingEraser::default()),
+        objects: Arc::new(InMemoryObjects::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
+    let release = leafypuff_api::application::release::ReleaseServices {
+        gates: Arc::new(api_testing::release_repositories::InMemoryGates::default()),
+        campaigns: Arc::new(api_testing::release_repositories::InMemoryCampaigns::default()),
+        audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
+        rbac: rbac.clone(),
+    };
     let probe = DependencyProbe::new(url, "127.0.0.1:3900".to_owned());
     Some(Harness {
-        router: build_router(AppState::new(probe, iam, sync, media)),
+        router: build_router(AppState {
+            readiness: probe,
+            iam,
+            sync,
+            media,
+            rbac: rbac.clone(),
+            admin,
+            catalog,
+            privacy,
+            release,
+        }),
         account_id: owner.id,
         token,
         connection,

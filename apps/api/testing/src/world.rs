@@ -1,14 +1,24 @@
 use std::sync::Arc;
 
 use chrono::{TimeZone, Utc};
+use leafypuff_api::application::admin::AdminServices;
+use leafypuff_api::application::catalog::CatalogServices;
 use leafypuff_api::application::iam::{
     CompleteSignIn, IamServices, RefreshSession, RegisterAccount, StartSignIn, VerifyEmail,
 };
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::privacy::PrivacyServices;
+use leafypuff_api::application::rbac::RbacServices;
+use leafypuff_api::application::release::ReleaseServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
+use crate::admin_repositories::{InMemoryDirectory, InMemoryMetrics};
+use crate::catalog_repositories::InMemoryCatalog;
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
+use crate::privacy_repositories::{InMemoryRequests, RecordingEraser};
+use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
+use crate::release_repositories::{InMemoryCampaigns, InMemoryGates};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
 use crate::sync_repositories::{
     InMemoryCheckpoints, InMemoryConflicts, InMemoryEntries, InMemoryIdempotency,
@@ -30,6 +40,20 @@ pub struct World {
     pub sync: SyncServices,
     pub objects: InMemoryObjects,
     pub media: MediaServices,
+    pub roles: InMemoryRoles,
+    pub audit: InMemoryAudit,
+    pub rbac: RbacServices,
+    pub directory: InMemoryDirectory,
+    pub metrics: InMemoryMetrics,
+    pub admin: AdminServices,
+    pub bundles: InMemoryCatalog,
+    pub catalog: CatalogServices,
+    pub requests: InMemoryRequests,
+    pub eraser: RecordingEraser,
+    pub privacy: PrivacyServices,
+    pub gates: InMemoryGates,
+    pub campaigns: InMemoryCampaigns,
+    pub release: ReleaseServices,
 }
 
 impl Default for World {
@@ -75,6 +99,49 @@ impl Default for World {
             media: Arc::new(InMemoryMedia::default()),
         };
 
+        let roles = InMemoryRoles::default();
+        let audit = InMemoryAudit::default();
+        let rbac = RbacServices {
+            roles: Arc::new(roles.clone()),
+            permissions: Arc::new(roles.clone()),
+            audit: Arc::new(audit.clone()),
+        };
+
+        let directory = InMemoryDirectory::default();
+        let metrics = InMemoryMetrics::default();
+        let admin = AdminServices {
+            directory: Arc::new(directory.clone()),
+            metrics: Arc::new(metrics.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
+        let bundles = InMemoryCatalog::default();
+        let catalog = CatalogServices {
+            store: Arc::new(bundles.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
+        let requests = InMemoryRequests::default();
+        let eraser = RecordingEraser::default();
+        let privacy = PrivacyServices {
+            requests: Arc::new(requests.clone()),
+            eraser: Arc::new(eraser.clone()),
+            objects: Arc::new(objects.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
+        let gates = InMemoryGates::default();
+        let campaigns = InMemoryCampaigns::default();
+        let release = ReleaseServices {
+            gates: Arc::new(gates.clone()),
+            campaigns: Arc::new(campaigns.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
         Self {
             accounts,
             credentials,
@@ -90,6 +157,20 @@ impl Default for World {
             sync,
             objects,
             media,
+            roles,
+            audit,
+            rbac,
+            directory,
+            metrics,
+            admin,
+            bundles,
+            catalog,
+            requests,
+            eraser,
+            privacy,
+            gates,
+            campaigns,
+            release,
         }
     }
 }

@@ -10,43 +10,147 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated.accounts/index'
+import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated.audit/index'
+import { Route as AuthenticatedCatalogIndexRouteImport } from './routes/_authenticated.catalog/index'
+import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.dashboard/index'
+import { Route as AuthenticatedPrivacyIndexRouteImport } from './routes/_authenticated.privacy/index'
+import { Route as AuthenticatedReleaseIndexRouteImport } from './routes/_authenticated.release/index'
+import { Route as AuthenticatedRolesIndexRouteImport } from './routes/_authenticated.roles/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LoginIndexRoute = LoginIndexRouteImport.update({
+  id: '/login/',
+  path: '/login/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountsIndexRoute =
+  AuthenticatedAccountsIndexRouteImport.update({
+    id: '/accounts/',
+    path: '/accounts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCatalogIndexRoute =
+  AuthenticatedCatalogIndexRouteImport.update({
+    id: '/catalog/',
+    path: '/catalog/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexRouteImport.update({
+    id: '/dashboard/',
+    path: '/dashboard/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPrivacyIndexRoute =
+  AuthenticatedPrivacyIndexRouteImport.update({
+    id: '/privacy/',
+    path: '/privacy/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReleaseIndexRoute =
+  AuthenticatedReleaseIndexRouteImport.update({
+    id: '/release/',
+    path: '/release/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRolesIndexRoute = AuthenticatedRolesIndexRouteImport.update({
+  id: '/roles/',
+  path: '/roles/',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/login/': typeof LoginIndexRoute
+  '/accounts/': typeof AuthenticatedAccountsIndexRoute
+  '/audit/': typeof AuthenticatedAuditIndexRoute
+  '/catalog/': typeof AuthenticatedCatalogIndexRoute
+  '/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/privacy/': typeof AuthenticatedPrivacyIndexRoute
+  '/release/': typeof AuthenticatedReleaseIndexRoute
+  '/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardIndexRoute
+  '/login': typeof LoginIndexRoute
+  '/accounts': typeof AuthenticatedAccountsIndexRoute
+  '/audit': typeof AuthenticatedAuditIndexRoute
+  '/catalog': typeof AuthenticatedCatalogIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/privacy': typeof AuthenticatedPrivacyIndexRoute
+  '/release': typeof AuthenticatedReleaseIndexRoute
+  '/roles': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login/': typeof LoginIndexRoute
+  '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
+  '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
+  '/_authenticated/catalog/': typeof AuthenticatedCatalogIndexRoute
+  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/privacy/': typeof AuthenticatedPrivacyIndexRoute
+  '/_authenticated/release/': typeof AuthenticatedReleaseIndexRoute
+  '/_authenticated/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard/'
+  fullPaths:
+    | '/'
+    | '/login/'
+    | '/accounts/'
+    | '/audit/'
+    | '/catalog/'
+    | '/dashboard/'
+    | '/privacy/'
+    | '/release/'
+    | '/roles/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard'
-  id: '__root__' | '/' | '/dashboard/'
+  to:
+    | '/'
+    | '/login'
+    | '/accounts'
+    | '/audit'
+    | '/catalog'
+    | '/dashboard'
+    | '/privacy'
+    | '/release'
+    | '/roles'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login/'
+    | '/_authenticated/accounts/'
+    | '/_authenticated/audit/'
+    | '/_authenticated/catalog/'
+    | '/_authenticated/dashboard/'
+    | '/_authenticated/privacy/'
+    | '/_authenticated/release/'
+    | '/_authenticated/roles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginIndexRoute: typeof LoginIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,19 +162,100 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/login'
+      fullPath: '/login/'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/accounts/': {
+      id: '/_authenticated/accounts/'
+      path: '/accounts'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/audit/': {
+      id: '/_authenticated/audit/'
+      path: '/audit'
+      fullPath: '/audit/'
+      preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/catalog/': {
+      id: '/_authenticated/catalog/'
+      path: '/catalog'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof AuthenticatedCatalogIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard/': {
+      id: '/_authenticated/dashboard/'
       path: '/dashboard'
       fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/privacy/': {
+      id: '/_authenticated/privacy/'
+      path: '/privacy'
+      fullPath: '/privacy/'
+      preLoaderRoute: typeof AuthenticatedPrivacyIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/release/': {
+      id: '/_authenticated/release/'
+      path: '/release'
+      fullPath: '/release/'
+      preLoaderRoute: typeof AuthenticatedReleaseIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/roles/': {
+      id: '/_authenticated/roles/'
+      path: '/roles'
+      fullPath: '/roles/'
+      preLoaderRoute: typeof AuthenticatedRolesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
+  AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
+  AuthenticatedCatalogIndexRoute: typeof AuthenticatedCatalogIndexRoute
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedPrivacyIndexRoute: typeof AuthenticatedPrivacyIndexRoute
+  AuthenticatedReleaseIndexRoute: typeof AuthenticatedReleaseIndexRoute
+  AuthenticatedRolesIndexRoute: typeof AuthenticatedRolesIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
+  AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
+  AuthenticatedCatalogIndexRoute: AuthenticatedCatalogIndexRoute,
+  AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+  AuthenticatedPrivacyIndexRoute: AuthenticatedPrivacyIndexRoute,
+  AuthenticatedReleaseIndexRoute: AuthenticatedReleaseIndexRoute,
+  AuthenticatedRolesIndexRoute: AuthenticatedRolesIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginIndexRoute: LoginIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

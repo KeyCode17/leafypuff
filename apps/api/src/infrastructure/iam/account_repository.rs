@@ -52,6 +52,7 @@ impl AccountRepository for PgAccountRepository {
             email_verified_at: ActiveValue::Set(
                 account.email_verified_at.map(|at| at.fixed_offset()),
             ),
+            suspended_at: ActiveValue::Set(None),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),
         };

@@ -76,6 +76,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: pnpm exec biome check .
+      - run: pnpm exec vitest run
       - name: react hooks are banned
         run: |
           if grep -rnE "\buse(State|Effect|Memo|Callback|Ref|Context|Reducer|LayoutEffect|Transition|DeferredValue|Id|SyncExternalStore|Optimistic)\b" src; then

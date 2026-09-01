@@ -1,16 +1,26 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use leafypuff_api::application::admin::AdminServices;
+use leafypuff_api::application::catalog::CatalogServices;
 use leafypuff_api::application::iam::IamServices;
 use leafypuff_api::application::media::MediaServices;
+use leafypuff_api::application::privacy::PrivacyServices;
+use leafypuff_api::application::rbac::RbacServices;
+use leafypuff_api::application::release::ReleaseServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
 use leafypuff_api::http::{AppState, build_router};
+use leafypuff_api::infrastructure::admin::{PgAccountDirectory, PgServiceMetrics};
+use leafypuff_api::infrastructure::catalog::PgCatalogStore;
 use leafypuff_api::infrastructure::iam::{
     Argon2Hasher, Blake3Otp, JwtTokenIssuer, PgAccountRepository, PgOtpRepository,
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
 };
 use leafypuff_api::infrastructure::media::{PgMediaRepository, S3ObjectStore, build_s3_client};
+use leafypuff_api::infrastructure::privacy::{PgDataRequestStore, PgEraser};
+use leafypuff_api::infrastructure::rbac::{PgAuditLog, PgPermissionReader, PgRoleRepository};
+use leafypuff_api::infrastructure::release::{PgCampaignStore, PgReleaseGateStore};
 use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
 };
@@ -59,8 +69,52 @@ async fn main() {
         media: Arc::new(PgMediaRepository::new(connection.clone())),
     };
 
+    let rbac = RbacServices {
+        roles: Arc::new(PgRoleRepository::new(connection.clone())),
+        permissions: Arc::new(PgPermissionReader::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+    };
+
+    let admin = AdminServices {
+        directory: Arc::new(PgAccountDirectory::new(connection.clone())),
+        metrics: Arc::new(PgServiceMetrics::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
+    let catalog = CatalogServices {
+        store: Arc::new(PgCatalogStore::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
+    let privacy = PrivacyServices {
+        requests: Arc::new(PgDataRequestStore::new(connection.clone())),
+        eraser: Arc::new(PgEraser::new(connection.clone())),
+        objects: Arc::clone(&media.objects),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
+    let release = ReleaseServices {
+        gates: Arc::new(PgReleaseGateStore::new(connection.clone())),
+        campaigns: Arc::new(PgCampaignStore::new(connection.clone())),
+        audit: Arc::new(PgAuditLog::new(connection.clone())),
+        rbac: rbac.clone(),
+    };
+
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
-    let app = build_router(AppState::new(probe, iam, sync, media));
+    let app = build_router(AppState {
+        readiness: probe,
+        iam,
+        sync,
+        media,
+        rbac,
+        admin,
+        catalog,
+        privacy,
+        release,
+    });
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
 
     let listener = tokio::net::TcpListener::bind(address)

@@ -13,12 +13,17 @@ const BODY_LIMIT: usize = 64 * 1024;
 
 fn router(world: &World) -> Router {
     let probe = DependencyProbe::new("postgres://unused".to_owned(), "127.0.0.1:3900".to_owned());
-    build_router(AppState::new(
-        probe,
-        world.services.clone(),
-        world.sync.clone(),
-        world.media.clone(),
-    ))
+    build_router(AppState {
+        readiness: probe,
+        iam: world.services.clone(),
+        sync: world.sync.clone(),
+        media: world.media.clone(),
+        rbac: world.rbac.clone(),
+        admin: world.admin.clone(),
+        catalog: world.catalog.clone(),
+        privacy: world.privacy.clone(),
+        release: world.release.clone(),
+    })
 }
 
 fn envelope(plaintext: &[u8], updated_at_ms: i64, device_id: Uuid) -> Value {
