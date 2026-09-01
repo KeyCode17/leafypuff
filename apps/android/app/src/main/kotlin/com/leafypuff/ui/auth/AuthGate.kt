@@ -1,7 +1,9 @@
 package com.leafypuff.ui.auth
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -9,12 +11,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.leafypuff.core.CoreClient
-import com.leafypuff.core.LeafyPuffCoreException
 import com.leafypuff.data.SessionStore
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.plainToast
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val ResendCooldownSeconds = 45
+private const val SecondInMillis = 1_000L
 
 @Composable
 fun AuthGate(
@@ -31,6 +36,7 @@ fun AuthGate(
 
     var state by remember { mutableStateOf(AuthFormState()) }
     var pending by remember { mutableStateOf(false) }
+    var cooldown by remember { mutableIntStateOf(0) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
 
     if (signedIn) {
@@ -38,9 +44,17 @@ fun AuthGate(
         return
     }
 
+    LaunchedEffect(cooldown) {
+        if (cooldown > 0) {
+            delay(SecondInMillis)
+            cooldown -= 1
+        }
+    }
+
     AuthScreen(
         state = state,
         pending = pending || client == null,
+        resendIn = cooldown,
         onChange = { state = it },
         onSwitchMode = {
             state = AuthFormState(
@@ -49,6 +63,17 @@ fun AuthGate(
             )
         },
         onForgotPassword = { toast = plainToast("Reset link sent to your email.") },
+        onResend = {
+            val core = client
+            if (core != null && !pending && cooldown == 0) {
+                pending = true
+                cooldown = ResendCooldownSeconds
+                scope.launch {
+                    state = resend(core, apiBaseUrl, state) { toast = plainToast(it) }
+                    pending = false
+                }
+            }
+        },
         onSubmit = {
             val complaint = state.validate()
             val core = client
@@ -58,7 +83,9 @@ fun AuthGate(
                 else -> {
                     pending = true
                     scope.launch {
-                        state = advance(core, apiBaseUrl, state, session, onSignedIn)
+                        state = advance(core, apiBaseUrl, state, session, onSignedIn) {
+                            toast = plainToast(it)
+                        }
                         pending = false
                     }
                 }
@@ -74,63 +101,3 @@ fun AuthGate(
         onDismiss = { toast = null },
     )
 }
-
-private suspend fun advance(
-    client: CoreClient,
-    apiBaseUrl: String,
-    state: AuthFormState,
-    session: SessionStore,
-    onSignedIn: (SignedIn) -> Unit,
-): AuthFormState = runCatching {
-    when (state.mode) {
-        AuthMode.Signup -> {
-            client.register(apiBaseUrl, state.email, state.password, state.name)
-            state.copy(mode = AuthMode.VerifyEmail, code = "", error = null)
-        }
-
-        AuthMode.VerifyEmail -> {
-            client.verifyEmail(apiBaseUrl, state.email, state.code)
-            runCatching { client.signIn(apiBaseUrl, state.email, state.password) }.fold(
-                onSuccess = { state.copy(mode = AuthMode.VerifySignIn, code = "", error = null) },
-                onFailure = { failure ->
-                    state.copy(
-                        mode = AuthMode.Login,
-                        code = "",
-                        error = readable(AuthMode.Login, failure),
-                    )
-                },
-            )
-        }
-
-        AuthMode.Login -> {
-            client.signIn(apiBaseUrl, state.email, state.password)
-            state.copy(mode = AuthMode.VerifySignIn, code = "", error = null)
-        }
-
-        AuthMode.VerifySignIn -> {
-            val issued = client.verifySignIn(apiBaseUrl, state.email, state.code)
-            session.start(state.email, issued.accessToken, issued.refreshToken)
-            onSignedIn(SignedIn(state.name, state.password, issued.accessToken))
-            state
-        }
-    }
-}.getOrElse { failure -> state.copy(error = readable(state.mode, failure)) }
-
-private fun readable(mode: AuthMode, failure: Throwable): String = when (failure) {
-    is LeafyPuffCoreException.InvalidCredentials -> when {
-        mode.verifying -> "That code is wrong or has expired."
-        else -> "That email and password do not match."
-    }
-
-    is LeafyPuffCoreException.EmailNotVerified -> "Confirm your email first."
-    is LeafyPuffCoreException.EmailTaken -> "That address already has an account."
-    is LeafyPuffCoreException.TooManyAttempts -> "Too many attempts. Wait a moment."
-    is LeafyPuffCoreException.MailUnavailable -> "We could not send the code. Try again shortly."
-    is LeafyPuffCoreException.ServiceUnavailable -> "The service is busy. Try again shortly."
-    is LeafyPuffCoreException.Timeout -> "The server is taking too long. Try again."
-    is LeafyPuffCoreException.Unreadable -> "The server answered something we could not read."
-    is LeafyPuffCoreException.Storage -> "No connection. Check your network."
-    else -> "Something went wrong. Try again."
-}
-
-data class SignedIn(val name: String, val password: String, val accessToken: String)

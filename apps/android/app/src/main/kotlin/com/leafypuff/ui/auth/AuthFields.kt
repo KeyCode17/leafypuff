@@ -60,6 +60,26 @@ internal fun AuthFields(state: AuthFormState, onChange: (AuthFormState) -> Unit)
 }
 
 @Composable
+internal fun AuthResendRow(secondsLeft: Int, enabled: Boolean, onResend: () -> Unit) {
+    val colors = LocalLeafyColors.current
+    val typography = LocalLeafyTypography.current
+    val waiting = secondsLeft > 0 || !enabled
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SwitchGap, Alignment.CenterHorizontally),
+    ) {
+        Text(text = "Did not get it?", style = typography.chipLabel, color = colors.ink2)
+        Text(
+            text = if (secondsLeft > 0) "Send again in ${secondsLeft}s" else "Send a new code",
+            style = typography.chipLabel,
+            color = if (waiting) colors.ink3 else colors.accentDeep,
+            modifier = Modifier.clickable(enabled = !waiting, onClick = onResend),
+        )
+    }
+}
+
+@Composable
 internal fun AuthFooterSwitch(mode: AuthMode, onSwitch: () -> Unit) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
