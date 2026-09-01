@@ -112,7 +112,7 @@ impl VaultSync {
         response
             .json()
             .await
-            .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))
+            .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))
     }
 }
 
@@ -145,9 +145,9 @@ fn slot(row: &Value) -> Result<WrappedKey, CoreError> {
 fn decode(raw: &str) -> Result<Vec<u8>, CoreError> {
     BASE64
         .decode(raw.as_bytes())
-        .map_err(|_| CoreError::Storage(ERR_SHAPE.to_owned()))
+        .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))
 }
 
 fn shape() -> CoreError {
-    CoreError::Storage(ERR_SHAPE.to_owned())
+    CoreError::Unreadable(ERR_SHAPE.to_owned())
 }

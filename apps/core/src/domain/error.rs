@@ -42,6 +42,8 @@ pub enum CoreError {
     Locked,
     #[error("Timed out: {0}")]
     Timeout(String),
+    #[error("Unreadable answer: {0}")]
+    Unreadable(String),
     #[error("{rejection}: {detail}")]
     Rejected {
         rejection: Rejection,
