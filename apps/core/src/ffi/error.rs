@@ -31,6 +31,8 @@ pub enum LeafyPuffCoreError {
     MailUnavailable { message: String },
     #[error("{message}")]
     ServiceUnavailable { message: String },
+    #[error("{message}")]
+    Timeout { message: String },
 }
 
 impl From<CoreError> for LeafyPuffCoreError {
@@ -44,6 +46,7 @@ impl From<CoreError> for LeafyPuffCoreError {
             CoreError::Crypto(_) => Self::Crypto { message },
             CoreError::Invalid(_) => Self::Invalid { message },
             CoreError::Locked => Self::Locked { message },
+            CoreError::Timeout(_) => Self::Timeout { message },
             CoreError::Rejected { rejection, .. } => match rejection {
                 Rejection::InvalidCredentials => Self::InvalidCredentials { message },
                 Rejection::EmailNotVerified => Self::EmailNotVerified { message },

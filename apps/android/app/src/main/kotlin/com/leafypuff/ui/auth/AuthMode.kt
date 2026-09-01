@@ -37,3 +37,12 @@ internal val AuthMode.cta: String
         AuthMode.VerifyEmail -> "CONFIRM EMAIL"
         AuthMode.VerifySignIn -> "VERIFY"
     }
+
+/// What the button says while the request is out. The design draws no pending state, and without
+/// one "working" and "broken" look identical: the button greys out and nothing else moves.
+internal val AuthMode.working: String
+    get() = when (this) {
+        AuthMode.Login -> "SIGNING IN…"
+        AuthMode.Signup -> "CREATING…"
+        AuthMode.VerifyEmail, AuthMode.VerifySignIn -> "CHECKING…"
+    }

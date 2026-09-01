@@ -58,7 +58,9 @@ fun AuthGate(
             val core = client
             when {
                 complaint != null -> state = state.copy(error = complaint)
-                core == null -> Unit
+                // Tapped before the local database finished opening. Rare and brief, but a
+                // silent no-op here is indistinguishable from a broken button.
+                core == null -> state = state.copy(error = "One moment, still opening your diary.")
                 else -> {
                     pending = true
                     scope.launch {
@@ -146,6 +148,7 @@ private fun readable(mode: AuthMode, failure: Throwable): String = when (failure
     is LeafyPuffCoreException.TooManyAttempts -> "Too many attempts. Wait a moment."
     is LeafyPuffCoreException.MailUnavailable -> "We could not send the code. Try again shortly."
     is LeafyPuffCoreException.ServiceUnavailable -> "The service is busy. Try again shortly."
+    is LeafyPuffCoreException.Timeout -> "The server is taking too long. Try again."
     is LeafyPuffCoreException.Storage -> "No connection. Check your network."
     else -> "Something went wrong. Try again."
 }
