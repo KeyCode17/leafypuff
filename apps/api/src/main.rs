@@ -8,7 +8,7 @@ use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 use leafypuff_api::domain::iam::{TokenIssuer, TokenVerifier};
 use leafypuff_api::http::{AppState, build_router};
-use leafypuff_api::infrastructure::admin::PgAccountDirectory;
+use leafypuff_api::infrastructure::admin::{PgAccountDirectory, PgServiceMetrics};
 use leafypuff_api::infrastructure::iam::{
     Argon2Hasher, Blake3Otp, JwtTokenIssuer, PgAccountRepository, PgOtpRepository,
     PgRefreshTokenRepository, ResendEmailSender, SystemClock,
@@ -71,6 +71,7 @@ async fn main() {
 
     let admin = AdminServices {
         directory: Arc::new(PgAccountDirectory::new(connection.clone())),
+        metrics: Arc::new(PgServiceMetrics::new(connection.clone())),
         audit: Arc::new(PgAuditLog::new(connection.clone())),
         rbac: rbac.clone(),
     };

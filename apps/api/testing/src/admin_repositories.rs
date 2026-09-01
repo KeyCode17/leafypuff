@@ -2,7 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use leafypuff_api::domain::admin::{AccountDirectory, AccountSummary, AdminError};
+use leafypuff_api::domain::admin::{
+    AccountDirectory, AccountSummary, AdminError, ServiceMetrics, ServiceOverview,
+};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
@@ -50,5 +52,27 @@ impl AccountDirectory for InMemoryDirectory {
             row.suspended = at.is_some();
         }
         Ok(())
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct InMemoryMetrics {
+    overview: Arc<Mutex<Option<ServiceOverview>>>,
+}
+
+impl InMemoryMetrics {
+    pub fn publish(&self, overview: ServiceOverview) {
+        *self.overview.lock().expect("the metrics lock holds") = Some(overview);
+    }
+}
+
+#[async_trait]
+impl ServiceMetrics for InMemoryMetrics {
+    async fn overview(&self, _since_ms: i64) -> Result<ServiceOverview, AdminError> {
+        self.overview
+            .lock()
+            .expect("the metrics lock holds")
+            .clone()
+            .ok_or_else(|| AdminError::Storage("the test published no overview".to_owned()))
     }
 }

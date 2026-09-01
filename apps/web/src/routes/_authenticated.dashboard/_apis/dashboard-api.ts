@@ -1,28 +1,21 @@
-import { queryOptions } from "@tanstack/react-query"
+import { request } from "#/lib/api-client"
 
-export type TDashboardSummary = {
-	accounts: number
-	entries: number
-	storageBytes: number
+export type TServiceOverview = {
+	account_count: number
+	verified_account_count: number
+	suspended_account_count: number
+	entry_count: number
+	tombstoned_entry_count: number
+	device_count: number
+	devices_synced_last_day: number
+	field_conflict_count: number
+	media_object_count: number
+	media_bytes: number
 }
 
-export const dashboardKeys = {
-	all: ["dashboard"] as const,
-	summary: () => [...dashboardKeys.all, "summary"] as const,
-}
-
-const fetchDashboardSummary = async (): Promise<TDashboardSummary> => {
-	const response = await fetch("/v1/admin/dashboard/summary")
-	if (!response.ok) {
-		throw new Error("Couldn’t load the dashboard — try again")
-	}
-	const body: { data: TDashboardSummary } = await response.json()
-	return body.data
-}
-
-export const dashboardSummaryQueryOptions = () =>
-	queryOptions({
-		queryKey: dashboardKeys.summary(),
-		queryFn: fetchDashboardSummary,
-		staleTime: 5 * 60_000,
+export const getServiceOverview = (): Promise<TServiceOverview> =>
+	request<TServiceOverview>({
+		path: "/v1/admin/overview",
+		method: "GET",
+		authenticated: true,
 	})

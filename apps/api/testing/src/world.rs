@@ -10,7 +10,7 @@ use leafypuff_api::application::rbac::RbacServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
-use crate::admin_repositories::InMemoryDirectory;
+use crate::admin_repositories::{InMemoryDirectory, InMemoryMetrics};
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
 use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
@@ -38,6 +38,7 @@ pub struct World {
     pub audit: InMemoryAudit,
     pub rbac: RbacServices,
     pub directory: InMemoryDirectory,
+    pub metrics: InMemoryMetrics,
     pub admin: AdminServices,
 }
 
@@ -93,8 +94,10 @@ impl Default for World {
         };
 
         let directory = InMemoryDirectory::default();
+        let metrics = InMemoryMetrics::default();
         let admin = AdminServices {
             directory: Arc::new(directory.clone()),
+            metrics: Arc::new(metrics.clone()),
             audit: Arc::new(audit.clone()),
             rbac: rbac.clone(),
         };
@@ -118,6 +121,7 @@ impl Default for World {
             audit,
             rbac,
             directory,
+            metrics,
             admin,
         }
     }

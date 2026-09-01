@@ -111,6 +111,7 @@ async fn harness() -> Option<Harness> {
     };
     let admin = leafypuff_api::application::admin::AdminServices {
         directory: Arc::new(api_testing::admin_repositories::InMemoryDirectory::default()),
+        metrics: Arc::new(api_testing::admin_repositories::InMemoryMetrics::default()),
         audit: Arc::new(api_testing::rbac_repositories::InMemoryAudit::default()),
         rbac: rbac.clone(),
     };

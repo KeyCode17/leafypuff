@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 use super::account_summary::AccountSummary;
 use super::error::AdminError;
+use super::overview::ServiceOverview;
 
 #[async_trait]
 pub trait AccountDirectory: Send + Sync {
@@ -14,4 +15,9 @@ pub trait AccountDirectory: Send + Sync {
         account_id: Uuid,
         at: Option<DateTime<Utc>>,
     ) -> Result<(), AdminError>;
+}
+
+#[async_trait]
+pub trait ServiceMetrics: Send + Sync {
+    async fn overview(&self, since_ms: i64) -> Result<ServiceOverview, AdminError>;
 }
