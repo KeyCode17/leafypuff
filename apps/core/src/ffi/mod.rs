@@ -6,6 +6,7 @@ pub mod error;
 pub mod photos;
 pub mod records;
 pub mod stats_records;
+pub mod vault;
 
 use std::sync::Arc;
 
@@ -17,8 +18,8 @@ use crate::domain::crypto::{
 };
 use crate::domain::error::ERR_DATE_UNREADABLE;
 use crate::infrastructure::{
-    FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteEntryRepository, SqliteVaultStore,
-    SyncOutbox, SystemClock, VaultSealer, db,
+    FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteDeviceSlotStore,
+    SqliteEntryRepository, SqliteVaultStore, SyncOutbox, SystemClock, VaultSealer, db,
 };
 
 pub use auth_records::{FfiChallenge, FfiSession};
@@ -53,6 +54,7 @@ pub fn verify_pin(pin: String, stored: String) -> bool {
 pub struct LeafyPuffCore {
     repository: SqliteEntryRepository<VaultSealer>,
     vault: SqliteVaultStore,
+    device_slot: SqliteDeviceSlotStore,
     outbox: SyncOutbox,
     sealer: VaultSealer,
     clock: SystemClock,
@@ -71,6 +73,7 @@ impl LeafyPuffCore {
         Ok(Arc::new(Self {
             repository: SqliteEntryRepository::new(connection.clone(), sealer.clone()),
             vault: SqliteVaultStore::new(connection.clone()),
+            device_slot: SqliteDeviceSlotStore::new(connection.clone()),
             outbox: SyncOutbox::new(connection),
             sealer: sealer.clone(),
             clock: SystemClock,
