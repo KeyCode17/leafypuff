@@ -42,10 +42,12 @@ private val TitleGap = 6.dp
 fun AuthScreen(
     state: AuthFormState,
     pending: Boolean,
+    resendIn: Int,
     onChange: (AuthFormState) -> Unit,
     onSubmit: () -> Unit,
     onSwitchMode: () -> Unit,
     onForgotPassword: () -> Unit,
+    onResend: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -80,7 +82,7 @@ fun AuthScreen(
             verticalArrangement = Arrangement.spacedBy(TitleGap),
         ) {
             Text(text = state.mode.title, style = typography.authTitle, color = colors.ink)
-            Text(text = state.mode.subtitle, style = typography.body, color = colors.ink2)
+            Text(text = state.mode.subtitle(state.email), style = typography.body, color = colors.ink2)
         }
 
         Column(
@@ -111,7 +113,9 @@ fun AuthScreen(
             onClick = onSubmit,
         )
 
-        if (!state.mode.verifying) {
+        if (state.mode.verifying) {
+            AuthResendRow(secondsLeft = resendIn, enabled = !pending, onResend = onResend)
+        } else {
             AuthFooterSwitch(mode = state.mode, onSwitch = onSwitchMode)
         }
     }

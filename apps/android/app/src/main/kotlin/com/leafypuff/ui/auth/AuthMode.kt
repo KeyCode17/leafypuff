@@ -14,16 +14,16 @@ internal val AuthMode.title: String
     get() = when (this) {
         AuthMode.Login -> "Welcome back"
         AuthMode.Signup -> "Start your diary"
-        AuthMode.VerifyEmail, AuthMode.VerifySignIn -> "Check your inbox"
+        AuthMode.VerifyEmail -> "Confirm your email"
+        AuthMode.VerifySignIn -> "One last code"
     }
 
-internal val AuthMode.subtitle: String
-    get() = when (this) {
-        AuthMode.Login -> "Your stories are waiting."
-        AuthMode.Signup -> "One page a day is enough."
-        AuthMode.VerifyEmail -> "Enter the six digits we sent you to confirm the address."
-        AuthMode.VerifySignIn -> "Enter the six digits we sent you."
-    }
+internal fun AuthMode.subtitle(email: String): String = when (this) {
+    AuthMode.Login -> "Your stories are waiting."
+    AuthMode.Signup -> "One page a day is enough."
+    AuthMode.VerifyEmail -> "Enter the six digits we sent to $email."
+    AuthMode.VerifySignIn -> "Enter the sign-in code we just sent to $email."
+}
 
 internal val AuthMode.cta: String
     get() = when (this) {

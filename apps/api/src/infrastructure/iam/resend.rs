@@ -5,12 +5,11 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
 
-use crate::domain::iam::policy::otp_ttl_minutes;
 use crate::domain::iam::{EmailSender, IamError, OtpPurpose};
 
+use super::mail_body;
+
 const RESEND_ENDPOINT: &str = "https://api.resend.com/emails";
-const SUBJECT_VERIFY_EMAIL: &str = "Verify your leafyPuff email";
-const SUBJECT_SIGN_IN: &str = "Your leafyPuff sign-in code";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct ResendEmailSender {
@@ -36,19 +35,12 @@ impl ResendEmailSender {
 #[async_trait]
 impl EmailSender for ResendEmailSender {
     async fn send_code(&self, to: &str, code: &str, purpose: OtpPurpose) -> Result<(), IamError> {
-        let subject = match purpose {
-            OtpPurpose::VerifyEmail => SUBJECT_VERIFY_EMAIL,
-            OtpPurpose::SignIn => SUBJECT_SIGN_IN,
-        };
-        let minutes = otp_ttl_minutes();
         let body = json!({
             "from": self.from,
             "to": [to],
-            "subject": subject,
-            "text": format!(
-                "Your leafyPuff code is {code}. It expires in {minutes} minutes. \
-                 If you did not ask for it, ignore this message."
-            ),
+            "subject": mail_body::subject(purpose),
+            "text": mail_body::text(code, purpose),
+            "html": mail_body::html(code, purpose),
         });
 
         let response = self
