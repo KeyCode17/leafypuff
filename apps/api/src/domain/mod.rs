@@ -7,6 +7,7 @@ pub mod ports;
 pub mod privacy;
 pub mod rbac;
 pub mod readiness;
+pub mod release;
 pub mod sync;
 
 pub use error::DomainError;

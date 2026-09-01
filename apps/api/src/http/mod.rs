@@ -12,6 +12,7 @@ pub mod media;
 pub mod privacy;
 pub mod rate_limit;
 pub mod rbac;
+pub mod release;
 pub mod router;
 pub mod state;
 pub mod sync;

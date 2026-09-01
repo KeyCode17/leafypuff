@@ -9,6 +9,7 @@ use leafypuff_api::application::iam::{
 use leafypuff_api::application::media::MediaServices;
 use leafypuff_api::application::privacy::PrivacyServices;
 use leafypuff_api::application::rbac::RbacServices;
+use leafypuff_api::application::release::ReleaseServices;
 use leafypuff_api::application::sync::SyncServices;
 
 use crate::adapters::{CountingHasher, FixedClock, RecordingMailer, ScriptedOtp, SequentialIssuer};
@@ -17,6 +18,7 @@ use crate::catalog_repositories::InMemoryCatalog;
 use crate::media_repositories::{InMemoryMedia, InMemoryObjects};
 use crate::privacy_repositories::{InMemoryRequests, RecordingEraser};
 use crate::rbac_repositories::{InMemoryAudit, InMemoryRoles};
+use crate::release_repositories::{InMemoryCampaigns, InMemoryGates};
 use crate::repositories::{InMemoryAccounts, InMemoryCredentials, InMemoryOtps};
 use crate::sync_repositories::{
     InMemoryCheckpoints, InMemoryConflicts, InMemoryEntries, InMemoryIdempotency,
@@ -49,6 +51,9 @@ pub struct World {
     pub requests: InMemoryRequests,
     pub eraser: RecordingEraser,
     pub privacy: PrivacyServices,
+    pub gates: InMemoryGates,
+    pub campaigns: InMemoryCampaigns,
+    pub release: ReleaseServices,
 }
 
 impl Default for World {
@@ -128,6 +133,15 @@ impl Default for World {
             rbac: rbac.clone(),
         };
 
+        let gates = InMemoryGates::default();
+        let campaigns = InMemoryCampaigns::default();
+        let release = ReleaseServices {
+            gates: Arc::new(gates.clone()),
+            campaigns: Arc::new(campaigns.clone()),
+            audit: Arc::new(audit.clone()),
+            rbac: rbac.clone(),
+        };
+
         Self {
             accounts,
             credentials,
@@ -154,6 +168,9 @@ impl Default for World {
             requests,
             eraser,
             privacy,
+            gates,
+            campaigns,
+            release,
         }
     }
 }

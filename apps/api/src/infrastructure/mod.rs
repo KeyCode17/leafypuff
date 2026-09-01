@@ -7,6 +7,7 @@ pub mod iam;
 pub mod media;
 pub mod privacy;
 pub mod rbac;
+pub mod release;
 pub mod sync;
 
 pub use config::{Config, ConfigError};

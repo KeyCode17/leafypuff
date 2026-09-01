@@ -17,6 +17,7 @@ import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedCatalogIndexRouteImport } from './routes/_authenticated.catalog/index'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.dashboard/index'
 import { Route as AuthenticatedPrivacyIndexRouteImport } from './routes/_authenticated.privacy/index'
+import { Route as AuthenticatedReleaseIndexRouteImport } from './routes/_authenticated.release/index'
 import { Route as AuthenticatedRolesIndexRouteImport } from './routes/_authenticated.roles/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -62,6 +63,12 @@ const AuthenticatedPrivacyIndexRoute =
     path: '/privacy/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedReleaseIndexRoute =
+  AuthenticatedReleaseIndexRouteImport.update({
+    id: '/release/',
+    path: '/release/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRolesIndexRoute = AuthenticatedRolesIndexRouteImport.update({
   id: '/roles/',
   path: '/roles/',
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/privacy/': typeof AuthenticatedPrivacyIndexRoute
+  '/release/': typeof AuthenticatedReleaseIndexRoute
   '/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/catalog': typeof AuthenticatedCatalogIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/privacy': typeof AuthenticatedPrivacyIndexRoute
+  '/release': typeof AuthenticatedReleaseIndexRoute
   '/roles': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRoutesById {
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/_authenticated/catalog/': typeof AuthenticatedCatalogIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/privacy/': typeof AuthenticatedPrivacyIndexRoute
+  '/_authenticated/release/': typeof AuthenticatedReleaseIndexRoute
   '/_authenticated/roles/': typeof AuthenticatedRolesIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/catalog/'
     | '/dashboard/'
     | '/privacy/'
+    | '/release/'
     | '/roles/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/dashboard'
     | '/privacy'
+    | '/release'
     | '/roles'
   id:
     | '__root__'
@@ -131,6 +143,7 @@ export interface FileRouteTypes {
     | '/_authenticated/catalog/'
     | '/_authenticated/dashboard/'
     | '/_authenticated/privacy/'
+    | '/_authenticated/release/'
     | '/_authenticated/roles/'
   fileRoutesById: FileRoutesById
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPrivacyIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/release/': {
+      id: '/_authenticated/release/'
+      path: '/release'
+      fullPath: '/release/'
+      preLoaderRoute: typeof AuthenticatedReleaseIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/roles/': {
       id: '/_authenticated/roles/'
       path: '/roles'
@@ -214,6 +234,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCatalogIndexRoute: typeof AuthenticatedCatalogIndexRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedPrivacyIndexRoute: typeof AuthenticatedPrivacyIndexRoute
+  AuthenticatedReleaseIndexRoute: typeof AuthenticatedReleaseIndexRoute
   AuthenticatedRolesIndexRoute: typeof AuthenticatedRolesIndexRoute
 }
 
@@ -223,6 +244,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCatalogIndexRoute: AuthenticatedCatalogIndexRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedPrivacyIndexRoute: AuthenticatedPrivacyIndexRoute,
+  AuthenticatedReleaseIndexRoute: AuthenticatedReleaseIndexRoute,
   AuthenticatedRolesIndexRoute: AuthenticatedRolesIndexRoute,
 }
 

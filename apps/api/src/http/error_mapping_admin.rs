@@ -4,13 +4,14 @@ use crate::domain::admin::AdminError;
 use crate::domain::catalog::CatalogError;
 use crate::domain::privacy::PrivacyError;
 use crate::domain::rbac::RbacError;
+use crate::domain::release::ReleaseError;
 
 use super::error::{
     ApiError, DETAIL_ACCOUNT_NOT_FOUND, DETAIL_ALREADY_FULFILLED, DETAIL_BUNDLE_NOT_FOUND,
-    DETAIL_INTERNAL, DETAIL_NO_CATALOG, DETAIL_NOT_PERMITTED, DETAIL_REQUEST_NOT_FOUND,
-    DETAIL_ROLE_NOT_FOUND, ERR_ACCOUNT_NOT_FOUND, ERR_ALREADY_FULFILLED, ERR_BUNDLE_NOT_FOUND,
-    ERR_FORBIDDEN, ERR_INTERNAL, ERR_MALFORMED_BUNDLE, ERR_NO_CATALOG, ERR_REQUEST_NOT_FOUND,
-    ERR_ROLE_NOT_FOUND,
+    DETAIL_GATE_NOT_FOUND, DETAIL_INTERNAL, DETAIL_NO_CATALOG, DETAIL_NOT_PERMITTED,
+    DETAIL_REQUEST_NOT_FOUND, DETAIL_ROLE_NOT_FOUND, ERR_ACCOUNT_NOT_FOUND, ERR_ALREADY_FULFILLED,
+    ERR_BUNDLE_NOT_FOUND, ERR_FORBIDDEN, ERR_GATE_NOT_FOUND, ERR_INTERNAL, ERR_MALFORMED_BUNDLE,
+    ERR_NO_CATALOG, ERR_REQUEST_NOT_FOUND, ERR_ROLE_NOT_FOUND,
 };
 
 impl From<RbacError> for ApiError {
@@ -108,6 +109,29 @@ impl From<PrivacyError> for ApiError {
             ),
             PrivacyError::Storage(reason) => {
                 tracing::error!(%reason, "a privacy request failed");
+                Self::new(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ERR_INTERNAL,
+                    DETAIL_INTERNAL,
+                )
+            }
+        }
+    }
+}
+
+impl From<ReleaseError> for ApiError {
+    fn from(error: ReleaseError) -> Self {
+        match error {
+            ReleaseError::Forbidden => {
+                Self::new(StatusCode::FORBIDDEN, ERR_FORBIDDEN, DETAIL_NOT_PERMITTED)
+            }
+            ReleaseError::GateNotFound => Self::new(
+                StatusCode::NOT_FOUND,
+                ERR_GATE_NOT_FOUND,
+                DETAIL_GATE_NOT_FOUND,
+            ),
+            ReleaseError::Storage(reason) => {
+                tracing::error!(%reason, "a release request failed");
                 Self::new(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     ERR_INTERNAL,
