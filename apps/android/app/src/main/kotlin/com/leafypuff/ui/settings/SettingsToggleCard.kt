@@ -43,6 +43,7 @@ internal fun SettingsToggleCard(
     onToggleReminder: (Boolean) -> Unit,
     onReminderTimeClick: () -> Unit,
     onToggleLock: (Boolean) -> Unit,
+    onChangePin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsCard(padding = ListCardPadding, modifier = modifier) {
@@ -68,6 +69,43 @@ internal fun SettingsToggleCard(
             subLabel = if (lockEnabled) "Ask when opening leafyPuff" else "Off",
             checked = lockEnabled,
             onToggle = onToggleLock,
+        )
+        if (lockEnabled) {
+            ChangePinRow(onClick = onChangePin)
+        }
+    }
+}
+
+@Composable
+private fun ChangePinRow(onClick: () -> Unit) {
+    val colors = LocalLeafyColors.current
+    val typography = LocalLeafyTypography.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = CardRowPaddingV),
+        horizontalArrangement = Arrangement.spacedBy(CardContentGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "The four digits you type to open the app",
+            style = typography.chipLabel.copy(
+                fontSize = SubLabelFontSize,
+                fontWeight = FontWeight.W400,
+            ),
+            color = colors.ink3,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "Change PIN",
+            style = typography.noteTitleInput.copy(fontSize = PillFontSize),
+            color = colors.ink,
+            modifier = Modifier
+                .clip(LeafyShapes.pill)
+                .background(colors.soft2)
+                .clickable(onClick = onClick)
+                .padding(horizontal = PillPaddingH, vertical = PillPaddingV),
         )
     }
 }

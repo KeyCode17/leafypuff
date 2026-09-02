@@ -31,6 +31,7 @@ fun SettingsScreen(
     onToggleReminder: (Boolean) -> Unit,
     onReminderTimeChange: (LocalTime) -> Unit,
     onToggleLock: (Boolean) -> Unit,
+    onChangePin: () -> Unit,
     onStickerPackChange: (StickerPack) -> Unit,
     onTextSizeChange: (TextSize) -> Unit,
     lastSynced: String,
@@ -69,6 +70,7 @@ fun SettingsScreen(
             onToggleReminder = onToggleReminder,
             onReminderTimeClick = { timePopupOpen = true },
             onToggleLock = onToggleLock,
+            onChangePin = onChangePin,
             modifier = Modifier.padding(bottom = CardSpacing),
         )
         SettingsChoiceCard(
