@@ -33,6 +33,13 @@ impl Default for Framing {
 impl Framing {
     pub const SMALLEST_WIDTH: f64 = 0.2;
 
+    pub fn narrowed_to(self, widest: f64) -> Self {
+        Self {
+            width: self.width.min(widest),
+            ..self
+        }
+    }
+
     pub fn clamped(self) -> Self {
         let width = self.width.clamp(Self::SMALLEST_WIDTH, 1.0);
         Self {
@@ -53,6 +60,15 @@ pub fn framed_cover(width: u32, height: u32, framing: Framing) -> Result<CropBox
     )
 }
 
+pub fn widest_framing(width: u32, height: u32, aspect_width: u32, aspect_height: u32) -> f64 {
+    if width == 0 || aspect_height == 0 {
+        return 1.0;
+    }
+    let ceiling =
+        f64::from(height) * f64::from(aspect_width) / (f64::from(width) * f64::from(aspect_height));
+    ceiling.min(1.0)
+}
+
 pub fn framed_to(
     width: u32,
     height: u32,
@@ -60,7 +76,9 @@ pub fn framed_to(
     aspect_width: u32,
     aspect_height: u32,
 ) -> Result<CropBox, CoreError> {
-    let held = framing.clamped();
+    let held = framing
+        .narrowed_to(widest_framing(width, height, aspect_width, aspect_height))
+        .clamped();
     let across = ((f64::from(width) * held.width).round() as u32).max(aspect_width);
     let down = across * aspect_height / aspect_width;
     if across > width || down > height {
@@ -107,10 +125,66 @@ pub const fn cover_size(frame: CropBox) -> (u32, u32) {
 #[cfg(test)]
 #[allow(clippy::expect_used)]
 mod tests {
-    use super::{COVER_ASPECT_HEIGHT, COVER_ASPECT_WIDTH, Framing, framed_cover};
+    use super::{COVER_ASPECT_HEIGHT, COVER_ASPECT_WIDTH, Framing, framed_cover, widest_framing};
 
     const WIDE: u32 = 1200;
     const TALL: u32 = 900;
+
+    #[test]
+    fn a_source_wider_than_the_cover_cannot_be_framed_at_full_width() {
+        assert!((widest_framing(1920, 1080, 3, 2) - 0.843_75).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_source_taller_than_the_cover_may_be_framed_at_full_width() {
+        assert!((widest_framing(1200, 1600, 3, 2) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_wide_source_keeps_the_framing_it_was_given() {
+        let frame = framed_cover(
+            1920,
+            1080,
+            Framing {
+                x: 0.15,
+                y: 0.0,
+                width: 1.0,
+            },
+        )
+        .expect("the cover is framed");
+
+        assert_eq!(frame.height, 1080);
+        assert_eq!(frame.width, 1620);
+        assert_eq!(frame.x, 288);
+    }
+
+    #[test]
+    fn a_wide_source_framed_to_the_right_stays_on_the_right() {
+        let left = framed_cover(
+            1920,
+            1080,
+            Framing {
+                x: 0.0,
+                y: 0.0,
+                width: 0.6,
+            },
+        )
+        .expect("the cover is framed");
+        let right = framed_cover(
+            1920,
+            1080,
+            Framing {
+                x: 0.4,
+                y: 0.0,
+                width: 0.6,
+            },
+        )
+        .expect("the cover is framed");
+
+        assert_eq!(left.x, 0);
+        assert_eq!(right.x, 768);
+        assert_eq!(left.width, right.width);
+    }
 
     #[test]
     fn a_framing_keeps_the_cover_aspect_whatever_is_asked_for() {
