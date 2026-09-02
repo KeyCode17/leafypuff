@@ -9,6 +9,7 @@ mod m20260901_111606_device_slot;
 mod m20260902_060439_photo_framing;
 mod m20260902_093257_photo_placement;
 mod m20260902_143831_profile;
+mod m20260902_222812_placed_crop;
 
 pub use idens::{Entries, Photos, Stickers, Tags};
 
@@ -26,6 +27,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260902_060439_photo_framing::Migration),
             Box::new(m20260902_093257_photo_placement::Migration),
             Box::new(m20260902_143831_profile::Migration),
+            Box::new(m20260902_222812_placed_crop::Migration),
         ]
     }
 }
