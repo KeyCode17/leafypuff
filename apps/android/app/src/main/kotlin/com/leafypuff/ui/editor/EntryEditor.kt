@@ -41,6 +41,7 @@ fun EntryEditor(
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
     photos: List<EntryPhoto> = emptyList(),
+    onRemovePhoto: ((String) -> Unit)? = null,
     stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
@@ -83,6 +84,7 @@ fun EntryEditor(
                     body = draft.body,
                     tags = draft.tags,
                     photos = photos,
+                    onRemovePhoto = onRemovePhoto,
                     onTitleChange = { onDraftChange(draft.copy(title = it)) },
                     onBodyChange = { onDraftChange(draft.copy(body = it)) },
                     onRemoveTag = { index ->

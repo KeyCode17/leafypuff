@@ -163,6 +163,11 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.exportDiary(destination)
     }
 
+    suspend fun forgetPhoto(baseUrl: String, accessToken: String, photoId: String) =
+        withContext(Dispatchers.IO) {
+            core.forgetPhoto(baseUrl, accessToken, photoId)
+        }
+
     suspend fun deviceId(): String = withContext(Dispatchers.IO) {
         core.deviceId()
     }

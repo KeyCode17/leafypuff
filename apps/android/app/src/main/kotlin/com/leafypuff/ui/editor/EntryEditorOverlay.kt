@@ -30,6 +30,7 @@ fun EntryEditorOverlay(
     onLocationClick: () -> Unit,
     onAddPhoto: () -> Unit,
     photos: List<EntryPhoto> = emptyList(),
+    onRemovePhoto: ((String) -> Unit)? = null,
     stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
@@ -56,6 +57,7 @@ fun EntryEditorOverlay(
             onLocationClick = onLocationClick,
             onAddPhoto = onAddPhoto,
             photos = photos,
+            onRemovePhoto = onRemovePhoto,
             stickerPack = stickerPack,
         )
     }

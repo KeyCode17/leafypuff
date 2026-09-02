@@ -134,6 +134,14 @@ impl SyncOutbox {
         Ok(waiting.into_iter().map(|photo| photo.id).collect())
     }
 
+    pub async fn forget_photo(&self, id: &str) -> Result<(), CoreError> {
+        photos::Entity::delete_many()
+            .filter(photos::Column::Id.eq(id.to_owned()))
+            .exec(&self.connection)
+            .await?;
+        Ok(())
+    }
+
     pub async fn record_photo_path(&self, id: &str, path: &str) -> Result<(), CoreError> {
         photos::Entity::update_many()
             .col_expr(photos::Column::Path, path.into())

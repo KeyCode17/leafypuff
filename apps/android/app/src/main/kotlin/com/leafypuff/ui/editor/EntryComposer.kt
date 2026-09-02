@@ -108,6 +108,7 @@ fun EntryComposer(
             onLocationClick = { popup = MetaPopup.Location },
             onAddPhoto = addPhoto,
             photos = photos,
+            onRemovePhoto = { id -> photos = photos.filterNot { it.id == id } },
             stickerPack = stickerPack,
             modifier = Modifier.statusBarsPadding(),
         )

@@ -108,6 +108,21 @@ impl LeafyPuffCore {
         Ok(FfiSyncOutcome::from(outcome))
     }
 
+    pub async fn forget_photo(
+        &self,
+        base_url: String,
+        access_token: String,
+        photo_id: String,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let device_id = self.outbox.device_id().await?;
+        MediaSync::new(base_url, access_token, &device_id)?
+            .forget(&photo_id)
+            .await?;
+        self.photos.forget(&photo_id)?;
+        self.outbox.forget_photo(&photo_id).await?;
+        Ok(())
+    }
+
     pub async fn device_id(&self) -> Result<String, LeafyPuffCoreError> {
         Ok(self.outbox.device_id().await?)
     }

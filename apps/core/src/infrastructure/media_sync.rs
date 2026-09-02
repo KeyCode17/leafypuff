@@ -74,6 +74,20 @@ impl MediaSync {
         Ok(Some(bytes.to_vec()))
     }
 
+    pub async fn forget(&self, photo_id: &str) -> Result<(), CoreError> {
+        let response = self
+            .client
+            .delete(format!("{}{MEDIA_PATH}/{photo_id}", self.base_url))
+            .bearer_auth(&self.access_token)
+            .send()
+            .await
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
+        if response.status().is_success() || response.status() == StatusCode::NOT_FOUND {
+            return Ok(());
+        }
+        Err(unreachable(response.status()))
+    }
+
     fn url(&self, photo_id: &str, kind: PhotoKind) -> String {
         format!("{}{MEDIA_PATH}/{photo_id}/{}", self.base_url, variant(kind))
     }
