@@ -20,7 +20,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.leafypuff.ui.editor.sticker.PlacedFrame
-import com.leafypuff.ui.editor.sticker.clampStickerPosition
 import com.leafypuff.ui.editor.sticker.snapRotation
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.PhotoPlacement
@@ -106,9 +105,19 @@ private fun PhotoPlacement.movedBy(
     layerWidth: Float,
     layerHeight: Float,
 ): PhotoPlacement = copy(
-    x = clampStickerPosition(x + fractionOf(deltaX, layerWidth), size, layerWidth),
-    y = clampStickerPosition(y + fractionOf(deltaY, layerHeight), size, layerHeight),
+    x = roam(x + fractionOf(deltaX, layerWidth), size, layerWidth),
+    y = roam(y + fractionOf(deltaY, layerHeight), size, layerHeight),
 )
+
+private fun roam(value: Float, size: Float, extent: Float): Float {
+    if (extent <= 0f) {
+        return 0f
+    }
+    val lip = size / 2f
+    val lower = -lip / extent
+    val upper = (extent - size + lip) / extent
+    return value.coerceIn(lower, maxOf(lower, upper))
+}
 
 private fun fractionOf(delta: Float, extent: Float): Float = when {
     extent <= 0f -> 0f
