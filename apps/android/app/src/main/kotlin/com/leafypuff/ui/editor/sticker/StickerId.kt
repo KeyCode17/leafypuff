@@ -11,14 +11,41 @@ enum class StickerId(val id: String) {
     Cloud("cloud"),
     Flower("flower"),
     Moon("moon"),
+    MoodHappy("moodHappy"),
+    MoodCalm("moodCalm"),
+    MoodGrateful("moodGrateful"),
+    MoodExcited("moodExcited"),
+    MoodOkay("moodOkay"),
+    MoodTired("moodTired"),
+    MoodAnxious("moodAnxious"),
+    MoodSad("moodSad"),
+    MoodAngry("moodAngry"),
+    MoodSick("moodSick"),
+    MoodLonely("moodLonely"),
+    MoodLoved("moodLoved"),
 }
+
+private val MoodPack = listOf(
+    StickerId.MoodHappy,
+    StickerId.MoodCalm,
+    StickerId.MoodGrateful,
+    StickerId.MoodExcited,
+    StickerId.MoodOkay,
+    StickerId.MoodTired,
+    StickerId.MoodAnxious,
+    StickerId.MoodSad,
+    StickerId.MoodAngry,
+    StickerId.MoodSick,
+    StickerId.MoodLonely,
+    StickerId.MoodLoved,
+)
 
 private val BunnyPack = listOf(
     StickerId.BunSit,
     StickerId.BunSleep,
     StickerId.Carrot,
     StickerId.Heart,
-)
+) + MoodPack
 
 private val SimplePack = listOf(
     StickerId.Heart,

@@ -15,10 +15,22 @@ pub enum Sticker {
     Cloud,
     Flower,
     Moon,
+    MoodHappy,
+    MoodCalm,
+    MoodGrateful,
+    MoodExcited,
+    MoodOkay,
+    MoodTired,
+    MoodAnxious,
+    MoodSad,
+    MoodAngry,
+    MoodSick,
+    MoodLonely,
+    MoodLoved,
 }
 
 impl Sticker {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 20] = [
         Self::BunSit,
         Self::BunSleep,
         Self::Carrot,
@@ -27,6 +39,18 @@ impl Sticker {
         Self::Cloud,
         Self::Flower,
         Self::Moon,
+        Self::MoodHappy,
+        Self::MoodCalm,
+        Self::MoodGrateful,
+        Self::MoodExcited,
+        Self::MoodOkay,
+        Self::MoodTired,
+        Self::MoodAnxious,
+        Self::MoodSad,
+        Self::MoodAngry,
+        Self::MoodSick,
+        Self::MoodLonely,
+        Self::MoodLoved,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -39,6 +63,18 @@ impl Sticker {
             Self::Cloud => "cloud",
             Self::Flower => "flower",
             Self::Moon => "moon",
+            Self::MoodHappy => "moodHappy",
+            Self::MoodCalm => "moodCalm",
+            Self::MoodGrateful => "moodGrateful",
+            Self::MoodExcited => "moodExcited",
+            Self::MoodOkay => "moodOkay",
+            Self::MoodTired => "moodTired",
+            Self::MoodAnxious => "moodAnxious",
+            Self::MoodSad => "moodSad",
+            Self::MoodAngry => "moodAngry",
+            Self::MoodSick => "moodSick",
+            Self::MoodLonely => "moodLonely",
+            Self::MoodLoved => "moodLoved",
         }
     }
 

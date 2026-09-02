@@ -55,6 +55,7 @@ internal fun DrawScope.drawStickerShape(sticker: StickerId) {
         StickerId.Flower -> drawFlower()
         StickerId.Moon -> fill(MoonOutline, MoonFill)
         StickerId.BunSit, StickerId.BunSleep -> Unit
+        StickerId.MoodHappy, StickerId.MoodCalm, StickerId.MoodGrateful, StickerId.MoodExcited, StickerId.MoodOkay, StickerId.MoodTired, StickerId.MoodAnxious, StickerId.MoodSad, StickerId.MoodAngry, StickerId.MoodSick, StickerId.MoodLonely, StickerId.MoodLoved -> Unit
     }
 }
 
