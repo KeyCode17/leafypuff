@@ -45,10 +45,24 @@ class StickerGeometryTest {
     }
 
     @Test
-    fun `position clamps to the layer plus the overhang, as a fraction of it`() {
-        assertEquals(-StickerOverhang / 300f, clampStickerPosition(-3f, 64f, 300f), Tolerance)
-        assertEquals(248f / 300f, clampStickerPosition(3f, 64f, 300f), Tolerance)
+    fun `position lets half of what is placed hang over either edge`() {
+        assertEquals(-32f / 300f, clampStickerPosition(-3f, 64f, 300f), Tolerance)
+        assertEquals(268f / 300f, clampStickerPosition(3f, 64f, 300f), Tolerance)
         assertEquals(0.4f, clampStickerPosition(0.4f, 64f, 300f), Tolerance)
+    }
+
+    @Test
+    fun `something as wide as the layer can still be dragged off either edge`() {
+        val overhang = clampStickerPosition(-3f, 300f, 300f)
+        val across = clampStickerPosition(3f, 300f, 300f)
+
+        assertEquals(-0.5f, overhang, Tolerance)
+        assertEquals(0.5f, across, Tolerance)
+    }
+
+    @Test
+    fun `a tiny sticker still keeps the design overhang`() {
+        assertEquals(-StickerOverhang / 300f, clampStickerPosition(-3f, 16f, 300f), Tolerance)
     }
 
     @Test
@@ -72,8 +86,8 @@ class StickerGeometryTest {
 
         val moved = placed.movedBy(deltaX = 90f, deltaY = -60f, layerWidth = 300f, layerHeight = 500f)
 
-        assertEquals(248f / 300f, moved.x, Tolerance)
-        assertEquals(-StickerOverhang / 500f, moved.y, Tolerance)
+        assertEquals(268f / 300f, moved.x, Tolerance)
+        assertEquals(-32f / 500f, moved.y, Tolerance)
     }
 
     @Test
