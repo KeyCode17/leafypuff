@@ -44,6 +44,8 @@ fun NotePhoto(
     isCover: Boolean,
     onRemove: (() -> Unit)?,
     onFrame: (() -> Unit)?,
+    onMakeCover: (() -> Unit)?,
+    onPlaceFreely: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -54,7 +56,8 @@ fun NotePhoto(
             .fillMaxWidth()
             .height(PhotoHeight)
             .clip(PhotoShape)
-            .background(colors.soft2),
+            .background(colors.soft2)
+            .then(if (onFrame == null) Modifier else Modifier.clickable(onClick = onFrame)),
     ) {
         Image(
             bitmap = photo.cover,
@@ -64,9 +67,9 @@ fun NotePhoto(
             modifier = Modifier.fillMaxSize(),
         )
 
-        if (isCover) {
+        if (isCover || onMakeCover != null) {
             Text(
-                text = (if (onFrame == null) "Diary thumbnail" else "Frame thumbnail").uppercase(),
+                text = (if (isCover) "Diary thumbnail" else "Make thumbnail").uppercase(),
                 style = typography.metaLabel.copy(fontSize = BadgeTextSize),
                 color = Color.White,
                 modifier = Modifier
@@ -74,7 +77,28 @@ fun NotePhoto(
                     .padding(BadgeOffset)
                     .clip(LeafyShapes.pill)
                     .background(BadgeScrim)
-                    .then(if (onFrame == null) Modifier else Modifier.clickable(onClick = onFrame))
+                    .then(
+                        if (onMakeCover == null) {
+                            Modifier
+                        } else {
+                            Modifier.clickable(onClick = onMakeCover)
+                        },
+                    )
+                    .padding(horizontal = BadgePaddingX, vertical = BadgePaddingY),
+            )
+        }
+
+        if (onPlaceFreely != null) {
+            Text(
+                text = "Place freely".uppercase(),
+                style = typography.metaLabel.copy(fontSize = BadgeTextSize),
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(BadgeOffset)
+                    .clip(LeafyShapes.pill)
+                    .background(BadgeScrim)
+                    .clickable(onClick = onPlaceFreely)
                     .padding(horizontal = BadgePaddingX, vertical = BadgePaddingY),
             )
         }

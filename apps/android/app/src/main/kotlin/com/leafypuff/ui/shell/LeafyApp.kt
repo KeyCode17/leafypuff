@@ -1,11 +1,14 @@
 package com.leafypuff.ui.shell
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import android.graphics.BitmapFactory
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.leafypuff.core.CoreClient
@@ -48,6 +52,7 @@ import com.leafypuff.ui.crop.CropScreen
 import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.ui.profile.ProfileStep
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoPlacement
 import com.leafypuff.ui.photo.NoPhotoLibrary
 import com.leafypuff.ui.settings.TextSize
 import com.leafypuff.ui.vault.VaultGate
@@ -103,6 +108,8 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
         store?.let { CorePhotoLibrary(it.client) } ?: NoPhotoLibrary
     }
 
+    var avatarFraming by remember { mutableStateOf<String?>(null) }
+
     val pickAvatar = rememberPhotoPicker { bytes ->
         scope.launch {
             val imported = library.import(bytes) ?: return@launch
@@ -110,6 +117,9 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             preferences = worn
             settings.save(worn)
             avatar = imported.cover
+            framing = PhotoFraming()
+            framingImage = null
+            avatarFraming = imported.id
         }
     }
     val vault = remember(store) { store?.let { VaultAccess(it.client, deviceKey) } }
@@ -216,8 +226,26 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 OpenedEntry(
                                     draft = it.draft,
                                     photos = it.photoIds.mapNotNull { photoId ->
-                                        library.thumbnail(photoId)
-                                            ?.let { cover -> EntryPhoto(photoId, cover, null) }
+                                        library.thumbnail(photoId)?.let { cover ->
+                                            EntryPhoto(
+                                                id = photoId,
+                                                cover = cover,
+                                                takenOn = null,
+                                                place = runCatching {
+                                                    store?.client?.photoPlacement(photoId)
+                                                }
+                                                    .getOrNull()
+                                                    ?.takeIf { held -> held.size == 4 }
+                                                    ?.let { held ->
+                                                        PhotoPlacement(
+                                                            x = held[0].toFloat(),
+                                                            y = held[1].toFloat(),
+                                                            size = held[2].toFloat(),
+                                                            rotation = held[3].toFloat(),
+                                                        )
+                                                    },
+                                            )
+                                        }
                                     },
                                 )
                             }
@@ -244,18 +272,31 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 }
                             }
                         },
-                        onSave = { draft, photoIds, onDone, onProblem ->
+                        onSave = { draft, kept, onDone, onProblem ->
                             scope.launch {
+                                val photoIds = kept.map { it.id }
                                 runCatching { store?.save(draft, photoIds) }.fold(
                                     onSuccess = {
-                                        photoIds.forEach { id ->
-                                            val held = framings[id] ?: return@forEach
+                                        kept.forEach { photo ->
+                                            val held = framings[photo.id]
+                                            if (held != null) {
+                                                runCatching {
+                                                    store?.client?.framePhoto(
+                                                        photo.id,
+                                                        held.x,
+                                                        held.y,
+                                                        held.width,
+                                                    )
+                                                }
+                                            }
+                                            val placed = photo.place ?: return@forEach
                                             runCatching {
-                                                store?.client?.framePhoto(
-                                                    id,
-                                                    held.x,
-                                                    held.y,
-                                                    held.width,
+                                                store?.client?.placePhoto(
+                                                    photo.id,
+                                                    placed.x.toDouble(),
+                                                    placed.y.toDouble(),
+                                                    placed.size.toDouble(),
+                                                    placed.rotation.toDouble(),
                                                 )
                                             }
                                         }
@@ -282,9 +323,66 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             avatar = preferences.avatarPhotoId?.let { library.thumbnail(it) }
         }
 
+        val sealedOff = Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = { },
+        )
+
+        val rounding = avatarFraming
+        if (rounding != null) {
+            BackHandler { avatarFraming = null }
+            LaunchedEffect(rounding) {
+                framingImage = runCatching { store?.client?.originalPhoto(rounding) }
+                    .getOrNull()
+                    ?.let { bytes ->
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }
+            }
+            CropScreen(
+                photo = framingImage,
+                framing = framing,
+                pending = framingPending,
+                title = "Frame your photo",
+                blurb = "Drag to move it, pinch to change how much it holds.",
+                ratio = PhotoFraming.SquareTallness,
+                round = true,
+                onFramingChange = { framing = it },
+                onSubmit = {
+                    if (!framingPending) {
+                        framingPending = true
+                        scope.launch {
+                            runCatching {
+                                store?.client?.frameAvatar(
+                                    rounding,
+                                    framing.x,
+                                    framing.y,
+                                    framing.width,
+                                )
+                            }
+                            avatar = library.thumbnail(rounding)
+                            framingPending = false
+                            avatarFraming = null
+                        }
+                    }
+                },
+                onBack = { avatarFraming = null },
+                modifier = sealedOff,
+            )
+        }
+
         val framed = framingPhoto
         if (framed != null) {
+            BackHandler { framingPhoto = null }
             LaunchedEffect(framed) {
+                val held = framings[framed]
+                    ?: runCatching { store?.client?.photoFraming(framed) }
+                        .getOrNull()
+                        ?.takeIf { it.size == 3 }
+                        ?.let { PhotoFraming(it[0], it[1], it[2]) }
+                if (held != null) {
+                    framing = held
+                }
                 framingImage = runCatching { store?.client?.originalPhoto(framed) }
                     .getOrNull()
                     ?.let { bytes ->
@@ -316,16 +414,37 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     }
                 },
                 onBack = { framingPhoto = null },
+                modifier = sealedOff,
             )
         }
 
         val editing = profile
         if (editing != null) {
+            BackHandler {
+                profile = when (editing.step) {
+                    ProfileStep.ConfirmEmail -> editing.copy(step = ProfileStep.Details)
+                    else -> null
+                }
+            }
             ProfileScreen(
                 state = editing,
                 avatar = avatar,
                 onStateChange = { profile = it },
                 onPickAvatar = pickAvatar,
+                onClearAvatar = {
+                    val held = preferences.avatarPhotoId
+                    val bare = preferences.copy(avatarPhotoId = null)
+                    preferences = bare
+                    settings.save(bare)
+                    avatar = null
+                    if (held != null) {
+                        scope.launch {
+                            runCatching {
+                                store?.forgetPhoto(apiBaseUrl, session.accessToken(), held)
+                            }
+                        }
+                    }
+                },
                 onSubmit = {
                     if (!editing.pending) {
                         profile = editing.copy(pending = true, error = null)
@@ -345,11 +464,13 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     }
                 },
                 onBack = { profile = null },
+                modifier = sealedOff,
             )
         }
 
         val setup = pinSetup
         if (setup != null) {
+            BackHandler { pinSetup = null }
             PinSetup(
                 mode = setup,
                 onDone = {
@@ -362,6 +483,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     pinSetup = null
                 },
                 onCancel = { pinSetup = null },
+                modifier = sealedOff,
             )
         }
     }

@@ -134,6 +134,25 @@ impl SyncOutbox {
         Ok(waiting.into_iter().map(|photo| photo.id).collect())
     }
 
+    pub async fn place_photo(
+        &self,
+        id: &str,
+        x: f64,
+        y: f64,
+        size: f64,
+        rotation: f64,
+    ) -> Result<(), CoreError> {
+        photos::Entity::update_many()
+            .col_expr(photos::Column::PlaceX, x.into())
+            .col_expr(photos::Column::PlaceY, y.into())
+            .col_expr(photos::Column::PlaceSize, size.into())
+            .col_expr(photos::Column::PlaceRotation, rotation.into())
+            .filter(photos::Column::Id.eq(id.to_owned()))
+            .exec(&self.connection)
+            .await?;
+        Ok(())
+    }
+
     pub async fn frame_photo(
         &self,
         id: &str,
@@ -148,6 +167,23 @@ impl SyncOutbox {
             .exec(&self.connection)
             .await?;
         Ok(())
+    }
+
+    pub async fn placement_of(&self, id: &str) -> Result<Option<[f64; 4]>, CoreError> {
+        let row = photos::Entity::find_by_id(id.to_owned())
+            .one(&self.connection)
+            .await?;
+        Ok(row.and_then(|photo| {
+            match (
+                photo.place_x,
+                photo.place_y,
+                photo.place_size,
+                photo.place_rotation,
+            ) {
+                (Some(x), Some(y), Some(size), Some(rotation)) => Some([x, y, size, rotation]),
+                _ => None,
+            }
+        }))
     }
 
     pub async fn framing_of(
@@ -270,6 +306,10 @@ impl SyncOutbox {
                 crop_x: ActiveValue::Set(photo.framing.map(|held| held.x)),
                 crop_y: ActiveValue::Set(photo.framing.map(|held| held.y)),
                 crop_width: ActiveValue::Set(photo.framing.map(|held| held.width)),
+                place_x: ActiveValue::Set(photo.placement.map(|held| held[0])),
+                place_y: ActiveValue::Set(photo.placement.map(|held| held[1])),
+                place_size: ActiveValue::Set(photo.placement.map(|held| held[2])),
+                place_rotation: ActiveValue::Set(photo.placement.map(|held| held[3])),
                 taken_at: ActiveValue::Set(None),
             })
             .on_conflict(
@@ -280,6 +320,10 @@ impl SyncOutbox {
                         photos::Column::CropX,
                         photos::Column::CropY,
                         photos::Column::CropWidth,
+                        photos::Column::PlaceX,
+                        photos::Column::PlaceY,
+                        photos::Column::PlaceSize,
+                        photos::Column::PlaceRotation,
                     ])
                     .to_owned(),
             )
@@ -311,6 +355,7 @@ pub struct InboundPhoto {
     pub entry_id: String,
     pub path: String,
     pub framing: Option<crate::domain::crop::Framing>,
+    pub placement: Option<[f64; 4]>,
     pub ordinal: i32,
 }
 
@@ -340,6 +385,20 @@ pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, C
     Ok(refs)
 }
 
+fn placement_json(photo: &photos::Model) -> String {
+    match (
+        photo.place_x,
+        photo.place_y,
+        photo.place_size,
+        photo.place_rotation,
+    ) {
+        (Some(x), Some(y), Some(size), Some(rotation)) => format!(
+            ",\"place_x\":{x},\"place_y\":{y},\"place_size\":{size},\"place_rotation\":{rotation}"
+        ),
+        _ => String::new(),
+    }
+}
+
 fn framing_json(photo: &photos::Model) -> String {
     match (photo.crop_x, photo.crop_y, photo.crop_width) {
         (Some(x), Some(y), Some(width)) => {
@@ -362,10 +421,11 @@ pub(super) fn photo_refs(carried: &[photos::Model]) -> Result<String, CoreError>
             refs.push(',');
         }
         refs.push_str(&format!(
-            "{{\"id\":\"{}\",\"ordinal\":{}{}}}",
+            "{{\"id\":\"{}\",\"ordinal\":{}{}{}}}",
             photo.id,
             photo.ordinal,
-            framing_json(photo)
+            framing_json(photo),
+            placement_json(photo)
         ));
     }
     refs.push(']');

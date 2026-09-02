@@ -24,6 +24,7 @@ import com.leafypuff.ui.editor.sticker.StickerId
 import com.leafypuff.ui.editor.sticker.StickerLayer
 import com.leafypuff.ui.editor.sticker.dropSticker
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoPlacement
 import com.leafypuff.ui.settings.StickerPack
 
 private val ScreenGutter = 24.dp
@@ -43,12 +44,17 @@ fun EntryEditor(
     photos: List<EntryPhoto> = emptyList(),
     onRemovePhoto: ((String) -> Unit)? = null,
     onFramePhoto: ((String) -> Unit)? = null,
+    onMakeCover: ((String) -> Unit)? = null,
+    onPlaceFreely: ((String) -> Unit)? = null,
+    onPlacementChange: ((String, PhotoPlacement) -> Unit)? = null,
+    onPutBack: ((String) -> Unit)? = null,
     stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
     var tool by remember { mutableStateOf<EditorTool?>(null) }
     var lastTool by remember { mutableStateOf(EditorTool.Hashtag) }
     var selectedSticker by remember { mutableStateOf<String?>(null) }
+    var selectedPhoto by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -87,6 +93,8 @@ fun EntryEditor(
                     photos = photos,
                     onRemovePhoto = onRemovePhoto,
                     onFramePhoto = onFramePhoto,
+                    onMakeCover = onMakeCover,
+                    onPlaceFreely = onPlaceFreely,
                     onTitleChange = { onDraftChange(draft.copy(title = it)) },
                     onBodyChange = { onDraftChange(draft.copy(body = it)) },
                     onRemoveTag = { index ->
@@ -94,6 +102,14 @@ fun EntryEditor(
                             draft.copy(tags = draft.tags.filterIndexed { at, _ -> at != index }),
                         )
                     },
+                )
+
+                PhotoLayer(
+                    photos = photos,
+                    selectedId = selectedPhoto,
+                    onSelect = { selectedPhoto = it },
+                    onChange = { id, placed -> onPlacementChange?.invoke(id, placed) },
+                    onPutBack = { id -> onPutBack?.invoke(id) },
                 )
 
                 StickerLayer(

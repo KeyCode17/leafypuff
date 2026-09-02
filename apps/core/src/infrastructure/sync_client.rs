@@ -123,6 +123,15 @@ fn inbound_framing(photo: &Value) -> Option<crate::domain::crop::Framing> {
     })
 }
 
+fn inbound_placement(photo: &Value) -> Option<[f64; 4]> {
+    Some([
+        photo["place_x"].as_f64()?,
+        photo["place_y"].as_f64()?,
+        photo["place_size"].as_f64()?,
+        photo["place_rotation"].as_f64()?,
+    ])
+}
+
 fn record(row: &OutboundEntry, device_id: &str) -> Result<Value, CoreError> {
     Ok(json!({
         "id": row.id.0,
@@ -202,6 +211,7 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
                 ordinal: i32::try_from(photo["ordinal"].as_i64().ok_or_else(shape)?)
                     .map_err(|_| shape())?,
                 framing: inbound_framing(photo),
+                placement: inbound_placement(photo),
             })
         })
         .collect()
@@ -313,6 +323,10 @@ mod tests {
             crop_x: Some(0.25),
             crop_y: Some(0.1),
             crop_width: Some(0.5),
+            place_x: Some(0.3),
+            place_y: Some(0.4),
+            place_size: Some(160.0),
+            place_rotation: Some(8.0),
         };
 
         let written = photo_refs(&[row]).expect("it writes");
@@ -326,6 +340,9 @@ mod tests {
             .expect("the framing crosses with the reference");
         assert!((carried.x - 0.25).abs() < f64::EPSILON);
         assert!((carried.width - 0.5).abs() < f64::EPSILON);
+        let placed = read[0].placement.expect("the placement crosses too");
+        assert!((placed[0] - 0.3).abs() < f64::EPSILON);
+        assert!((placed[3] - 8.0).abs() < f64::EPSILON);
         assert_eq!(read[0].ordinal, 0);
         assert!(read[0].path.is_empty());
     }

@@ -60,7 +60,13 @@ fun LockGate(
             }
         },
         onBackspace = { digits = digits.dropLast(1) },
-        onBiometric = { unlockWithBiometric(context) { onUnlocked() } },
+        onBiometric = when {
+            biometricReady(context) -> {
+                { unlockWithBiometric(context, onProblem = { wrong = true }) { onUnlocked() } }
+            }
+
+            else -> null
+        },
         onCancel = null,
         modifier = modifier,
     )

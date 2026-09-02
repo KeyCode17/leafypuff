@@ -65,7 +65,7 @@ internal fun SettingsToggleCard(
         }
         SettingsDivider()
         ToggleRow(
-            label = "PIN / Face ID lock",
+            label = "PIN / Biometric lock",
             subLabel = if (lockEnabled) "Ask when opening leafyPuff" else "Off",
             checked = lockEnabled,
             onToggle = onToggleLock,

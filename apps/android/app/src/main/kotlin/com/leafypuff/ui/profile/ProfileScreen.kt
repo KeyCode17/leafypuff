@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +43,7 @@ fun ProfileScreen(
     avatar: ImageBitmap?,
     onStateChange: (ProfileState) -> Unit,
     onPickAvatar: () -> Unit,
+    onClearAvatar: () -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -77,12 +79,22 @@ fun ProfileScreen(
                 )
             }
         }
-        Text(
-            text = "Change photo",
-            style = typography.chipLabel,
-            color = colors.accentDeep,
-            modifier = Modifier.clickable(onClick = onPickAvatar),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(BlockGap)) {
+            Text(
+                text = "Change photo",
+                style = typography.chipLabel,
+                color = colors.accentDeep,
+                modifier = Modifier.clickable(onClick = onPickAvatar),
+            )
+            if (avatar != null) {
+                Text(
+                    text = "Remove photo",
+                    style = typography.chipLabel,
+                    color = Destructive,
+                    modifier = Modifier.clickable(onClick = onClearAvatar),
+                )
+            }
+        }
 
         Text(
             text = state.step.title,

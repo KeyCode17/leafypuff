@@ -11,11 +11,18 @@ private const val PromptSubtitle = "Use your fingerprint or face instead of the 
 private const val PromptCancel = "Use PIN"
 private const val Authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK
 
-fun unlockWithBiometric(context: Context, onUnlocked: () -> Unit) {
-    val activity = context as? FragmentActivity ?: return
-    if (BiometricManager.from(context).canAuthenticate(Authenticators) !=
+fun biometricReady(context: Context): Boolean =
+    BiometricManager.from(context).canAuthenticate(Authenticators) ==
         BiometricManager.BIOMETRIC_SUCCESS
-    ) {
+
+fun unlockWithBiometric(
+    context: Context,
+    onProblem: (String) -> Unit,
+    onUnlocked: () -> Unit,
+) {
+    val activity = context as? FragmentActivity ?: return
+    if (!biometricReady(context)) {
+        onProblem("This device has no biometric set up.")
         return
     }
 
@@ -25,6 +32,10 @@ fun unlockWithBiometric(context: Context, onUnlocked: () -> Unit) {
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 onUnlocked()
+            }
+
+            override fun onAuthenticationError(code: Int, message: CharSequence) {
+                onProblem(message.toString())
             }
         },
     )

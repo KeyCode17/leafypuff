@@ -50,7 +50,7 @@ fun LeafyHome(
     onStatistics: suspend (StatRange) -> StatsSummary?,
     onExport: suspend () -> String?,
     onSync: suspend () -> Boolean,
-    onSave: (EntryDraft, List<String>, () -> Unit, (String) -> Unit) -> Unit,
+    onSave: (EntryDraft, List<EntryPhoto>, () -> Unit, (String) -> Unit) -> Unit,
     onForgetPhotos: (List<String>) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
@@ -174,12 +174,12 @@ fun LeafyHome(
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
             onFramePhoto = onFramePhoto,
-            onSave = { draft, photoIds ->
+            onSave = { draft, kept ->
                 val reopened = !draft.fresh
-                val dropped = editingPhotos.map { it.id } - photoIds.toSet()
+                val dropped = editingPhotos.map { it.id } - kept.map { it.id }.toSet()
                 onSave(
                     draft,
-                    photoIds,
+                    kept,
                     {
                         onForgetPhotos(dropped)
                         composing = false

@@ -13,8 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,13 +32,17 @@ import com.leafypuff.ui.auth.PrimaryCta
 private val TopPadding = 68.dp
 private val SidePadding = 24.dp
 private val BlockGap = 18.dp
-private const val CoverRatio = 3f / 2f
 
 @Composable
 fun CropScreen(
     photo: ImageBitmap?,
     framing: PhotoFraming,
     pending: Boolean,
+    title: String = "Frame the thumbnail",
+    blurb: String = "Drag to move it, pinch to change how much it holds. This is what the diary " +
+        "and the calendar show.",
+    ratio: Double = PhotoFraming.CoverTallness,
+    round: Boolean = false,
     onFramingChange: (PhotoFraming) -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
@@ -44,6 +51,8 @@ fun CropScreen(
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
     val tallness = photo?.let { it.width.toDouble() / it.height.toDouble() } ?: 1.0
+    val held by rememberUpdatedState(framing)
+    val report by rememberUpdatedState(onFramingChange)
 
     Column(
         modifier = modifier
@@ -54,14 +63,13 @@ fun CropScreen(
         verticalArrangement = Arrangement.spacedBy(BlockGap),
     ) {
         Text(
-            text = "Frame the thumbnail",
+            text = title,
             style = typography.authTitle,
             color = colors.ink,
             modifier = Modifier.fillMaxWidth(),
         )
         Text(
-            text = "Drag to move it, pinch to change how much it holds. This is what the diary " +
-                "and the calendar show.",
+            text = blurb,
             style = typography.body,
             color = colors.ink2,
             modifier = Modifier.fillMaxWidth(),
@@ -70,25 +78,27 @@ fun CropScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(CoverRatio)
-                .clip(LeafyShapes.card)
+                .aspectRatio((1.0 / ratio).toFloat())
+                .clip(if (round) CircleShape else LeafyShapes.card)
                 .background(colors.soft2)
                 .pointerInput(tallness) {
                     detectTransformGestures { _, pan, zoom, _ ->
-                        val moved = framing.panned(
-                            acrossFraction = -pan.x.toDouble() / size.width * framing.width,
+                        val standing = held
+                        val moved = standing.panned(
+                            acrossFraction = -pan.x.toDouble() / size.width * standing.width,
                             downFraction = -pan.y.toDouble() / size.height *
-                                framing.height(tallness),
+                                standing.height(tallness, ratio),
                             tallness = tallness,
+                            ratio = ratio,
                         )
-                        onFramingChange(moved.zoomed(zoom.toDouble(), tallness))
+                        report(moved.zoomed(zoom.toDouble(), tallness, ratio))
                     }
                 },
         ) {
             if (photo != null) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val across = (photo.width * framing.width).toInt().coerceAtLeast(1)
-                    val down = (across * 2 / 3).coerceAtLeast(1).coerceAtMost(photo.height)
+                    val down = (across * ratio).toInt().coerceAtLeast(1).coerceAtMost(photo.height)
                     val left = (photo.width * framing.x).toInt()
                         .coerceIn(0, (photo.width - across).coerceAtLeast(0))
                     val top = (photo.height * framing.y).toInt()

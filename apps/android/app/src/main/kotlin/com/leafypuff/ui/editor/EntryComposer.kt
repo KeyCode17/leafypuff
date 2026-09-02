@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.statusBarsPadding
 import java.util.UUID
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +39,7 @@ fun EntryComposer(
     today: LocalDate,
     library: PhotoLibrary,
     onClose: () -> Unit,
-    onSave: (EntryDraft, List<String>) -> Unit,
+    onSave: (EntryDraft, List<EntryPhoto>) -> Unit,
     onFramePhoto: (String) -> Unit,
     modifier: Modifier = Modifier,
     existing: EntryDraft? = null,
@@ -50,10 +51,22 @@ fun EntryComposer(
     var draft by remember { mutableStateOf(blankDraft(today)) }
     var editing by remember { mutableStateOf(false) }
     var photos by remember { mutableStateOf(emptyList<EntryPhoto>()) }
+
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
     var asking by remember { mutableStateOf(false) }
     var promptedDay by remember { mutableStateOf<LocalDate?>(null) }
+
     var popup by remember { mutableStateOf<MetaPopup?>(null) }
+
+    if (open) {
+        BackHandler {
+            when {
+                popup != null -> popup = null
+                !editing -> editing = true
+                else -> onClose()
+            }
+        }
+    }
 
     val addPhoto = rememberPhotoPicker { bytes ->
         scope.launch {
@@ -101,7 +114,7 @@ fun EntryComposer(
             visible = open && editing,
             draft = draft,
             onDraftChange = { draft = it },
-            onSave = { onSave(draft, photos.map { photo -> photo.id }) },
+            onSave = { onSave(draft, photos) },
             onClose = onClose,
             onMoodClick = { editing = false },
             onDateClick = { popup = MetaPopup.Date },
@@ -111,6 +124,36 @@ fun EntryComposer(
             photos = photos,
             onRemovePhoto = { id -> photos = photos.filterNot { it.id == id } },
             onFramePhoto = onFramePhoto,
+            onPlaceFreely = { id ->
+                photos = photos.map { photo ->
+                    when (photo.id) {
+                        id -> photo.copy(place = droppedPlacement(photos.indexOfFirst { it.id == id }))
+                        else -> photo
+                    }
+                }
+            },
+            onPlacementChange = { id, placed ->
+                photos = photos.map { photo ->
+                    when (photo.id) {
+                        id -> photo.copy(place = placed)
+                        else -> photo
+                    }
+                }
+            },
+            onPutBack = { id ->
+                photos = photos.map { photo ->
+                    when (photo.id) {
+                        id -> photo.copy(place = null)
+                        else -> photo
+                    }
+                }
+            },
+            onMakeCover = { id ->
+                val chosen = photos.firstOrNull { it.id == id }
+                if (chosen != null) {
+                    photos = listOf(chosen) + photos.filterNot { it.id == id }
+                }
+            },
             stickerPack = stickerPack,
             modifier = Modifier.statusBarsPadding(),
         )
