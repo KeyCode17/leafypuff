@@ -26,9 +26,10 @@ use leafypuff_api::infrastructure::sync::{
     PgCheckpointStore, PgConflictSink, PgEntryStore, PgIdempotencyStore, PgWrappedKeyStore,
 };
 use leafypuff_core::domain::crypto::{FIELD_TITLE, FieldContext, KeyVault, RecoveryCode, open};
-use leafypuff_core::domain::{Entry, EntryId, EntryRepository, Mood};
+use leafypuff_core::domain::{Entry, EntryId, EntryRepository, Mood, PhotoKind};
 use leafypuff_core::infrastructure::{
-    SqliteEntryRepository, SqliteVaultStore, SyncClient, SyncOutbox, VaultSealer, db,
+    MediaSync, SqliteEntryRepository, SqliteVaultStore, SyncClient, SyncOutbox, VaultSealer,
+    VaultSync, db,
 };
 use sea_orm::{Database, DatabaseConnection};
 use tokio::sync::OnceCell;
@@ -222,14 +223,24 @@ async fn an_entry_written_on_one_device_opens_on_another_through_the_real_client
         .await
         .expect("the entry saves locally");
 
-    let pushed = SyncClient::new(base_url.clone(), token.clone())
+    let writer_device = writer
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let reader_device = reader
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let pushed = SyncClient::new(base_url.clone(), token.clone(), &writer_device)
         .expect("the client builds")
         .exchange(&writer.outbox)
         .await
         .expect("the writer exchanges");
     assert_eq!(pushed.pushed, 1);
 
-    let pulled = SyncClient::new(base_url, token)
+    let pulled = SyncClient::new(base_url, token, &reader_device)
         .expect("the client builds")
         .exchange(&reader.outbox)
         .await
@@ -261,12 +272,17 @@ async fn a_second_exchange_pushes_nothing_it_already_sent() {
         .await
         .expect("the entry saves locally");
 
-    let first = SyncClient::new(base_url.clone(), token.clone())
+    let writer_device = writer
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let first = SyncClient::new(base_url.clone(), token.clone(), &writer_device)
         .expect("the client builds")
         .exchange(&writer.outbox)
         .await
         .expect("the first exchange runs");
-    let second = SyncClient::new(base_url, token)
+    let second = SyncClient::new(base_url, token, &writer_device)
         .expect("the client builds")
         .exchange(&writer.outbox)
         .await
@@ -294,12 +310,22 @@ async fn the_ciphertext_that_crossed_is_the_one_the_writer_sealed() {
         .save(entry(entry_id, at))
         .await
         .expect("the entry saves locally");
-    SyncClient::new(base_url.clone(), token.clone())
+    let lead_device = writer
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let follow_device = reader
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    SyncClient::new(base_url.clone(), token.clone(), &lead_device)
         .expect("the client builds")
         .exchange(&writer.outbox)
         .await
         .expect("the writer exchanges");
-    SyncClient::new(base_url, token)
+    SyncClient::new(base_url, token, &follow_device)
         .expect("the client builds")
         .exchange(&reader.outbox)
         .await
@@ -322,4 +348,84 @@ async fn the_ciphertext_that_crossed_is_the_one_the_writer_sealed() {
 
     assert_eq!(reopened, TITLE.as_bytes());
     assert_eq!(arrived.title, TITLE);
+}
+
+#[tokio::test]
+async fn a_vault_pushed_by_one_device_is_restored_and_opened_by_another() {
+    let Some((base_url, _connection, _account_id, token)) = server().await else {
+        return;
+    };
+    let (writer, vault) = device(None).await;
+    let (reader, _) = device(None).await;
+    let writer_device = writer
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let reader_device = reader
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+
+    VaultSync::new(base_url.clone(), token.clone(), &writer_device)
+        .expect("the client builds")
+        .push(&vault, 1_700_000_000_000)
+        .await
+        .expect("the vault pushes");
+
+    let restored = VaultSync::new(base_url, token, &reader_device)
+        .expect("the client builds")
+        .pull()
+        .await
+        .expect("the vault pulls")
+        .expect("the server holds a vault for this account");
+
+    assert_eq!(restored, vault);
+    restored
+        .unlock_with_passphrase(PASSPHRASE)
+        .expect("the passphrase opens the restored vault");
+}
+
+#[tokio::test]
+async fn a_photo_uploaded_by_one_device_downloads_byte_for_byte_on_another() {
+    let Some((base_url, _connection, _account_id, token)) = server().await else {
+        return;
+    };
+    let (writer, _) = device(None).await;
+    let (reader, _) = device(None).await;
+    let writer_device = writer
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+    let reader_device = reader
+        .outbox
+        .device_id()
+        .await
+        .expect("the device is named");
+
+    let photo_id = Uuid::new_v4().to_string();
+    let entry_id = EntryId::new();
+    let sealed: Vec<u8> = (0..512_u16).map(|byte| byte as u8).collect();
+
+    MediaSync::new(base_url.clone(), token.clone(), &writer_device)
+        .expect("the client builds")
+        .upload(
+            &photo_id,
+            &entry_id.to_text(),
+            PhotoKind::Original,
+            sealed.clone(),
+        )
+        .await
+        .expect("the photo uploads");
+
+    let fetched = MediaSync::new(base_url, token, &reader_device)
+        .expect("the client builds")
+        .download(&photo_id, PhotoKind::Original)
+        .await
+        .expect("the photo downloads")
+        .expect("the server holds the photo");
+
+    assert_eq!(fetched, sealed);
 }

@@ -48,7 +48,8 @@ impl LeafyPuffCore {
         updated_at_ms: i64,
     ) -> Result<(), LeafyPuffCoreError> {
         let held = self.vault.read().await?;
-        VaultSync::new(base_url, access_token)?
+        let device_id = self.outbox.device_id().await?;
+        VaultSync::new(base_url, access_token, &device_id)?
             .push(&held, updated_at_ms)
             .await?;
         Ok(())
@@ -106,7 +107,11 @@ impl LeafyPuffCore {
         base_url: String,
         access_token: String,
     ) -> Result<bool, LeafyPuffCoreError> {
-        let Some(held) = VaultSync::new(base_url, access_token)?.pull().await? else {
+        let device_id = self.outbox.device_id().await?;
+        let Some(held) = VaultSync::new(base_url, access_token, &device_id)?
+            .pull()
+            .await?
+        else {
             return Ok(false);
         };
         self.vault.replace(&held).await?;
@@ -129,7 +134,8 @@ impl LeafyPuffCore {
             .map_err(CoreError::from)?;
         self.vault.replace(&rewrapped).await?;
         self.sealer.unlock(content)?;
-        VaultSync::new(base_url, access_token)?
+        let device_id = self.outbox.device_id().await?;
+        VaultSync::new(base_url, access_token, &device_id)?
             .push(&rewrapped, updated_at_ms)
             .await?;
         Ok(())

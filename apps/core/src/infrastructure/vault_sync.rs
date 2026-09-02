@@ -1,15 +1,11 @@
-use std::time::Duration;
-
 use data_encoding::BASE64;
 use reqwest::Client;
 use serde_json::{Value, json};
 
+use super::http_client;
 use super::http_error::reached;
 use crate::domain::CoreError;
 use crate::domain::crypto::{KeyVault, WrappedKey};
-
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const KEYS_PATH: &str = "/v1/sync/keys";
 const KIND_PASSPHRASE: &str = "passphrase";
@@ -27,14 +23,9 @@ pub struct VaultSync {
 }
 
 impl VaultSync {
-    pub fn new(base_url: String, access_token: String) -> Result<Self, CoreError> {
-        let client = Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(REQUEST_TIMEOUT)
-            .build()
-            .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
+    pub fn new(base_url: String, access_token: String, device_id: &str) -> Result<Self, CoreError> {
         Ok(Self {
-            client,
+            client: http_client::for_device(device_id, ERR_UNREACHABLE)?,
             base_url,
             access_token,
         })
@@ -102,6 +93,13 @@ impl VaultSync {
             .send()
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
+        let status = response.status();
+        if !status.is_success() {
+            return Err(CoreError::Storage(format!(
+                "{ERR_UNREACHABLE}: {}",
+                status.as_u16()
+            )));
+        }
         response
             .json()
             .await

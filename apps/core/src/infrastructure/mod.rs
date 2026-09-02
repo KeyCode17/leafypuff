@@ -7,6 +7,7 @@ pub mod db;
 pub mod entity;
 pub mod exif_reader;
 #[cfg(feature = "sync")]
+pub mod http_client;
 #[cfg(feature = "sync")]
 pub mod http_error;
 #[cfg(feature = "sqlite")]

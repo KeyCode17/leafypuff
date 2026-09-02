@@ -110,7 +110,7 @@ impl SyncOutbox {
         Ok(outbound)
     }
 
-    pub async fn pending_photo_ids(&self) -> Result<Vec<String>, CoreError> {
+    pub async fn pending_photos(&self) -> Result<Vec<(String, String)>, CoreError> {
         let owed = self.pending().await?;
         let ids: Vec<String> = owed.iter().map(|row| row.id.to_text()).collect();
         if ids.is_empty() {
@@ -120,7 +120,10 @@ impl SyncOutbox {
             .filter(photos::Column::EntryId.is_in(ids))
             .all(&self.connection)
             .await?;
-        Ok(carried.into_iter().map(|photo| photo.id).collect())
+        Ok(carried
+            .into_iter()
+            .map(|photo| (photo.id, photo.entry_id))
+            .collect())
     }
 
     pub async fn unfetched_photos(&self) -> Result<Vec<String>, CoreError> {
