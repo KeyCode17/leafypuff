@@ -14,6 +14,7 @@ private const val ReminderMinutesKey = "reminder.minutes"
 private const val LockEnabledKey = "lock.enabled"
 private const val StickerPackKey = "sticker.pack"
 private const val TextSizeKey = "text.size"
+private const val AvatarPhotoKey = "avatar.photo"
 
 private const val MinutesPerHour = 60
 
@@ -29,6 +30,7 @@ class PreferenceStore(private val context: Context) {
             lockEnabled = held.getBoolean(LockEnabledKey, false),
             stickerPack = readPack(held.getString(StickerPackKey, null)),
             textSize = readTextSize(held.getString(TextSizeKey, null)),
+            avatarPhotoId = held.getString(AvatarPhotoKey, null),
         )
     }
 
@@ -45,6 +47,7 @@ class PreferenceStore(private val context: Context) {
             .putBoolean(LockEnabledKey, preferences.lockEnabled)
             .putString(StickerPackKey, preferences.stickerPack.name)
             .putString(TextSizeKey, preferences.textSize.name)
+            .putString(AvatarPhotoKey, preferences.avatarPhotoId)
             .apply()
     }
 

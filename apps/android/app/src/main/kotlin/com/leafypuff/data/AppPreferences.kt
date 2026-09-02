@@ -12,4 +12,5 @@ data class AppPreferences(
     val lockEnabled: Boolean = false,
     val stickerPack: StickerPack = StickerPack.Mixed,
     val textSize: TextSize = TextSize.Medium,
+    val avatarPhotoId: String? = null,
 )

@@ -144,6 +144,16 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
             core.refreshSession(baseUrl, refreshToken).toIssued()
         }
 
+    suspend fun changeEmail(baseUrl: String, accessToken: String, email: String): MailedChallenge =
+        withContext(Dispatchers.IO) {
+            core.changeEmail(baseUrl, accessToken, email).toChallenge()
+        }
+
+    suspend fun confirmEmail(baseUrl: String, accessToken: String, code: String): String =
+        withContext(Dispatchers.IO) {
+            core.confirmEmail(baseUrl, accessToken, code)
+        }
+
     suspend fun signIn(baseUrl: String, email: String, password: String): MailedChallenge =
         withContext(Dispatchers.IO) {
             core.signIn(baseUrl, email, password).toChallenge()
