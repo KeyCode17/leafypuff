@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import com.leafypuff.ui.photo.EntryPhoto
@@ -37,6 +38,8 @@ fun EntryEditorOverlay(
     onPlaceFreely: ((String) -> Unit)? = null,
     onPlacementChange: ((String, PhotoPlacement) -> Unit)? = null,
     onPutBack: ((String) -> Unit)? = null,
+    onCropPlaced: ((String) -> Unit)? = null,
+    originals: Map<String, ImageBitmap> = emptyMap(),
     stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
@@ -69,6 +72,8 @@ fun EntryEditorOverlay(
             onPlaceFreely = onPlaceFreely,
             onPlacementChange = onPlacementChange,
             onPutBack = onPutBack,
+            onCropPlaced = onCropPlaced,
+            originals = originals,
             stickerPack = stickerPack,
         )
     }

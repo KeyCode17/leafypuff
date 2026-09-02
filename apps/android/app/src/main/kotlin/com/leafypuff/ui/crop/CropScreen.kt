@@ -4,13 +4,18 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
@@ -25,6 +31,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
@@ -44,6 +51,8 @@ fun CropScreen(
         "and the calendar show.",
     ratio: Double = PhotoFraming.CoverTallness,
     round: Boolean = false,
+    adjustableRatio: Boolean = false,
+    onRatioChange: (Double) -> Unit = { },
     onFramingChange: (PhotoFraming) -> Unit,
     onSubmit: () -> Unit,
     onBack: () -> Unit,
@@ -86,6 +95,7 @@ fun CropScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = PreviewMaxHeight)
                 .aspectRatio((1.0 / ratio).toFloat())
                 .clip(if (round) CircleShape else LeafyShapes.card)
                 .background(colors.soft2)
@@ -121,6 +131,10 @@ fun CropScreen(
             }
         }
 
+        if (adjustableRatio) {
+            RatioPicker(ratio = ratio, onRatioChange = onRatioChange)
+        }
+
         PrimaryCta(
             label = if (pending) "SAVING…" else "USE THIS FRAME",
             enabled = !pending,
@@ -131,6 +145,65 @@ fun CropScreen(
             style = typography.chipLabel,
             color = colors.ink2,
             modifier = Modifier.clickable(onClick = onBack),
+        )
+    }
+}
+
+private val PreviewMaxHeight = 380.dp
+
+private val RatioShapes = listOf(
+    "1:1" to 1.0,
+    "4:5" to 5.0 / 4.0,
+    "3:2" to 2.0 / 3.0,
+    "2:3" to 3.0 / 2.0,
+    "16:9" to 9.0 / 16.0,
+    "9:16" to 16.0 / 9.0,
+)
+private const val TallestRatio = 2.0
+private const val WidestRatio = 0.5
+private const val RatioSnap = 0.02
+private val ChipGap = 8.dp
+private val ChipPaddingH = 12.dp
+private val ChipPaddingV = 6.dp
+
+@Composable
+private fun RatioPicker(ratio: Double, onRatioChange: (Double) -> Unit) {
+    val colors = LocalLeafyColors.current
+    val typography = LocalLeafyTypography.current
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ChipGap),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(ChipGap),
+        ) {
+            RatioShapes.forEach { (label, shape) ->
+                val chosen = abs(shape - ratio) < RatioSnap
+                Text(
+                    text = label,
+                    style = typography.chipLabel,
+                    color = if (chosen) colors.bg else colors.ink,
+                    modifier = Modifier
+                        .clip(LeafyShapes.pill)
+                        .background(if (chosen) colors.accentDeep else colors.soft2)
+                        .clickable { onRatioChange(shape) }
+                        .padding(horizontal = ChipPaddingH, vertical = ChipPaddingV),
+                )
+            }
+        }
+        Slider(
+            value = ratio.toFloat(),
+            onValueChange = { onRatioChange(it.toDouble()) },
+            valueRange = WidestRatio.toFloat()..TallestRatio.toFloat(),
+            colors = SliderDefaults.colors(
+                thumbColor = colors.accentDeep,
+                activeTrackColor = colors.accent,
+                inactiveTrackColor = colors.soft2,
+            ),
         )
     }
 }

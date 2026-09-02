@@ -169,6 +169,42 @@ impl SyncOutbox {
         Ok(())
     }
 
+    pub async fn crop_placed_photo(
+        &self,
+        id: &str,
+        x: f64,
+        y: f64,
+        width: f64,
+        ratio: f64,
+    ) -> Result<(), CoreError> {
+        photos::Entity::update_many()
+            .col_expr(photos::Column::PlaceCropX, x.into())
+            .col_expr(photos::Column::PlaceCropY, y.into())
+            .col_expr(photos::Column::PlaceCropWidth, width.into())
+            .col_expr(photos::Column::PlaceRatio, ratio.into())
+            .filter(photos::Column::Id.eq(id.to_owned()))
+            .exec(&self.connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn placed_crop_of(&self, id: &str) -> Result<Option<[f64; 4]>, CoreError> {
+        let row = photos::Entity::find_by_id(id.to_owned())
+            .one(&self.connection)
+            .await?;
+        Ok(row.and_then(|photo| {
+            match (
+                photo.place_crop_x,
+                photo.place_crop_y,
+                photo.place_crop_width,
+                photo.place_ratio,
+            ) {
+                (Some(x), Some(y), Some(width), Some(ratio)) => Some([x, y, width, ratio]),
+                _ => None,
+            }
+        }))
+    }
+
     pub async fn placement_of(&self, id: &str) -> Result<Option<[f64; 4]>, CoreError> {
         let row = photos::Entity::find_by_id(id.to_owned())
             .one(&self.connection)
@@ -310,6 +346,10 @@ impl SyncOutbox {
                 place_y: ActiveValue::Set(photo.placement.map(|held| held[1])),
                 place_size: ActiveValue::Set(photo.placement.map(|held| held[2])),
                 place_rotation: ActiveValue::Set(photo.placement.map(|held| held[3])),
+                place_crop_x: ActiveValue::Set(photo.placed_crop.map(|held| held[0])),
+                place_crop_y: ActiveValue::Set(photo.placed_crop.map(|held| held[1])),
+                place_crop_width: ActiveValue::Set(photo.placed_crop.map(|held| held[2])),
+                place_ratio: ActiveValue::Set(photo.placed_crop.map(|held| held[3])),
                 taken_at: ActiveValue::Set(None),
             })
             .on_conflict(
@@ -356,6 +396,7 @@ pub struct InboundPhoto {
     pub path: String,
     pub framing: Option<crate::domain::crop::Framing>,
     pub placement: Option<[f64; 4]>,
+    pub placed_crop: Option<[f64; 4]>,
     pub ordinal: i32,
 }
 
@@ -386,7 +427,7 @@ pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, C
 }
 
 fn placement_json(photo: &photos::Model) -> String {
-    match (
+    let placed = match (
         photo.place_x,
         photo.place_y,
         photo.place_size,
@@ -395,7 +436,18 @@ fn placement_json(photo: &photos::Model) -> String {
         (Some(x), Some(y), Some(size), Some(rotation)) => format!(
             ",\"place_x\":{x},\"place_y\":{y},\"place_size\":{size},\"place_rotation\":{rotation}"
         ),
-        _ => String::new(),
+        _ => return String::new(),
+    };
+    match (
+        photo.place_crop_x,
+        photo.place_crop_y,
+        photo.place_crop_width,
+        photo.place_ratio,
+    ) {
+        (Some(x), Some(y), Some(width), Some(ratio)) => format!(
+            "{placed},\"place_crop_x\":{x},\"place_crop_y\":{y},\"place_crop_width\":{width},\"place_ratio\":{ratio}"
+        ),
+        _ => placed,
     }
 }
 

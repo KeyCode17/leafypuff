@@ -52,6 +52,7 @@ import com.leafypuff.ui.crop.CropScreen
 import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.ui.profile.ProfileStep
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoCropped
 import com.leafypuff.ui.photo.PhotoCover
 import com.leafypuff.ui.photo.PhotoPlacement
 import com.leafypuff.ui.photo.NoPhotoLibrary
@@ -99,6 +100,12 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var coversEpoch by remember { mutableIntStateOf(0) }
     var framings by remember { mutableStateOf(mapOf<String, PhotoFraming>()) }
     var refreshedCover by remember { mutableStateOf<PhotoCover?>(null) }
+    var croppingPlaced by remember { mutableStateOf<String?>(null) }
+    var placedCrop by remember { mutableStateOf(PhotoFraming()) }
+    var placedRatio by remember { mutableStateOf(1.0) }
+    var placedImage by remember { mutableStateOf<ImageBitmap?>(null) }
+    var placedPending by remember { mutableStateOf(false) }
+    var refreshedPlacement by remember { mutableStateOf<PhotoCropped?>(null) }
     var vaultEpoch by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(databasePath) {
@@ -221,6 +228,13 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             framingImage = null
                             framingPhoto = id
                         },
+                        onCropPlaced = { id ->
+                            placedCrop = PhotoFraming()
+                            placedRatio = 1.0
+                            placedImage = null
+                            croppingPlaced = id
+                        },
+                        refreshedPlacement = refreshedPlacement,
                         onEditProfile = {
                             profile = ProfileState(
                                 name = preferences.name,
@@ -260,11 +274,20 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                                     .getOrNull()
                                                     ?.takeIf { held -> held.size == 4 }
                                                     ?.let { held ->
+                                                        val cropped = runCatching {
+                                                            store?.client?.placedCrop(photoId)
+                                                        }
+                                                            .getOrNull()
+                                                            ?.takeIf { it.size == 4 }
                                                         PhotoPlacement(
                                                             x = held[0].toFloat(),
                                                             y = held[1].toFloat(),
                                                             size = held[2].toFloat(),
                                                             rotation = held[3].toFloat(),
+                                                            crop = cropped?.let {
+                                                                PhotoFraming(it[0], it[1], it[2])
+                                                            },
+                                                            ratio = cropped?.get(3)?.toFloat() ?: 1f,
                                                         )
                                                     },
                                             )
@@ -320,6 +343,16 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                                     placed.y.toDouble(),
                                                     placed.size.toDouble(),
                                                     placed.rotation.toDouble(),
+                                                )
+                                            }
+                                            val crop = placed.crop ?: return@forEach
+                                            runCatching {
+                                                store?.client?.cropPlacedPhoto(
+                                                    photo.id,
+                                                    crop.x,
+                                                    crop.y,
+                                                    crop.width,
+                                                    placed.ratio.toDouble(),
                                                 )
                                             }
                                         }
@@ -420,6 +453,55 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     }
                 },
                 onBack = { framingPhoto = null },
+                modifier = sealedOff,
+            )
+        }
+
+        val cropping = croppingPlaced
+        if (cropping != null) {
+            BackHandler { croppingPlaced = null }
+            LaunchedEffect(cropping) {
+                runCatching { store?.client?.placedCrop(cropping) }
+                    .getOrNull()
+                    ?.takeIf { it.size == 4 }
+                    ?.let {
+                        placedCrop = PhotoFraming(it[0], it[1], it[2])
+                        placedRatio = it[3]
+                    }
+                placedImage = library.original(cropping)
+            }
+            CropScreen(
+                photo = placedImage,
+                framing = placedCrop,
+                pending = placedPending,
+                title = "Crop the photo",
+                blurb = "Drag to move it, pinch to change how much it holds. Pick any shape " +
+                    "below, or slide to your own.",
+                ratio = placedRatio,
+                adjustableRatio = true,
+                onRatioChange = { placedRatio = it },
+                onFramingChange = { placedCrop = it },
+                onSubmit = {
+                    if (!placedPending) {
+                        placedPending = true
+                        scope.launch {
+                            runCatching {
+                                store?.client?.cropPlacedPhoto(
+                                    cropping,
+                                    placedCrop.x,
+                                    placedCrop.y,
+                                    placedCrop.width,
+                                    placedRatio,
+                                )
+                            }
+                            refreshedPlacement =
+                                PhotoCropped(cropping, placedCrop, placedRatio.toFloat())
+                            placedPending = false
+                            croppingPlaced = null
+                        }
+                    }
+                },
+                onBack = { croppingPlaced = null },
                 modifier = sealedOff,
             )
         }

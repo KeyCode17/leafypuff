@@ -132,6 +132,15 @@ fn inbound_placement(photo: &Value) -> Option<[f64; 4]> {
     ])
 }
 
+fn inbound_placed_crop(photo: &Value) -> Option<[f64; 4]> {
+    Some([
+        photo["place_crop_x"].as_f64()?,
+        photo["place_crop_y"].as_f64()?,
+        photo["place_crop_width"].as_f64()?,
+        photo["place_ratio"].as_f64()?,
+    ])
+}
+
 fn record(row: &OutboundEntry, device_id: &str) -> Result<Value, CoreError> {
     Ok(json!({
         "id": row.id.0,
@@ -212,6 +221,7 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
                     .map_err(|_| shape())?,
                 framing: inbound_framing(photo),
                 placement: inbound_placement(photo),
+                placed_crop: inbound_placed_crop(photo),
             })
         })
         .collect()
@@ -313,6 +323,35 @@ mod tests {
     }
 
     #[test]
+    fn a_placement_without_a_crop_still_crosses() {
+        let row = photos::Model {
+            id: "3f2a91c0-0000-4000-8000-0000000000bb".to_owned(),
+            entry_id: "e1".to_owned(),
+            path: String::new(),
+            ordinal: 1,
+            taken_at: None,
+            crop_x: None,
+            crop_y: None,
+            crop_width: None,
+            place_x: Some(0.1),
+            place_y: Some(0.2),
+            place_size: Some(120.0),
+            place_rotation: Some(0.0),
+            place_crop_x: None,
+            place_crop_y: None,
+            place_crop_width: None,
+            place_ratio: None,
+        };
+
+        let written = photo_refs(&[row]).expect("it writes");
+        let read =
+            super::inbound_photos(&serde_json::Value::String(written), "e1").expect("it reads");
+
+        assert!(read[0].placement.is_some());
+        assert!(read[0].placed_crop.is_none());
+    }
+
+    #[test]
     fn a_photo_reference_survives_the_wire_unchanged() {
         let row = photos::Model {
             id: "3f2a91c0-0000-4000-8000-0000000000aa".to_owned(),
@@ -327,6 +366,10 @@ mod tests {
             place_y: Some(0.4),
             place_size: Some(160.0),
             place_rotation: Some(8.0),
+            place_crop_x: Some(0.15),
+            place_crop_y: Some(0.05),
+            place_crop_width: Some(0.7),
+            place_ratio: Some(1.25),
         };
 
         let written = photo_refs(&[row]).expect("it writes");
@@ -343,6 +386,10 @@ mod tests {
         let placed = read[0].placement.expect("the placement crosses too");
         assert!((placed[0] - 0.3).abs() < f64::EPSILON);
         assert!((placed[3] - 8.0).abs() < f64::EPSILON);
+        let cropped = read[0].placed_crop.expect("the placed crop crosses too");
+        assert!((cropped[0] - 0.15).abs() < f64::EPSILON);
+        assert!((cropped[2] - 0.7).abs() < f64::EPSILON);
+        assert!((cropped[3] - 1.25).abs() < f64::EPSILON);
         assert_eq!(read[0].ordinal, 0);
         assert!(read[0].path.is_empty());
     }

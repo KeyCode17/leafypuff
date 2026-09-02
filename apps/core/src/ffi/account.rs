@@ -198,6 +198,29 @@ impl LeafyPuffCore {
         Ok(())
     }
 
+    pub async fn crop_placed_photo(
+        &self,
+        photo_id: String,
+        x: f64,
+        y: f64,
+        width: f64,
+        ratio: f64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        self.outbox
+            .crop_placed_photo(&photo_id, x, y, width, ratio)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn placed_crop(&self, photo_id: String) -> Result<Vec<f64>, LeafyPuffCoreError> {
+        Ok(self
+            .outbox
+            .placed_crop_of(&photo_id)
+            .await?
+            .map(|held| held.to_vec())
+            .unwrap_or_default())
+    }
+
     pub async fn photo_placement(&self, photo_id: String) -> Result<Vec<f64>, LeafyPuffCoreError> {
         Ok(self
             .outbox

@@ -26,6 +26,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.ui.editor.sticker.StickerId
@@ -58,6 +59,8 @@ fun EntryEditor(
     onPlaceFreely: ((String) -> Unit)? = null,
     onPlacementChange: ((String, PhotoPlacement) -> Unit)? = null,
     onPutBack: ((String) -> Unit)? = null,
+    onCropPlaced: ((String) -> Unit)? = null,
+    originals: Map<String, ImageBitmap> = emptyMap(),
     stickerPack: StickerPack = StickerPack.Mixed,
     modifier: Modifier = Modifier,
 ) {
@@ -135,8 +138,10 @@ fun EntryEditor(
 
                 PhotoLayer(
                     photos = photos,
+                    originals = originals,
                     selectedId = selectedPhoto,
                     onSelect = { selectedPhoto = it },
+                    onCrop = { id -> onCropPlaced?.invoke(id) },
                     onBounds = { picked = it },
                     onChange = { id, placed -> onPlacementChange?.invoke(id, placed) },
                     onPutBack = { id -> onPutBack?.invoke(id) },
