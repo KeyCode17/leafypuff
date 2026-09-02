@@ -30,8 +30,9 @@ fun clampStickerPosition(value: Float, size: Float, extent: Float): Float {
     if (extent <= 0f) {
         return 0f
     }
-    val lower = -StickerOverhang / extent
-    val upper = (extent - size + StickerOverhang) / extent
+    val lip = maxOf(StickerOverhang, size / 2f)
+    val lower = -lip / extent
+    val upper = (extent - size + lip) / extent
     return value.coerceIn(lower, maxOf(lower, upper))
 }
 
@@ -64,7 +65,7 @@ fun PlacedSticker.movedBy(
     y = clampStickerPosition(y + fractionOf(deltaY, layerHeight), size, layerHeight),
 )
 
-private fun fractionOf(delta: Float, extent: Float): Float = when {
+fun fractionOf(delta: Float, extent: Float): Float = when {
     extent <= 0f -> 0f
     else -> delta / extent
 }

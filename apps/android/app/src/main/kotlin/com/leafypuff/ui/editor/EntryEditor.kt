@@ -19,6 +19,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.ui.editor.sticker.StickerId
@@ -58,11 +65,30 @@ fun EntryEditor(
     var lastTool by remember { mutableStateOf(EditorTool.Hashtag) }
     var selectedSticker by remember { mutableStateOf<String?>(null) }
     var selectedPhoto by remember { mutableStateOf<String?>(null) }
+    var picked by remember { mutableStateOf<Rect?>(null) }
+    var rootOrigin by remember { mutableStateOf(Offset.Zero) }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(LocalLeafyColors.current.bg),
+            .background(LocalLeafyColors.current.bg)
+            .onGloballyPositioned { rootOrigin = it.positionInWindow() }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type != PointerEventType.Press) {
+                            continue
+                        }
+                        val at = event.changes.first().position + rootOrigin
+                        if (picked?.contains(at) != true) {
+                            selectedSticker = null
+                            selectedPhoto = null
+                            picked = null
+                        }
+                    }
+                }
+            },
     ) {
         Column(
             modifier = Modifier
@@ -111,6 +137,7 @@ fun EntryEditor(
                     photos = photos,
                     selectedId = selectedPhoto,
                     onSelect = { selectedPhoto = it },
+                    onBounds = { picked = it },
                     onChange = { id, placed -> onPlacementChange?.invoke(id, placed) },
                     onPutBack = { id -> onPutBack?.invoke(id) },
                 )
@@ -119,6 +146,7 @@ fun EntryEditor(
                     stickers = draft.stickers,
                     selectedKey = selectedSticker,
                     onSelect = { selectedSticker = it },
+                    onBounds = { picked = it },
                     onChange = { moved ->
                         onDraftChange(
                             draft.copy(

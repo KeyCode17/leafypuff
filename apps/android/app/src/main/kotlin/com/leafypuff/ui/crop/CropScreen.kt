@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -53,6 +54,13 @@ fun CropScreen(
     val tallness = photo?.let { it.width.toDouble() / it.height.toDouble() } ?: 1.0
     val held by rememberUpdatedState(framing)
     val report by rememberUpdatedState(onFramingChange)
+
+    LaunchedEffect(tallness, ratio) {
+        val fitted = held.fitted(tallness, ratio)
+        if (fitted != held) {
+            report(fitted)
+        }
+    }
 
     Column(
         modifier = modifier

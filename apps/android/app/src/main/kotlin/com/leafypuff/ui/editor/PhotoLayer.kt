@@ -10,16 +10,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.leafypuff.ui.editor.sticker.PlacedFrame
+import com.leafypuff.ui.editor.sticker.clampStickerPosition
+import com.leafypuff.ui.editor.sticker.fractionOf
 import com.leafypuff.ui.editor.sticker.snapRotation
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.PhotoPlacement
@@ -37,6 +41,7 @@ fun PhotoLayer(
     onSelect: (String?) -> Unit,
     onChange: (String, PhotoPlacement) -> Unit,
     onPutBack: (String) -> Unit,
+    onBounds: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -54,8 +59,9 @@ fun PhotoLayer(
             },
     ) {
         photos.forEach { photo ->
-            val placed = photo.place ?: return@forEach
+            val held = photo.place ?: return@forEach
             key(photo.id) {
+                val placed by rememberUpdatedState(held)
                 PlacedFrame(
                     x = placed.x,
                     y = placed.y,
@@ -82,6 +88,7 @@ fun PhotoLayer(
                         onPutBack(photo.id)
                         onSelect(null)
                     },
+                    onBounds = onBounds,
                 ) {
                     Image(
                         bitmap = photo.cover,
@@ -105,24 +112,9 @@ private fun PhotoPlacement.movedBy(
     layerWidth: Float,
     layerHeight: Float,
 ): PhotoPlacement = copy(
-    x = roam(x + fractionOf(deltaX, layerWidth), size, layerWidth),
-    y = roam(y + fractionOf(deltaY, layerHeight), size, layerHeight),
+    x = clampStickerPosition(x + fractionOf(deltaX, layerWidth), size, layerWidth),
+    y = clampStickerPosition(y + fractionOf(deltaY, layerHeight), size, layerHeight),
 )
-
-private fun roam(value: Float, size: Float, extent: Float): Float {
-    if (extent <= 0f) {
-        return 0f
-    }
-    val lip = size / 2f
-    val lower = -lip / extent
-    val upper = (extent - size + lip) / extent
-    return value.coerceIn(lower, maxOf(lower, upper))
-}
-
-private fun fractionOf(delta: Float, extent: Float): Float = when {
-    extent <= 0f -> 0f
-    else -> delta / extent
-}
 
 fun droppedPlacement(index: Int): PhotoPlacement = PhotoPlacement(
     x = 0.12f + (index % 3) * 0.14f,

@@ -72,6 +72,7 @@ private fun StickerFrame(dark: Boolean) {
                         stickers = stickers.map { if (it.key == next.key) next else it }
                     },
                     onRemove = { key -> stickers = stickers.filterNot { it.key == key } },
+                    onBounds = { },
                 )
             }
             StickerTrayDrawer(

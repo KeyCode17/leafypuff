@@ -24,14 +24,14 @@ private const val RibWidth = 1.4f
 private const val PetalRadius = 6f
 private const val FlowerCenterRadius = 5.4f
 
-private val Body = svgPath("M24 17L33 25L26.6 43C25.8 45 22.2 45 21.4 43L15 25Z")
-private val LeafDeep = svgPath("M24 18C20.8 12 21.2 6 24 3C26.8 6 27.2 12 24 18Z")
+private val Body = svgPath("M15.5 21C15.5 18.4 32.5 18.4 32.5 21L25.4 42.4C24.9 44.2 23.1 44.2 22.6 42.4Z")
+private val LeafDeep = svgPath("M24 20.4C21 14.4 21.5 8.2 24 4.6C26.5 8.2 27 14.4 24 20.4Z")
 private val LeafPale =
     svgPath(
-        "M23 18C17.6 15 13.6 10.4 14.6 7.6C17.8 7 22 12 24 17.6Z" +
-            "M25 18C30.4 15 34.4 10.4 33.4 7.6C30.2 7 26 12 24 17.6Z",
+        "M23.2 20C18 17 14.6 11.6 16 8.6C19.6 8.7 22.6 13.6 24 19Z" +
+            "M24.8 20C30 17 33.4 11.6 32 8.6C28.4 8.7 25.4 13.6 24 19Z",
     )
-private val Ribs = listOf(svgPath("M19.4 27L28.6 30"), svgPath("M21.2 34L27 36"))
+private val Ribs = listOf(svgPath("M19.5 27L28.5 29"), svgPath("M21.5 34L26.5 35.4"))
 private val HeartOutline = svgPath(
     "M24 40C16 34.6 8 28.6 8 21.2 8 15.6 12.2 12 16.8 12c3 0 5.6 1.6 7.2 4 1.6-2.4 4.2-4 " +
         "7.2-4C35.8 12 40 15.6 40 21.2 40 28.6 32 34.6 24 40z",
