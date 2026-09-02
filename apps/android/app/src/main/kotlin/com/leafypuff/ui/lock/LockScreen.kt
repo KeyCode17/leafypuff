@@ -29,7 +29,7 @@ private val DotsGapAbove = 26.dp
 private val DotsGapBelow = 32.dp
 private val BiometricGap = 26.dp
 
-private const val BiometricLabel = "Use Face ID"
+private const val BiometricLabel = "Biometric lock"
 private const val CancelLabel = "Cancel"
 private val CancelGap = 18.dp
 private val BiometricPaddingH = 24.dp
