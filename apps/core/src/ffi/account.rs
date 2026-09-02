@@ -88,6 +88,31 @@ impl LeafyPuffCore {
         ))
     }
 
+    pub async fn change_email(
+        &self,
+        base_url: String,
+        access_token: String,
+        email: String,
+    ) -> Result<FfiChallenge, LeafyPuffCoreError> {
+        let device_id = self.outbox.device_id().await?;
+        let client = AuthClient::for_device(base_url, &device_id)?;
+        Ok(FfiChallenge::from(
+            client.change_email(&access_token, email).await?,
+        ))
+    }
+
+    pub async fn confirm_email(
+        &self,
+        base_url: String,
+        access_token: String,
+        code: String,
+    ) -> Result<String, LeafyPuffCoreError> {
+        let device_id = self.outbox.device_id().await?;
+        Ok(AuthClient::for_device(base_url, &device_id)?
+            .confirm_email(&access_token, code)
+            .await?)
+    }
+
     pub async fn sync_now(
         &self,
         base_url: String,

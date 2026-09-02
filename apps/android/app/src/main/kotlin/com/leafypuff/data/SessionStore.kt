@@ -31,6 +31,10 @@ class SessionStore(private val context: Context) {
             .apply()
     }
 
+    fun rename(email: String) {
+        preferences().edit().putString(EmailKey, email).apply()
+    }
+
     fun clear() {
         preferences().edit().clear().apply()
     }

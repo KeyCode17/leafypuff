@@ -2,8 +2,8 @@ use api_testing::World;
 use chrono::Duration;
 use leafypuff_api::application::iam::Session;
 use leafypuff_api::application::iam::{
-    CompleteSignInInput, RefreshInput, RegisterInput, ResetPasswordInput, StartPasswordResetInput,
-    StartSignInInput, VerifyEmailInput,
+    CompleteSignInInput, ConfirmEmailChangeInput, RefreshInput, RegisterInput, ResetPasswordInput,
+    StartEmailChangeInput, StartPasswordResetInput, StartSignInInput, VerifyEmailInput,
 };
 use leafypuff_api::domain::iam::policy::OTP_TTL_SECONDS;
 use leafypuff_api::domain::iam::{IamError, OtpCode, OtpPurpose};
@@ -551,4 +551,105 @@ async fn a_reset_code_from_another_purpose_is_refused() {
         .expect_err("a sign-in code must not reset a password");
 
     assert!(matches!(rejected, IamError::ChallengeUnusable));
+}
+
+const OTHER_EMAIL: &str = "elsewhere@example.test";
+
+#[tokio::test]
+async fn changing_an_address_mails_the_new_one_and_leaves_the_old_in_place_until_confirmed() {
+    let world = verified_world().await;
+    let account = world.accounts.snapshot()[0].clone();
+    world.generator.queue("222333");
+
+    world
+        .start_email_change()
+        .execute(StartEmailChangeInput {
+            account_id: account.id,
+            email: OTHER_EMAIL.to_owned(),
+        })
+        .await
+        .expect("a fresh address may be claimed");
+
+    let (to, purpose, _) = world
+        .mailer
+        .sent()
+        .last()
+        .cloned()
+        .expect("a code must have been mailed");
+    assert_eq!(to, OTHER_EMAIL);
+    assert_eq!(purpose, OtpPurpose::ChangeEmail);
+    assert_eq!(world.accounts.snapshot()[0].email, NORMALISED);
+}
+
+#[tokio::test]
+async fn confirming_an_address_change_moves_the_account_to_it() {
+    let world = verified_world().await;
+    let account = world.accounts.snapshot()[0].clone();
+    world.generator.queue("222333");
+    world
+        .start_email_change()
+        .execute(StartEmailChangeInput {
+            account_id: account.id,
+            email: OTHER_EMAIL.to_owned(),
+        })
+        .await
+        .expect("a fresh address may be claimed");
+
+    let adopted = world
+        .confirm_email_change()
+        .execute(ConfirmEmailChangeInput {
+            account_id: account.id,
+            code: "222333".to_owned(),
+        })
+        .await
+        .expect("the code confirms the address");
+
+    assert_eq!(adopted, OTHER_EMAIL);
+    let stored = world.accounts.snapshot()[0].clone();
+    assert_eq!(stored.email, OTHER_EMAIL);
+    assert!(stored.pending_email.is_none());
+}
+
+#[tokio::test]
+async fn an_address_another_account_already_holds_is_refused() {
+    let world = verified_world().await;
+    let account = world.accounts.snapshot()[0].clone();
+    world.generator.queue("444555");
+    world
+        .register()
+        .execute(RegisterInput {
+            email: OTHER_EMAIL.to_owned(),
+            password: PASSWORD.to_owned(),
+            display_name: None,
+        })
+        .await
+        .expect("a second account registers");
+
+    let refused = world
+        .start_email_change()
+        .execute(StartEmailChangeInput {
+            account_id: account.id,
+            email: OTHER_EMAIL.to_owned(),
+        })
+        .await
+        .expect_err("an address in use must be refused");
+
+    assert!(matches!(refused, IamError::EmailAlreadyRegistered));
+}
+
+#[tokio::test]
+async fn a_confirmation_without_a_claim_is_refused() {
+    let world = verified_world().await;
+    let account = world.accounts.snapshot()[0].clone();
+
+    let refused = world
+        .confirm_email_change()
+        .execute(ConfirmEmailChangeInput {
+            account_id: account.id,
+            code: "222333".to_owned(),
+        })
+        .await
+        .expect_err("there is no address waiting");
+
+    assert!(matches!(refused, IamError::ChallengeUnusable));
 }

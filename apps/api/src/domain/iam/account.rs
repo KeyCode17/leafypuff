@@ -8,6 +8,7 @@ pub struct Account {
     pub password_hash: String,
     pub display_name: Option<String>,
     pub email_verified_at: Option<DateTime<Utc>>,
+    pub pending_email: Option<String>,
 }
 
 impl Account {
@@ -37,6 +38,7 @@ pub enum OtpPurpose {
     VerifyEmail,
     SignIn,
     ResetPassword,
+    ChangeEmail,
 }
 
 impl OtpPurpose {
@@ -45,6 +47,7 @@ impl OtpPurpose {
             Self::VerifyEmail => "verify_email",
             Self::SignIn => "sign_in",
             Self::ResetPassword => "reset_password",
+            Self::ChangeEmail => "change_email",
         }
     }
 
@@ -53,6 +56,7 @@ impl OtpPurpose {
             "verify_email" => Some(Self::VerifyEmail),
             "sign_in" => Some(Self::SignIn),
             "reset_password" => Some(Self::ResetPassword),
+            "change_email" => Some(Self::ChangeEmail),
             _ => None,
         }
     }

@@ -1,4 +1,5 @@
 pub mod complete_sign_in;
+pub mod confirm_email_change;
 pub mod consume_challenge;
 pub mod issue_challenge;
 pub mod mint_session;
@@ -6,11 +7,13 @@ pub mod refresh_session;
 pub mod register_account;
 pub mod reset_password;
 pub mod services;
+pub mod start_email_change;
 pub mod start_password_reset;
 pub mod start_sign_in;
 pub mod verify_email;
 
 pub use complete_sign_in::{CompleteSignIn, CompleteSignInInput};
+pub use confirm_email_change::{ConfirmEmailChange, ConfirmEmailChangeInput};
 pub use consume_challenge::ConsumeChallenge;
 pub use issue_challenge::IssueChallenge;
 pub use mint_session::{MintSession, Session};
@@ -18,6 +21,7 @@ pub use refresh_session::{RefreshInput, RefreshSession};
 pub use register_account::{RegisterAccount, RegisterInput};
 pub use reset_password::{ResetPassword, ResetPasswordInput};
 pub use services::IamServices;
+pub use start_email_change::{StartEmailChange, StartEmailChangeInput};
 pub use start_password_reset::{StartPasswordReset, StartPasswordResetInput};
 pub use start_sign_in::{StartSignIn, StartSignInInput};
 pub use verify_email::{VerifyEmail, VerifyEmailInput};

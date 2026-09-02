@@ -42,6 +42,8 @@ fun LeafyHome(
     onToggleLock: (Boolean) -> Unit,
     onChangePin: () -> Unit,
     onSignOut: () -> Unit,
+    onEditProfile: () -> Unit,
+    avatar: ImageBitmap?,
     onOpenEntry: suspend (Entry) -> OpenedEntry?,
     onStatistics: suspend (StatRange) -> StatsSummary?,
     onExport: suspend () -> String?,
@@ -109,6 +111,8 @@ fun LeafyHome(
                 onToggleLock = onToggleLock,
                 onChangePin = onChangePin,
                 onSignOut = onSignOut,
+                avatar = avatar,
+                onEditProfile = onEditProfile,
                 onSelectDay = { selected = it },
                 onMonthChange = { visibleMonth = it },
                 onToday = {

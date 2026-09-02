@@ -72,6 +72,39 @@ impl AccountRepository for InMemoryAccounts {
         }
         Ok(())
     }
+
+    async fn hold_pending_email(
+        &self,
+        id: Uuid,
+        email: Option<String>,
+        _at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let mut rows = self.rows.lock().expect("the account lock holds");
+        for row in rows.iter_mut().filter(|row| row.id == id) {
+            row.pending_email.clone_from(&email);
+        }
+        Ok(())
+    }
+
+    async fn adopt_pending_email(
+        &self,
+        id: Uuid,
+        email: String,
+        _at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let mut rows = self.rows.lock().expect("the account lock holds");
+        if rows
+            .iter()
+            .any(|row| row.id != id && row.email.eq_ignore_ascii_case(&email))
+        {
+            return Err(IamError::EmailAlreadyRegistered);
+        }
+        for row in rows.iter_mut().filter(|row| row.id == id) {
+            row.email.clone_from(&email);
+            row.pending_email = None;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Default)]

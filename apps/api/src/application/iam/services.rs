@@ -9,8 +9,8 @@ use super::consume_challenge::ConsumeChallenge;
 use super::issue_challenge::IssueChallenge;
 use super::mint_session::MintSession;
 use super::{
-    CompleteSignIn, RefreshSession, RegisterAccount, ResetPassword, StartPasswordReset,
-    StartSignIn, VerifyEmail,
+    CompleteSignIn, ConfirmEmailChange, RefreshSession, RegisterAccount, ResetPassword,
+    StartEmailChange, StartPasswordReset, StartSignIn, VerifyEmail,
 };
 
 #[derive(Clone)]
@@ -69,6 +69,22 @@ impl IamServices {
             Arc::clone(&self.accounts),
             Arc::clone(&self.credentials),
             Arc::clone(&self.hasher),
+            self.consume_challenge(),
+            Arc::clone(&self.clock),
+        )
+    }
+
+    pub fn start_email_change(&self) -> StartEmailChange {
+        StartEmailChange::new(
+            Arc::clone(&self.accounts),
+            self.issue_challenge(),
+            Arc::clone(&self.clock),
+        )
+    }
+
+    pub fn confirm_email_change(&self) -> ConfirmEmailChange {
+        ConfirmEmailChange::new(
+            Arc::clone(&self.accounts),
             self.consume_challenge(),
             Arc::clone(&self.clock),
         )

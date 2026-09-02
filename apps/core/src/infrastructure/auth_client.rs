@@ -10,6 +10,8 @@ const SIGN_IN_PATH: &str = "/v1/auth/sign-in";
 const VERIFY_SIGN_IN_PATH: &str = "/v1/auth/sign-in/verify";
 const VERIFY_EMAIL_PATH: &str = "/v1/auth/verify-email";
 const REFRESH_PATH: &str = "/v1/auth/refresh";
+const CHANGE_EMAIL_PATH: &str = "/v1/auth/email/change";
+const CONFIRM_EMAIL_PATH: &str = "/v1/auth/email/confirm";
 const FORGOT_PASSWORD_PATH: &str = "/v1/auth/password/forgot";
 const RESET_PASSWORD_PATH: &str = "/v1/auth/password/reset";
 
@@ -25,6 +27,13 @@ impl AuthClient {
     pub fn new(base_url: String) -> Result<Self, CoreError> {
         Ok(Self {
             client: http_client::plain(ERR_UNREACHABLE)?,
+            base_url,
+        })
+    }
+
+    pub fn for_device(base_url: String, device_id: &str) -> Result<Self, CoreError> {
+        Ok(Self {
+            client: http_client::for_device(device_id, ERR_UNREACHABLE)?,
             base_url,
         })
     }
@@ -114,6 +123,48 @@ impl AuthClient {
         session(&body)
     }
 
+    pub async fn change_email(
+        &self,
+        access_token: &str,
+        email: String,
+    ) -> Result<Challenge, CoreError> {
+        let body = self
+            .bearer(CHANGE_EMAIL_PATH, access_token, &json!({ "email": email }))
+            .await?;
+        challenge(&body)
+    }
+
+    pub async fn confirm_email(
+        &self,
+        access_token: &str,
+        code: String,
+    ) -> Result<String, CoreError> {
+        let body = self
+            .bearer(CONFIRM_EMAIL_PATH, access_token, &json!({ "code": code }))
+            .await?;
+        body["data"]["email"]
+            .as_str()
+            .map(str::to_owned)
+            .ok_or_else(|| CoreError::Unreadable(ERR_SHAPE.to_owned()))
+    }
+
+    async fn bearer(
+        &self,
+        path: &str,
+        access_token: &str,
+        body: &Value,
+    ) -> Result<Value, CoreError> {
+        let response = self
+            .client
+            .post(format!("{}{path}", self.base_url))
+            .bearer_auth(access_token)
+            .json(body)
+            .send()
+            .await
+            .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
+        read(response).await
+    }
+
     async fn post(&self, path: &str, body: &Value) -> Result<Value, CoreError> {
         let response = self
             .client
@@ -122,24 +173,27 @@ impl AuthClient {
             .send()
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
-
-        let parsed: Value = response
-            .json()
-            .await
-            .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
-
-        if parsed["success"].as_bool() == Some(true) {
-            return Ok(parsed);
-        }
-        let code = parsed["error"]["code"].as_str().unwrap_or_default();
-        Err(CoreError::Rejected {
-            rejection: Rejection::from_code(code),
-            detail: parsed["error"]["detail"]
-                .as_str()
-                .unwrap_or_default()
-                .to_owned(),
-        })
+        read(response).await
     }
+}
+
+async fn read(response: reqwest::Response) -> Result<Value, CoreError> {
+    let parsed: Value = response
+        .json()
+        .await
+        .map_err(|_| CoreError::Unreadable(ERR_SHAPE.to_owned()))?;
+
+    if parsed["success"].as_bool() == Some(true) {
+        return Ok(parsed);
+    }
+    let code = parsed["error"]["code"].as_str().unwrap_or_default();
+    Err(CoreError::Rejected {
+        rejection: Rejection::from_code(code),
+        detail: parsed["error"]["detail"]
+            .as_str()
+            .unwrap_or_default()
+            .to_owned(),
+    })
 }
 
 fn challenge(body: &Value) -> Result<Challenge, CoreError> {

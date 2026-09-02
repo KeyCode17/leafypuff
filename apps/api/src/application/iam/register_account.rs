@@ -46,6 +46,7 @@ impl RegisterAccount {
                 password_hash: self.hasher.hash(&input.password)?,
                 display_name: input.display_name,
                 email_verified_at: None,
+                pending_email: None,
             })
             .await;
 

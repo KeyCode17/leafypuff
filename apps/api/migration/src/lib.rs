@@ -15,6 +15,7 @@ mod m20260901_000013_data_requests;
 mod m20260901_000014_release_and_campaigns;
 mod m20260901_112525_entry_photo_refs;
 mod m20260901_130408_entry_weather_and_location;
+mod m20260902_051706_account_pending_email;
 
 pub struct Migrator;
 
@@ -37,6 +38,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260901_000014_release_and_campaigns::Migration),
             Box::new(m20260901_112525_entry_photo_refs::Migration),
             Box::new(m20260901_130408_entry_weather_and_location::Migration),
+            Box::new(m20260902_051706_account_pending_email::Migration),
         ]
     }
 }

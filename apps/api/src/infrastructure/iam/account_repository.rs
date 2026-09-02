@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sea_orm::sea_query::{Alias, Expr};
+use sea_orm::sea_query::{Alias, Expr, Value};
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
@@ -52,6 +52,7 @@ impl AccountRepository for PgAccountRepository {
             email_verified_at: ActiveValue::Set(
                 account.email_verified_at.map(|at| at.fixed_offset()),
             ),
+            pending_email: ActiveValue::Set(None),
             suspended_at: ActiveValue::Set(None),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),
@@ -72,6 +73,44 @@ impl AccountRepository for PgAccountRepository {
             .exec(&self.connection)
             .await
             .map_err(mapper::storage)?;
+        Ok(())
+    }
+
+    async fn hold_pending_email(
+        &self,
+        id: Uuid,
+        email: Option<String>,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let stamp = at.fixed_offset();
+        accounts::Entity::update_many()
+            .col_expr(accounts::Column::PendingEmail, email.into())
+            .col_expr(accounts::Column::UpdatedAt, stamp.into())
+            .filter(accounts::Column::Id.eq(id))
+            .exec(&self.connection)
+            .await
+            .map_err(mapper::storage)?;
+        Ok(())
+    }
+
+    async fn adopt_pending_email(
+        &self,
+        id: Uuid,
+        email: String,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError> {
+        let stamp = at.fixed_offset();
+        accounts::Entity::update_many()
+            .col_expr(accounts::Column::Email, email.into())
+            .col_expr(
+                accounts::Column::PendingEmail,
+                Expr::value(Value::String(None)),
+            )
+            .col_expr(accounts::Column::UpdatedAt, stamp.into())
+            .filter(accounts::Column::Id.eq(id))
+            .exec(&self.connection)
+            .await
+            .map_err(|error| mapper::insert_conflict(error, IamError::EmailAlreadyRegistered))?;
         Ok(())
     }
 

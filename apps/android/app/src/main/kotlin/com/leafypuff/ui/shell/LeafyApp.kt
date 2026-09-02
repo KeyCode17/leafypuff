@@ -11,6 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.ImageBitmap
+import com.leafypuff.core.CoreClient
+import com.leafypuff.core.LeafyPuffCoreException
 import com.leafypuff.data.DeviceKey
 import com.leafypuff.data.EntryStore
 import com.leafypuff.data.PinLock
@@ -35,6 +38,10 @@ import com.leafypuff.ui.lock.LockGate
 import com.leafypuff.ui.lock.PinSetup
 import com.leafypuff.ui.lock.PinSetupMode
 import com.leafypuff.ui.photo.CorePhotoLibrary
+import com.leafypuff.ui.photo.rememberPhotoPicker
+import com.leafypuff.ui.profile.ProfileScreen
+import com.leafypuff.ui.profile.ProfileState
+import com.leafypuff.ui.profile.ProfileStep
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.NoPhotoLibrary
 import com.leafypuff.ui.settings.TextSize
@@ -73,16 +80,30 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var credentials by remember { mutableStateOf<SignedIn?>(null) }
     var pinSetup by remember { mutableStateOf<PinSetupMode?>(null) }
     var pinAccepted by remember { mutableStateOf(false) }
+    var profile by remember { mutableStateOf<ProfileState?>(null) }
 
     LaunchedEffect(databasePath) {
         store = EntryStore.open(databasePath)
     }
 
+    var avatar by remember { mutableStateOf<ImageBitmap?>(null) }
+
     val library = remember(store) {
         store?.let { CorePhotoLibrary(it.client) } ?: NoPhotoLibrary
     }
+
+    val pickAvatar = rememberPhotoPicker { bytes ->
+        scope.launch {
+            val imported = library.import(bytes) ?: return@launch
+            val worn = preferences.copy(avatarPhotoId = imported.id)
+            preferences = worn
+            settings.save(worn)
+            avatar = imported.cover
+        }
+    }
     val vault = remember(store) { store?.let { VaultAccess(it.client, deviceKey) } }
     val syncing = remember(store) { store?.let { SyncRunner(it, session, apiBaseUrl) } }
+
 
     val listed: suspend () -> List<Entry> = {
         runCatching { store?.list().orEmpty() }.getOrDefault(emptyList())
@@ -153,6 +174,13 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             }
                         },
                         onChangePin = { pinSetup = PinSetupMode.Change },
+                        avatar = avatar,
+                        onEditProfile = {
+                            profile = ProfileState(
+                                name = preferences.name,
+                                email = session.email(),
+                            )
+                        },
                         onSignOut = {
                             pinAccepted = false
                             forgetSession()
@@ -221,6 +249,39 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             }
         }
 
+        LaunchedEffect(preferences.avatarPhotoId, store) {
+            avatar = preferences.avatarPhotoId?.let { library.thumbnail(it) }
+        }
+
+        val editing = profile
+        if (editing != null) {
+            ProfileScreen(
+                state = editing,
+                avatar = avatar,
+                onStateChange = { profile = it },
+                onPickAvatar = pickAvatar,
+                onSubmit = {
+                    if (!editing.pending) {
+                        profile = editing.copy(pending = true, error = null)
+                        scope.launch {
+                            profile = submitProfile(
+                                state = editing,
+                                apiBaseUrl = apiBaseUrl,
+                                session = session,
+                                client = store?.client,
+                                onNameChange = { chosen ->
+                                    val named = preferences.copy(name = chosen)
+                                    preferences = named
+                                    settings.save(named)
+                                },
+                            )
+                        }
+                    }
+                },
+                onBack = { profile = null },
+            )
+        }
+
         val setup = pinSetup
         if (setup != null) {
             PinSetup(
@@ -238,6 +299,56 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             )
         }
     }
+}
+
+private suspend fun submitProfile(
+    state: ProfileState,
+    apiBaseUrl: String,
+    session: SessionStore,
+    client: CoreClient?,
+    onNameChange: (String) -> Unit,
+): ProfileState? {
+    val token = session.accessToken()
+    if (client == null || token == null) {
+        return state.copy(pending = false, error = "Sign in again to change these.")
+    }
+    return when (state.step) {
+        ProfileStep.Details -> {
+            onNameChange(state.name.trim())
+            if (state.email.trim().equals(session.email(), ignoreCase = true)) {
+                null
+            } else {
+                runCatching { client.changeEmail(apiBaseUrl, token, state.email.trim()) }.fold(
+                    onSuccess = {
+                        state.copy(pending = false, step = ProfileStep.ConfirmEmail, code = "")
+                    },
+                    onFailure = { failure ->
+                        state.copy(pending = false, error = profileProblem(failure))
+                    },
+                )
+            }
+        }
+
+        ProfileStep.ConfirmEmail ->
+            runCatching { client.confirmEmail(apiBaseUrl, token, state.code) }.fold(
+                onSuccess = { adopted ->
+                    session.rename(adopted)
+                    null
+                },
+                onFailure = { failure ->
+                    state.copy(pending = false, error = profileProblem(failure))
+                },
+            )
+    }
+}
+
+private fun profileProblem(failure: Throwable): String = when (failure) {
+    is LeafyPuffCoreException.EmailTaken -> "That address already has an account."
+    is LeafyPuffCoreException.InvalidCredentials -> "That code is wrong or has expired."
+    is LeafyPuffCoreException.TooManyAttempts -> "Too many attempts. Wait a moment."
+    is LeafyPuffCoreException.MailUnavailable -> "We could not send the code. Try again shortly."
+    is LeafyPuffCoreException.Storage -> "No connection. Check your network."
+    else -> "That did not work. Try again."
 }
 
 private fun exportPath(context: Context, today: LocalDate): String {

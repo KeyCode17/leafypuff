@@ -50,6 +50,20 @@ pub trait AccountRepository: Send + Sync {
         password_hash: String,
         at: DateTime<Utc>,
     ) -> Result<(), IamError>;
+
+    async fn hold_pending_email(
+        &self,
+        id: Uuid,
+        email: Option<String>,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError>;
+
+    async fn adopt_pending_email(
+        &self,
+        id: Uuid,
+        email: String,
+        at: DateTime<Utc>,
+    ) -> Result<(), IamError>;
 }
 
 #[async_trait]
