@@ -1,5 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 
+use super::crop::Framing;
 use super::entry::{Entry, EntryId};
 use super::error::CoreError;
 use super::photo::PhotoKind;
@@ -66,6 +67,8 @@ pub trait ExifReader {
 
 pub trait ThumbnailMaker {
     fn cover(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError>;
+
+    fn framed_cover(&self, bytes: &[u8], framing: Framing) -> Result<Vec<u8>, CoreError>;
 }
 
 pub trait PhotoStore {

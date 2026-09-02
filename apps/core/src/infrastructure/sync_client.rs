@@ -115,6 +115,14 @@ impl SyncClient {
     }
 }
 
+fn inbound_framing(photo: &Value) -> Option<crate::domain::crop::Framing> {
+    Some(crate::domain::crop::Framing {
+        x: photo["crop_x"].as_f64()?,
+        y: photo["crop_y"].as_f64()?,
+        width: photo["crop_width"].as_f64()?,
+    })
+}
+
 fn record(row: &OutboundEntry, device_id: &str) -> Result<Value, CoreError> {
     Ok(json!({
         "id": row.id.0,
@@ -193,6 +201,7 @@ fn inbound_photos(value: &Value, entry_id: &str) -> Result<Vec<InboundPhoto>, Co
                 path: String::new(),
                 ordinal: i32::try_from(photo["ordinal"].as_i64().ok_or_else(shape)?)
                     .map_err(|_| shape())?,
+                framing: inbound_framing(photo),
             })
         })
         .collect()
@@ -301,6 +310,9 @@ mod tests {
             path: "/somewhere/on/the/first/device".to_owned(),
             ordinal: 0,
             taken_at: None,
+            crop_x: Some(0.25),
+            crop_y: Some(0.1),
+            crop_width: Some(0.5),
         };
 
         let written = photo_refs(&[row]).expect("it writes");
@@ -309,6 +321,11 @@ mod tests {
 
         assert_eq!(read.len(), 1);
         assert_eq!(read[0].id, "3f2a91c0-0000-4000-8000-0000000000aa");
+        let carried = read[0]
+            .framing
+            .expect("the framing crosses with the reference");
+        assert!((carried.x - 0.25).abs() < f64::EPSILON);
+        assert!((carried.width - 0.5).abs() < f64::EPSILON);
         assert_eq!(read[0].ordinal, 0);
         assert!(read[0].path.is_empty());
     }

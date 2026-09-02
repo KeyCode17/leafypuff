@@ -43,6 +43,7 @@ fun NotePhoto(
     photo: EntryPhoto,
     isCover: Boolean,
     onRemove: (() -> Unit)?,
+    onFrame: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -65,7 +66,7 @@ fun NotePhoto(
 
         if (isCover) {
             Text(
-                text = "Diary thumbnail".uppercase(),
+                text = (if (onFrame == null) "Diary thumbnail" else "Frame thumbnail").uppercase(),
                 style = typography.metaLabel.copy(fontSize = BadgeTextSize),
                 color = Color.White,
                 modifier = Modifier
@@ -73,6 +74,7 @@ fun NotePhoto(
                     .padding(BadgeOffset)
                     .clip(LeafyShapes.pill)
                     .background(BadgeScrim)
+                    .then(if (onFrame == null) Modifier else Modifier.clickable(onClick = onFrame))
                     .padding(horizontal = BadgePaddingX, vertical = BadgePaddingY),
             )
         }

@@ -37,6 +37,9 @@ async fn entities_round_trip_against_the_migrated_schema() {
     .expect("an entry row inserts");
 
     photos::ActiveModel {
+        crop_x: Set(None),
+        crop_y: Set(None),
+        crop_width: Set(None),
         id: Set("photo-1".to_owned()),
         entry_id: Set("11111111-1111-4111-8111-111111111111".to_owned()),
         path: Set("/photos/one.jpg".to_owned()),

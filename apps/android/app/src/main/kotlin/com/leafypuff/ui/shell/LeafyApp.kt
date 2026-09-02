@@ -6,12 +6,15 @@ import androidx.activity.result.contract.ActivityResultContracts.RequestPermissi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.leafypuff.core.CoreClient
 import com.leafypuff.core.LeafyPuffCoreException
 import com.leafypuff.data.DeviceKey
@@ -41,6 +44,8 @@ import com.leafypuff.ui.photo.CorePhotoLibrary
 import com.leafypuff.ui.photo.rememberPhotoPicker
 import com.leafypuff.ui.profile.ProfileScreen
 import com.leafypuff.ui.profile.ProfileState
+import com.leafypuff.ui.crop.CropScreen
+import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.ui.profile.ProfileStep
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.NoPhotoLibrary
@@ -81,6 +86,12 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var pinSetup by remember { mutableStateOf<PinSetupMode?>(null) }
     var pinAccepted by remember { mutableStateOf(false) }
     var profile by remember { mutableStateOf<ProfileState?>(null) }
+    var framingPhoto by remember { mutableStateOf<String?>(null) }
+    var framingImage by remember { mutableStateOf<ImageBitmap?>(null) }
+    var framing by remember { mutableStateOf(PhotoFraming()) }
+    var framingPending by remember { mutableStateOf(false) }
+    var coversEpoch by remember { mutableIntStateOf(0) }
+    var framings by remember { mutableStateOf(mapOf<String, PhotoFraming>()) }
 
     LaunchedEffect(databasePath) {
         store = EntryStore.open(databasePath)
@@ -175,6 +186,12 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         },
                         onChangePin = { pinSetup = PinSetupMode.Change },
                         avatar = avatar,
+                        coversEpoch = coversEpoch,
+                        onFramePhoto = { id ->
+                            framing = PhotoFraming()
+                            framingImage = null
+                            framingPhoto = id
+                        },
                         onEditProfile = {
                             profile = ProfileState(
                                 name = preferences.name,
@@ -231,6 +248,18 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             scope.launch {
                                 runCatching { store?.save(draft, photoIds) }.fold(
                                     onSuccess = {
+                                        photoIds.forEach { id ->
+                                            val held = framings[id] ?: return@forEach
+                                            runCatching {
+                                                store?.client?.framePhoto(
+                                                    id,
+                                                    held.x,
+                                                    held.y,
+                                                    held.width,
+                                                )
+                                            }
+                                        }
+                                        framings = framings - photoIds.toSet()
                                         entries = listed()
                                         onDone()
                                     },
@@ -251,6 +280,43 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
 
         LaunchedEffect(preferences.avatarPhotoId, store) {
             avatar = preferences.avatarPhotoId?.let { library.thumbnail(it) }
+        }
+
+        val framed = framingPhoto
+        if (framed != null) {
+            LaunchedEffect(framed) {
+                framingImage = runCatching { store?.client?.originalPhoto(framed) }
+                    .getOrNull()
+                    ?.let { bytes ->
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }
+            }
+            CropScreen(
+                photo = framingImage,
+                framing = framing,
+                pending = framingPending,
+                onFramingChange = { framing = it },
+                onSubmit = {
+                    if (!framingPending) {
+                        framingPending = true
+                        scope.launch {
+                            runCatching {
+                                store?.client?.framePhoto(
+                                    framed,
+                                    framing.x,
+                                    framing.y,
+                                    framing.width,
+                                )
+                            }
+                            framings = framings + (framed to framing)
+                            framingPending = false
+                            framingPhoto = null
+                            coversEpoch += 1
+                        }
+                    }
+                },
+                onBack = { framingPhoto = null },
+            )
         }
 
         val editing = profile

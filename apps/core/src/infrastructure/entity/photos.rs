@@ -9,6 +9,9 @@ pub struct Model {
     pub path: String,
     pub ordinal: i32,
     pub taken_at: Option<String>,
+    pub crop_x: Option<f64>,
+    pub crop_y: Option<f64>,
+    pub crop_width: Option<f64>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

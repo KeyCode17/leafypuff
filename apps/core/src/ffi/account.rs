@@ -1,4 +1,6 @@
 use crate::domain::PhotoKind;
+use crate::domain::crop::Framing;
+use crate::domain::{PhotoStore, ThumbnailMaker};
 use crate::infrastructure::{AuthClient, MediaSync, SyncClient};
 
 use super::LeafyPuffCore;
@@ -148,6 +150,25 @@ impl LeafyPuffCore {
         Ok(())
     }
 
+    pub async fn frame_photo(
+        &self,
+        photo_id: String,
+        x: f64,
+        y: f64,
+        width: f64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let framing = Framing { x, y, width }.clamped();
+        let original = self.photos.read(&photo_id, PhotoKind::Original)?;
+        let cover = self.thumbnails.framed_cover(&original, framing)?;
+        self.photos.write(&photo_id, PhotoKind::Cover, &cover)?;
+        self.outbox.frame_photo(&photo_id, framing).await?;
+        Ok(())
+    }
+
+    pub async fn original_photo(&self, photo_id: String) -> Result<Vec<u8>, LeafyPuffCoreError> {
+        Ok(self.photos.read(&photo_id, PhotoKind::Original)?)
+    }
+
     pub async fn device_id(&self) -> Result<String, LeafyPuffCoreError> {
         Ok(self.outbox.device_id().await?)
     }
@@ -171,14 +192,17 @@ impl LeafyPuffCore {
     }
 
     async fn fetch_photo(&self, media: &MediaSync, id: &str) -> Result<(), LeafyPuffCoreError> {
-        let Some(original) = media.download(id, PhotoKind::Original).await? else {
+        let Some(sealed) = media.download(id, PhotoKind::Original).await? else {
             return Ok(());
         };
-        self.photos
-            .write_sealed(id, PhotoKind::Original, &original)?;
-        if let Some(cover) = media.download(id, PhotoKind::Cover).await? {
-            self.photos.write_sealed(id, PhotoKind::Cover, &cover)?;
-        }
+        self.photos.write_sealed(id, PhotoKind::Original, &sealed)?;
+
+        let original = self.photos.read(id, PhotoKind::Original)?;
+        let cover = match self.outbox.framing_of(id).await? {
+            Some(held) => self.thumbnails.framed_cover(&original, held)?,
+            None => self.thumbnails.cover(&original)?,
+        };
+        self.photos.write(id, PhotoKind::Cover, &cover)?;
         let path = self.photos.root().join(id).to_string_lossy().into_owned();
         self.outbox.record_photo_path(id, &path).await?;
         Ok(())
