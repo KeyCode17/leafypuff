@@ -1,5 +1,6 @@
 package com.leafypuff.ui.calendar
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -57,15 +59,23 @@ fun CalendarDayCell(
             .drawBehind { if (day.isToday) drawTodayRing(accent) },
         contentAlignment = Alignment.Center,
     ) {
-        if (day.showsPhoto) {
+        val cover = day.cover
+        if (day.showsPhoto && cover != null) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .padding(PhotoInset)
                     .clip(CircleShape)
-                    .background(colors.soft2)
-                    .background(PhotoScrim),
-            )
+                    .background(colors.soft2),
+            ) {
+                Image(
+                    bitmap = cover,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize(),
+                )
+                Box(modifier = Modifier.matchParentSize().background(PhotoScrim))
+            }
         }
         if (day.isSelected) {
             Box(

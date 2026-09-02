@@ -62,6 +62,7 @@ fun CalendarScreen(
             entriesByDate = entriesByDate,
             today = today,
             selected = selected,
+            covers = covers,
             onSelect = onSelect,
         )
         SelectedDayBlock(

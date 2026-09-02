@@ -32,6 +32,8 @@ import com.leafypuff.ui.auth.AuthGate
 import com.leafypuff.ui.auth.SignedIn
 import com.leafypuff.ui.editor.OpenedEntry
 import com.leafypuff.ui.lock.LockGate
+import com.leafypuff.ui.lock.PinSetup
+import com.leafypuff.ui.lock.PinSetupMode
 import com.leafypuff.ui.photo.CorePhotoLibrary
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.NoPhotoLibrary
@@ -69,7 +71,8 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var preferences by remember { mutableStateOf(settings.load()) }
     var signedIn by remember { mutableStateOf(session.signedIn()) }
     var credentials by remember { mutableStateOf<SignedIn?>(null) }
-    val askForPin = remember(settings) { settings.lockEnabled() }
+    var pinSetup by remember { mutableStateOf<PinSetupMode?>(null) }
+    var pinAccepted by remember { mutableStateOf(false) }
 
     LaunchedEffect(databasePath) {
         store = EntryStore.open(databasePath)
@@ -80,6 +83,10 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     }
     val vault = remember(store) { store?.let { VaultAccess(it.client, deviceKey) } }
     val syncing = remember(store) { store?.let { SyncRunner(it, session, apiBaseUrl) } }
+
+    val listed: suspend () -> List<Entry> = {
+        runCatching { store?.list().orEmpty() }.getOrDefault(emptyList())
+    }
 
     val forgetSession = {
         scope.launch { vault?.signOut() }
@@ -115,25 +122,38 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                 onSignedOut = { forgetSession() },
                 onOpened = {
                     scope.launch {
-                        entries = store?.list().orEmpty()
+                        entries = listed()
                         if (syncing?.run() == SyncOutcome.SignedOut) {
                             forgetSession()
+                            return@launch
                         }
-                        entries = store?.list().orEmpty()
+                        entries = listed()
                     }
                 },
             ) {
-                LockGate(enabled = askForPin) {
+                LockGate(
+                    enabled = preferences.lockEnabled,
+                    unlocked = pinAccepted,
+                    onUnlocked = { pinAccepted = true },
+                ) {
                     LeafyHome(
                         library = library,
                         today = today,
                         entries = entries,
                         preferences = preferences,
                         versionName = versionName,
-                        onPreferencesChange = {
-                            if (preferences.lockEnabled && !it.lockEnabled) {
+                        onToggleLock = { wanted ->
+                            if (wanted) {
+                                pinSetup = PinSetupMode.Create
+                            } else {
                                 pin.clear()
+                                val without = preferences.copy(lockEnabled = false)
+                                preferences = without
+                                settings.save(without)
                             }
+                        },
+                        onChangePin = { pinSetup = PinSetupMode.Change },
+                        onPreferencesChange = {
                             preferences = it
                             settings.save(it)
                             reminders.apply(it.reminderEnabled, it.reminderTime)
@@ -170,7 +190,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             scope.launch {
                                 runCatching { store?.save(draft, photoIds) }.fold(
                                     onSuccess = {
-                                        entries = store?.list().orEmpty()
+                                        entries = listed()
                                         onDone()
                                     },
                                     onFailure = { failure -> onProblem(unsaved(failure)) },
@@ -179,13 +199,30 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         },
                         onDeleteAll = {
                             scope.launch {
-                                store?.deleteAll()
-                                entries = store?.list().orEmpty()
+                                runCatching { store?.deleteAll() }
+                                entries = listed()
                             }
                         },
                     )
                 }
             }
+        }
+
+        val setup = pinSetup
+        if (setup != null) {
+            PinSetup(
+                mode = setup,
+                onDone = {
+                    if (setup == PinSetupMode.Create) {
+                        val guarded = preferences.copy(lockEnabled = true)
+                        preferences = guarded
+                        settings.save(guarded)
+                    }
+                    pinAccepted = true
+                    pinSetup = null
+                },
+                onCancel = { pinSetup = null },
+            )
         }
     }
 }

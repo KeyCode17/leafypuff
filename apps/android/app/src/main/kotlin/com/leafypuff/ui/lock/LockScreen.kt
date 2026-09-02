@@ -30,6 +30,8 @@ private val DotsGapBelow = 32.dp
 private val BiometricGap = 26.dp
 
 private const val BiometricLabel = "Use Face ID"
+private const val CancelLabel = "Cancel"
+private val CancelGap = 18.dp
 private val BiometricPaddingH = 24.dp
 private val BiometricPaddingV = 13.dp
 
@@ -39,7 +41,8 @@ fun LockScreen(
     hint: String,
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
-    onBiometric: () -> Unit,
+    onBiometric: (() -> Unit)?,
+    onCancel: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -63,9 +66,25 @@ fun LockScreen(
         PinDots(pinLength)
         Spacer(Modifier.height(DotsGapBelow))
         LockKeypad(onDigit = onDigit, onBackspace = onBackspace)
-        Spacer(Modifier.height(BiometricGap))
-        BiometricButton(onBiometric)
+        if (onBiometric != null) {
+            Spacer(Modifier.height(BiometricGap))
+            BiometricButton(onBiometric)
+        }
+        if (onCancel != null) {
+            Spacer(Modifier.height(CancelGap))
+            CancelButton(onCancel)
+        }
     }
+}
+
+@Composable
+private fun CancelButton(onCancel: () -> Unit) {
+    Text(
+        text = CancelLabel,
+        style = LocalLeafyTypography.current.chipLabel,
+        color = LocalLeafyColors.current.ink2,
+        modifier = Modifier.clickable(onClick = onCancel),
+    )
 }
 
 @Composable

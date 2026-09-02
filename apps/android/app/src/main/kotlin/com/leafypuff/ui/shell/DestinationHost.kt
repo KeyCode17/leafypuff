@@ -35,6 +35,8 @@ fun DestinationHost(
     onSync: () -> Unit,
     onExport: () -> Unit,
     onPreferencesChange: (AppPreferences) -> Unit,
+    onToggleLock: (Boolean) -> Unit,
+    onChangePin: () -> Unit,
     onDeleteAll: () -> Unit,
 ) {
     when (destination) {
@@ -69,7 +71,8 @@ fun DestinationHost(
             onToggleDark = { onPreferencesChange(preferences.copy(darkMode = it)) },
             onToggleReminder = { onPreferencesChange(preferences.copy(reminderEnabled = it)) },
             onReminderTimeChange = { onPreferencesChange(preferences.copy(reminderTime = it)) },
-            onToggleLock = { onPreferencesChange(preferences.copy(lockEnabled = it)) },
+            onToggleLock = onToggleLock,
+            onChangePin = onChangePin,
             onStickerPackChange = { onPreferencesChange(preferences.copy(stickerPack = it)) },
             onTextSizeChange = { onPreferencesChange(preferences.copy(textSize = it)) },
             lastSynced = lastSynced,
