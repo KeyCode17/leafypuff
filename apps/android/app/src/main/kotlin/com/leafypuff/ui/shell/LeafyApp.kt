@@ -42,6 +42,14 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import java.io.File
 
+private const val UnsavedEmpty = "An entry needs a title or a few words."
+private const val UnsavedUnknown = "That entry would not save. Try again."
+
+private fun unsaved(failure: Throwable): String = when {
+    failure.message?.contains("title or a body") == true -> UnsavedEmpty
+    else -> UnsavedUnknown
+}
+
 @Composable
 fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     val context = LocalContext.current
@@ -146,11 +154,15 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         onStatistics = { picked -> store?.statistics(picked, today) },
                         onExport = { store?.export(exportPath(context, today)) },
                         onSync = { store?.sync(apiBaseUrl, session.accessToken()) != null },
-                        onSave = { draft, photoIds, onDone ->
+                        onSave = { draft, photoIds, onDone, onProblem ->
                             scope.launch {
-                                store?.save(draft, photoIds)
-                                entries = store?.list().orEmpty()
-                                onDone()
+                                runCatching { store?.save(draft, photoIds) }.fold(
+                                    onSuccess = {
+                                        entries = store?.list().orEmpty()
+                                        onDone()
+                                    },
+                                    onFailure = { failure -> onProblem(unsaved(failure)) },
+                                )
                             }
                         },
                         onDeleteAll = {

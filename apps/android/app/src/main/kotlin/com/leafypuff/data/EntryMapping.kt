@@ -1,5 +1,7 @@
 package com.leafypuff.data
 
+import java.util.UUID
+
 import com.leafypuff.core.EntryDraft as CoreDraft
 import com.leafypuff.core.PhotoDraft
 import com.leafypuff.domain.Entry
@@ -30,7 +32,7 @@ fun CoreDraft.toUiDraft(): UiDraft = UiDraft(
 fun CoreDraft.photoIds(): List<String> = photos.sortedBy { it.ordinal }.map { it.id }
 
 fun UiDraft.toCoreDraft(photoIds: List<String>): CoreDraft = CoreDraft(
-    id = id.orEmpty(),
+    id = id ?: UUID.randomUUID().toString(),
     date = date,
     mood = mood.toCore(),
     title = title,
