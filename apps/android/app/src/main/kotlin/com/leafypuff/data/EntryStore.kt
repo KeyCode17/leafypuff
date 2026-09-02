@@ -29,6 +29,10 @@ class EntryStore(internal val client: CoreClient) {
     suspend fun sync(baseUrl: String, accessToken: String?): SyncSummary? =
         accessToken?.let { client.syncNow(baseUrl, it) }
 
+    suspend fun forgetPhoto(baseUrl: String, accessToken: String?, photoId: String) {
+        accessToken?.let { client.forgetPhoto(baseUrl, it, photoId) }
+    }
+
     suspend fun deleteAll() {
         client.deleteAll()
     }

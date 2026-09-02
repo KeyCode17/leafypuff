@@ -39,6 +39,7 @@ fun EntryNoteCard(
     body: String,
     tags: List<String>,
     photos: List<EntryPhoto>,
+    onRemovePhoto: ((String) -> Unit)?,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onRemoveTag: (Int) -> Unit,
@@ -73,7 +74,11 @@ fun EntryNoteCard(
         )
 
         photos.forEachIndexed { index, photo ->
-            NotePhoto(photo = photo, isCover = index == 0)
+            NotePhoto(
+                photo = photo,
+                isCover = index == 0,
+                onRemove = onRemovePhoto?.let { remove -> { remove(photo.id) } },
+            )
         }
 
         if (tags.isNotEmpty()) {

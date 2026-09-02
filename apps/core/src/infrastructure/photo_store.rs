@@ -41,6 +41,20 @@ impl<S: ContentSealer> FilePhotoStore<S> {
             .map_err(|cause| CoreError::Storage(format!("{ERR_PHOTO_STORE}: {cause}")))
     }
 
+    pub fn forget(&self, id: &str) -> Result<(), CoreError> {
+        for kind in [PhotoKind::Original, PhotoKind::Cover] {
+            let path = self.blob_path(id, kind)?;
+            match fs::remove_file(&path) {
+                Ok(()) => {}
+                Err(cause) if cause.kind() == std::io::ErrorKind::NotFound => {}
+                Err(cause) => {
+                    return Err(CoreError::Storage(format!("{ERR_PHOTO_STORE}: {cause}")));
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn holds(&self, id: &str, kind: PhotoKind) -> bool {
         self.blob_path(id, kind).is_ok_and(|path| path.exists())
     }

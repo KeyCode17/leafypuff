@@ -46,6 +46,7 @@ fun LeafyHome(
     onExport: suspend () -> String?,
     onSync: suspend () -> Boolean,
     onSave: (EntryDraft, List<String>, () -> Unit, (String) -> Unit) -> Unit,
+    onForgetPhotos: (List<String>) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
     val colors = LocalLeafyColors.current
@@ -166,10 +167,12 @@ fun LeafyHome(
             onClose = { composing = false },
             onSave = { draft, photoIds ->
                 val reopened = !draft.fresh
+                val dropped = editingPhotos.map { it.id } - photoIds.toSet()
                 onSave(
                     draft,
                     photoIds,
                     {
+                        onForgetPhotos(dropped)
                         composing = false
                         selected = draft.date
                         current = Destination.Diary

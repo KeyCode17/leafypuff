@@ -186,6 +186,15 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 else -> false
                             }
                         },
+                        onForgetPhotos = { dropped ->
+                            scope.launch {
+                                dropped.forEach { id ->
+                                    runCatching {
+                                        store?.forgetPhoto(apiBaseUrl, session.accessToken(), id)
+                                    }
+                                }
+                            }
+                        },
                         onSave = { draft, photoIds, onDone, onProblem ->
                             scope.launch {
                                 runCatching { store?.save(draft, photoIds) }.fold(
