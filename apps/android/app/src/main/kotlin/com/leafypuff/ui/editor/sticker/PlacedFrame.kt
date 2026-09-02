@@ -11,6 +11,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 
@@ -28,6 +32,7 @@ internal fun PlacedFrame(
     onRotate: (Float) -> Unit,
     onResize: (Float) -> Unit,
     onRemove: () -> Unit,
+    onBounds: (Rect) -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val select by rememberUpdatedState(onSelect)
@@ -37,6 +42,7 @@ internal fun PlacedFrame(
         modifier = Modifier
             .offset((x * layerWidth).dp - HandleInset, (y * layerHeight).dp - HandleInset)
             .size(size.dp + HandleInset * 2)
+            .onGloballyPositioned { if (selected) onBounds(it.boundsInWindow()) }
             .pointerInput(Unit) { detectTapGestures(onTap = { select() }) }
             .pointerInput(Unit) {
                 detectDragGestures(
@@ -54,7 +60,8 @@ internal fun PlacedFrame(
             SelectionOutline(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(size.dp + OutlineInset * 2),
+                    .size(size.dp + OutlineInset * 2)
+                    .graphicsLayer { rotationZ = rotation },
             )
             RemoveHandle(onRemove = onRemove, modifier = Modifier.align(Alignment.TopStart))
             RotateHandle(

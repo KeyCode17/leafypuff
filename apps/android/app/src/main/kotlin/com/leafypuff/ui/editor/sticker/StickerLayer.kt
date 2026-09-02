@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ fun StickerLayer(
     onSelect: (String?) -> Unit,
     onChange: (PlacedSticker) -> Unit,
     onRemove: (String) -> Unit,
+    onBounds: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -54,6 +56,7 @@ fun StickerLayer(
                     onSelect = onSelect,
                     onChange = onChange,
                     onRemove = onRemove,
+                    onBounds = onBounds,
                 )
             }
         }
@@ -69,6 +72,7 @@ private fun PlacedStickerBox(
     onSelect: (String?) -> Unit,
     onChange: (PlacedSticker) -> Unit,
     onRemove: (String) -> Unit,
+    onBounds: (Rect) -> Unit,
 ) {
     val current by rememberUpdatedState(sticker)
     val width by rememberUpdatedState(layerWidth)
@@ -92,6 +96,7 @@ private fun PlacedStickerBox(
             onRemove(current.key)
             onSelect(null)
         },
+        onBounds = onBounds,
     ) {
         StickerArt(
             sticker = sticker.sticker,
