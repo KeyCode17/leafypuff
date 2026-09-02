@@ -4,7 +4,9 @@ use sea_orm::sea_query::{Alias, Expr, Value};
 use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-use crate::domain::iam::{Account, AccountRepository, IamError};
+use crate::domain::iam::{Account, AccountRepository, IamError, Profile};
+
+const MISSING_ACCOUNT: &str = "the authenticated account has no row";
 
 use super::entity::accounts;
 use super::mapper;
@@ -53,6 +55,9 @@ impl AccountRepository for PgAccountRepository {
                 account.email_verified_at.map(|at| at.fixed_offset()),
             ),
             pending_email: ActiveValue::Set(None),
+            sealed_profile: ActiveValue::Set(None),
+            avatar_photo_id: ActiveValue::Set(None),
+            profile_updated_at_ms: ActiveValue::Set(0),
             suspended_at: ActiveValue::Set(None),
             created_at: ActiveValue::Set(now),
             updated_at: ActiveValue::Set(now),
@@ -91,6 +96,40 @@ impl AccountRepository for PgAccountRepository {
             .await
             .map_err(mapper::storage)?;
         Ok(())
+    }
+
+    async fn profile(&self, id: Uuid) -> Result<Profile, IamError> {
+        let row = accounts::Entity::find_by_id(id)
+            .one(&self.connection)
+            .await
+            .map_err(mapper::storage)?
+            .ok_or_else(|| IamError::Storage(MISSING_ACCOUNT.to_owned()))?;
+        Ok(mapper::profile(row))
+    }
+
+    async fn save_profile(&self, id: Uuid, profile: Profile) -> Result<Profile, IamError> {
+        let stored = self.profile(id).await?;
+        if !profile.supersedes(&stored) {
+            return Ok(stored);
+        }
+        accounts::Entity::update_many()
+            .col_expr(
+                accounts::Column::SealedProfile,
+                Expr::value(profile.sealed_profile.clone()),
+            )
+            .col_expr(
+                accounts::Column::AvatarPhotoId,
+                Expr::value(profile.avatar_photo_id),
+            )
+            .col_expr(
+                accounts::Column::ProfileUpdatedAtMs,
+                profile.updated_at_ms.into(),
+            )
+            .filter(accounts::Column::Id.eq(id))
+            .exec(&self.connection)
+            .await
+            .map_err(mapper::storage)?;
+        Ok(profile)
     }
 
     async fn adopt_pending_email(

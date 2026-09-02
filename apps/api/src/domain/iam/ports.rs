@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use super::account::{Account, OtpCode, OtpPurpose, RefreshToken};
+use super::account::{Account, OtpCode, OtpPurpose, Profile, RefreshToken};
 use super::error::IamError;
 
 pub trait Clock: Send + Sync {
@@ -57,6 +57,10 @@ pub trait AccountRepository: Send + Sync {
         email: Option<String>,
         at: DateTime<Utc>,
     ) -> Result<(), IamError>;
+
+    async fn profile(&self, id: Uuid) -> Result<Profile, IamError>;
+
+    async fn save_profile(&self, id: Uuid, profile: Profile) -> Result<Profile, IamError>;
 
     async fn adopt_pending_email(
         &self,
