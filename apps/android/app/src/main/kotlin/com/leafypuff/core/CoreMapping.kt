@@ -55,3 +55,9 @@ internal fun FfiPhoto.toImported(): ImportedPhoto = ImportedPhoto(
     path = path,
     takenOn = takenAt?.let { Instant.parse(it).toLocalDateTime(TimeZone.UTC).date },
 )
+
+internal fun FfiProfile.toStored(): StoredProfile = StoredProfile(
+    displayName = displayName,
+    avatarPhotoId = avatarPhotoId,
+    updatedAtMs = updatedAtMs,
+)

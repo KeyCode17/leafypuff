@@ -16,6 +16,12 @@ data class MailedChallenge(val expiresInSeconds: Long)
 
 data class PhotoDraft(val id: String, val path: String, val ordinal: Int)
 
+data class StoredProfile(
+    val displayName: String?,
+    val avatarPhotoId: String?,
+    val updatedAtMs: Long,
+)
+
 data class ImportedPhoto(val id: String, val path: String, val takenOn: LocalDate?)
 
 data class StickerDraft(
@@ -176,6 +182,20 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
     suspend fun forgetPhoto(baseUrl: String, accessToken: String, photoId: String) =
         withContext(Dispatchers.IO) {
             core.forgetPhoto(baseUrl, accessToken, photoId)
+        }
+
+    suspend fun profile(): StoredProfile = withContext(Dispatchers.IO) {
+        core.profile().toStored()
+    }
+
+    suspend fun saveProfile(displayName: String?, avatarPhotoId: String?): StoredProfile =
+        withContext(Dispatchers.IO) {
+            core.saveProfile(displayName, avatarPhotoId).toStored()
+        }
+
+    suspend fun syncProfile(baseUrl: String, accessToken: String): StoredProfile =
+        withContext(Dispatchers.IO) {
+            core.syncProfile(baseUrl, accessToken).toStored()
         }
 
     suspend fun deviceId(): String = withContext(Dispatchers.IO) {

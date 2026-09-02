@@ -22,7 +22,8 @@ internal val ProfileStep.title: String
 
 internal fun ProfileStep.subtitle(email: String): String = when (this) {
     ProfileStep.Details ->
-        "Your name and photo stay on this device. Your address is what signs you in."
+        "Your name and photo follow your account, sealed the way your entries are. " +
+            "Your address is what signs you in."
 
     ProfileStep.ConfirmEmail ->
         "Enter the six digits we sent to $email. The old address keeps working until you do."
