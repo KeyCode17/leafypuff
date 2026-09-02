@@ -21,6 +21,9 @@ import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.exifPromptToast
 import com.leafypuff.ui.mood.MoodPickerOverlay
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoCover
+import com.leafypuff.ui.photo.inCoverOrder
+import com.leafypuff.ui.photo.placed
 import com.leafypuff.ui.photo.PhotoLibrary
 import com.leafypuff.ui.photo.rememberPhotoPicker
 import com.leafypuff.ui.popups.DatePopup
@@ -41,6 +44,7 @@ fun EntryComposer(
     onClose: () -> Unit,
     onSave: (EntryDraft, List<EntryPhoto>) -> Unit,
     onFramePhoto: (String) -> Unit,
+    refreshedCover: PhotoCover?,
     modifier: Modifier = Modifier,
     existing: EntryDraft? = null,
     existingPhotos: List<EntryPhoto> = emptyList(),
@@ -57,6 +61,16 @@ fun EntryComposer(
     var promptedDay by remember { mutableStateOf<LocalDate?>(null) }
 
     var popup by remember { mutableStateOf<MetaPopup?>(null) }
+
+    LaunchedEffect(refreshedCover) {
+        val fresh = refreshedCover ?: return@LaunchedEffect
+        photos = photos.map { photo ->
+            when (photo.id) {
+                fresh.id -> photo.copy(cover = fresh.cover)
+                else -> photo
+            }
+        }
+    }
 
     if (open) {
         BackHandler {
@@ -114,7 +128,7 @@ fun EntryComposer(
             visible = open && editing,
             draft = draft,
             onDraftChange = { draft = it },
-            onSave = { onSave(draft, photos) },
+            onSave = { onSave(draft, photos.inCoverOrder()) },
             onClose = onClose,
             onMoodClick = { editing = false },
             onDateClick = { popup = MetaPopup.Date },
@@ -125,9 +139,10 @@ fun EntryComposer(
             onRemovePhoto = { id -> photos = photos.filterNot { it.id == id } },
             onFramePhoto = onFramePhoto,
             onPlaceFreely = { id ->
+                val placed = photos.placed().size
                 photos = photos.map { photo ->
                     when (photo.id) {
-                        id -> photo.copy(place = droppedPlacement(photos.indexOfFirst { it.id == id }))
+                        id -> photo.copy(place = droppedPlacement(placed))
                         else -> photo
                     }
                 }
