@@ -1,5 +1,6 @@
 package com.leafypuff.ui.editor
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.leafypuff.ui.editor.sticker.PlacedFrame
 import com.leafypuff.ui.editor.sticker.clampStickerPosition
@@ -37,8 +41,10 @@ private val PhotoCorner = 14.dp
 @Composable
 fun PhotoLayer(
     photos: List<EntryPhoto>,
+    originals: Map<String, ImageBitmap>,
     selectedId: String?,
     onSelect: (String?) -> Unit,
+    onCrop: (String) -> Unit,
     onChange: (String, PhotoPlacement) -> Unit,
     onPutBack: (String) -> Unit,
     onBounds: (Rect) -> Unit,
@@ -68,9 +74,15 @@ fun PhotoLayer(
                     size = placed.size,
                     rotation = placed.rotation,
                     selected = photo.id == selectedId,
+                    height = placed.height,
                     layerWidth = layerWidth,
                     layerHeight = layerHeight,
-                    onSelect = { onSelect(photo.id) },
+                    onSelect = {
+                        when (photo.id) {
+                            selectedId -> onCrop(photo.id)
+                            else -> onSelect(photo.id)
+                        }
+                    },
                     onMove = { deltaX, deltaY ->
                         onChange(
                             photo.id,
@@ -90,16 +102,37 @@ fun PhotoLayer(
                     },
                     onBounds = onBounds,
                 ) {
-                    Image(
-                        bitmap = photo.cover,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(placed.size.dp)
-                            .graphicsLayer { rotationZ = placed.rotation }
-                            .clip(RoundedCornerShape(PhotoCorner)),
-                    )
+                    val frame = Modifier
+                        .align(Alignment.Center)
+                        .size(width = placed.size.dp, height = placed.height.dp)
+                        .graphicsLayer { rotationZ = placed.rotation }
+                        .clip(RoundedCornerShape(PhotoCorner))
+                    val original = originals[photo.id]
+                    val crop = placed.crop
+                    if (original != null && crop != null) {
+                        Canvas(modifier = frame) {
+                            val across = (original.width * crop.width).toInt().coerceAtLeast(1)
+                            val down = (across * placed.ratio).toInt()
+                                .coerceIn(1, original.height)
+                            val left = (original.width * crop.x).toInt()
+                                .coerceIn(0, (original.width - across).coerceAtLeast(0))
+                            val top = (original.height * crop.y).toInt()
+                                .coerceIn(0, (original.height - down).coerceAtLeast(0))
+                            drawImage(
+                                image = original,
+                                srcOffset = IntOffset(left, top),
+                                srcSize = IntSize(across, down),
+                                dstSize = IntSize(size.width.toInt(), size.height.toInt()),
+                            )
+                        }
+                    } else {
+                        Image(
+                            bitmap = photo.cover,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = frame,
+                        )
+                    }
                 }
             }
         }
@@ -113,7 +146,7 @@ private fun PhotoPlacement.movedBy(
     layerHeight: Float,
 ): PhotoPlacement = copy(
     x = clampStickerPosition(x + fractionOf(deltaX, layerWidth), size, layerWidth),
-    y = clampStickerPosition(y + fractionOf(deltaY, layerHeight), size, layerHeight),
+    y = clampStickerPosition(y + fractionOf(deltaY, layerHeight), height, layerHeight),
 )
 
 fun droppedPlacement(index: Int): PhotoPlacement = PhotoPlacement(

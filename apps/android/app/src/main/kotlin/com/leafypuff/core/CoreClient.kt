@@ -237,6 +237,20 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.placePhoto(photoId, x, y, size, rotation)
     }
 
+    suspend fun cropPlacedPhoto(
+        photoId: String,
+        x: Double,
+        y: Double,
+        width: Double,
+        ratio: Double,
+    ) = withContext(Dispatchers.IO) {
+        core.cropPlacedPhoto(photoId, x, y, width, ratio)
+    }
+
+    suspend fun placedCrop(photoId: String): List<Double> = withContext(Dispatchers.IO) {
+        core.placedCrop(photoId)
+    }
+
     suspend fun photoPlacement(photoId: String): List<Double> = withContext(Dispatchers.IO) {
         core.photoPlacement(photoId)
     }

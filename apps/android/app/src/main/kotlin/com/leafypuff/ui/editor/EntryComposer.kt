@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.Modifier
 import com.leafypuff.domain.Mood
 import com.leafypuff.ui.common.ToastOverlay
@@ -21,6 +22,7 @@ import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.exifPromptToast
 import com.leafypuff.ui.mood.MoodPickerOverlay
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoCropped
 import com.leafypuff.ui.photo.PhotoCover
 import com.leafypuff.ui.photo.inCoverOrder
 import com.leafypuff.ui.photo.placed
@@ -44,7 +46,9 @@ fun EntryComposer(
     onClose: () -> Unit,
     onSave: (EntryDraft, List<EntryPhoto>) -> Unit,
     onFramePhoto: (String) -> Unit,
+    onCropPlaced: (String) -> Unit,
     refreshedCover: PhotoCover?,
+    refreshedPlacement: PhotoCropped?,
     modifier: Modifier = Modifier,
     existing: EntryDraft? = null,
     existingPhotos: List<EntryPhoto> = emptyList(),
@@ -69,6 +73,27 @@ fun EntryComposer(
                 fresh.id -> photo.copy(cover = fresh.cover)
                 else -> photo
             }
+        }
+    }
+
+    LaunchedEffect(refreshedPlacement) {
+        val fresh = refreshedPlacement ?: return@LaunchedEffect
+        photos = photos.map { photo ->
+            val placed = photo.place
+            when {
+                photo.id == fresh.id && placed != null ->
+                    photo.copy(place = placed.copy(crop = fresh.crop, ratio = fresh.ratio))
+                else -> photo
+            }
+        }
+    }
+
+    var originals by remember { mutableStateOf(mapOf<String, ImageBitmap>()) }
+    val wanting = photos.filter { it.place?.crop != null }.map { it.id }.toSet()
+    LaunchedEffect(wanting) {
+        val missing = wanting - originals.keys
+        for (id in missing) {
+            library.original(id)?.let { held -> originals = originals + (id to held) }
         }
     }
 
@@ -138,6 +163,8 @@ fun EntryComposer(
             photos = photos,
             onRemovePhoto = { id -> photos = photos.filterNot { it.id == id } },
             onFramePhoto = onFramePhoto,
+            onCropPlaced = onCropPlaced,
+            originals = originals,
             onPlaceFreely = { id ->
                 val placed = photos.placed().size
                 photos = photos.map { photo ->

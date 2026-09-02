@@ -25,6 +25,7 @@ internal fun PlacedFrame(
     size: Float,
     rotation: Float,
     selected: Boolean,
+    height: Float = size,
     layerWidth: Float,
     layerHeight: Float,
     onSelect: () -> Unit,
@@ -41,7 +42,7 @@ internal fun PlacedFrame(
     Box(
         modifier = Modifier
             .offset((x * layerWidth).dp - HandleInset, (y * layerHeight).dp - HandleInset)
-            .size(size.dp + HandleInset * 2)
+            .size(width = size.dp + HandleInset * 2, height = height.dp + HandleInset * 2)
             .onGloballyPositioned { if (selected) onBounds(it.boundsInWindow()) }
             .pointerInput(Unit) { detectTapGestures(onTap = { select() }) }
             .pointerInput(Unit) {
@@ -60,7 +61,7 @@ internal fun PlacedFrame(
             SelectionOutline(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(size.dp + OutlineInset * 2)
+                    .size(width = size.dp + OutlineInset * 2, height = height.dp + OutlineInset * 2)
                     .graphicsLayer { rotationZ = rotation },
             )
             RemoveHandle(onRemove = onRemove, modifier = Modifier.align(Alignment.TopStart))
