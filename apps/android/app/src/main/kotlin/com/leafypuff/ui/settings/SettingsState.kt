@@ -24,6 +24,7 @@ data class SettingsState(
     val reminderEnabled: Boolean,
     val reminderTime: LocalTime,
     val lockEnabled: Boolean,
+    val biometricEnabled: Boolean,
     val stickerPack: StickerPack,
     val textSize: TextSize,
     val entryCount: Int,

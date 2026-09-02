@@ -2,10 +2,12 @@ package com.leafypuff.ui.shell
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import com.leafypuff.data.AppPreferences
 import com.leafypuff.domain.Entry
 import com.leafypuff.ui.calendar.CalendarScreen
 import com.leafypuff.ui.diary.DiaryScreen
+import com.leafypuff.ui.lock.biometricReady
 import com.leafypuff.ui.settings.SettingsScreen
 import com.leafypuff.ui.settings.SettingsState
 import com.leafypuff.ui.stats.StatRange
@@ -36,6 +38,7 @@ fun DestinationHost(
     onExport: () -> Unit,
     onPreferencesChange: (AppPreferences) -> Unit,
     onToggleLock: (Boolean) -> Unit,
+    onToggleBiometric: (Boolean) -> Unit,
     onChangePin: () -> Unit,
     onSignOut: () -> Unit,
     avatar: ImageBitmap?,
@@ -77,6 +80,8 @@ fun DestinationHost(
             onToggleReminder = { onPreferencesChange(preferences.copy(reminderEnabled = it)) },
             onReminderTimeChange = { onPreferencesChange(preferences.copy(reminderTime = it)) },
             onToggleLock = onToggleLock,
+            onToggleBiometric = onToggleBiometric,
+            biometricAvailable = biometricReady(LocalContext.current),
             onChangePin = onChangePin,
             onStickerPackChange = { onPreferencesChange(preferences.copy(stickerPack = it)) },
             onTextSizeChange = { onPreferencesChange(preferences.copy(textSize = it)) },
@@ -97,6 +102,7 @@ private fun settingsState(preferences: AppPreferences, entries: List<Entry>): Se
         reminderEnabled = preferences.reminderEnabled,
         reminderTime = preferences.reminderTime,
         lockEnabled = preferences.lockEnabled,
+        biometricEnabled = preferences.biometricEnabled,
         stickerPack = preferences.stickerPack,
         textSize = preferences.textSize,
         entryCount = entries.size,

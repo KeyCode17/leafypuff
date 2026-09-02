@@ -17,6 +17,7 @@ private const val UnlockDelayMillis = 240L
 @Composable
 fun LockGate(
     enabled: Boolean,
+    biometricEnabled: Boolean,
     unlocked: Boolean,
     onUnlocked: () -> Unit,
     modifier: Modifier = Modifier,
@@ -61,7 +62,7 @@ fun LockGate(
         },
         onBackspace = { digits = digits.dropLast(1) },
         onBiometric = when {
-            biometricReady(context) -> {
+            biometricEnabled && biometricReady(context) -> {
                 { unlockWithBiometric(context, onProblem = { wrong = true }) { onUnlocked() } }
             }
 

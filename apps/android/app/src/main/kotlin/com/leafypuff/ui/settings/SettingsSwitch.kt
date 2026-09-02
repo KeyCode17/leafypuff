@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -16,17 +17,23 @@ import com.leafypuff.theme.LocalLeafyColors
 private val TrackWidth = 44.dp
 private val TrackHeight = 26.dp
 private val KnobSize = 20.dp
+private const val DimmedAlpha = 0.45f
 private val KnobInset = 3.dp
 private val KnobColor = Color(0xFFFFFFFF)
 
 @Composable
-internal fun SettingsSwitch(checked: Boolean, modifier: Modifier = Modifier) {
+internal fun SettingsSwitch(
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
     val colors = LocalLeafyColors.current
 
     Box(
         modifier = modifier
             .size(width = TrackWidth, height = TrackHeight)
             .clip(LeafyShapes.pill)
+            .alpha(if (enabled) 1f else DimmedAlpha)
             .background(if (checked) colors.accent else colors.line),
         contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
     ) {
