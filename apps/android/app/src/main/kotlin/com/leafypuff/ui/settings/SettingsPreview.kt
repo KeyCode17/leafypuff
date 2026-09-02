@@ -66,6 +66,7 @@ private fun SettingsFrame(initial: SettingsState) {
             onReminderTimeChange = { state = state.copy(reminderTime = it) },
             onToggleLock = { state = state.copy(lockEnabled = it) },
             onChangePin = { },
+            onSignOut = { },
             onStickerPackChange = { state = state.copy(stickerPack = it) },
             onTextSizeChange = { state = state.copy(textSize = it) },
             lastSynced = "Just now",

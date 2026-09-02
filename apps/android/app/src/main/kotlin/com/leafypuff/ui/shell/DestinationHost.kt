@@ -37,6 +37,7 @@ fun DestinationHost(
     onPreferencesChange: (AppPreferences) -> Unit,
     onToggleLock: (Boolean) -> Unit,
     onChangePin: () -> Unit,
+    onSignOut: () -> Unit,
     onDeleteAll: () -> Unit,
 ) {
     when (destination) {
@@ -79,6 +80,7 @@ fun DestinationHost(
             onSync = onSync,
             onExport = onExport,
             onDeleteAll = onDeleteAll,
+            onSignOut = onSignOut,
         )
     }
 }
