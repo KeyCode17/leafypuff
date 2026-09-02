@@ -17,6 +17,10 @@ pub mod media_sync;
 #[cfg(feature = "test-support")]
 pub mod memory;
 pub mod photo_store;
+#[cfg(feature = "sqlite")]
+pub mod profile_store;
+#[cfg(feature = "sync")]
+pub mod profile_sync;
 pub mod sealer;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_entry_repository;

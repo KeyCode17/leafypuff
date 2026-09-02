@@ -6,6 +6,7 @@ pub mod error;
 pub mod mood;
 pub mod photo;
 pub mod ports;
+pub mod profile;
 pub mod stats;
 pub mod sticker;
 pub mod sync;
@@ -20,6 +21,7 @@ pub use photo::{COVER_ORDINAL, PhotoKind, PhotoRef};
 pub use ports::{
     Clock, ContentSealer, EntryRepository, ExifReader, FieldSealer, PhotoStore, ThumbnailMaker,
 };
+pub use profile::Profile;
 pub use stats::{
     GroupCount, MoodCount, SPREAD_LIMIT, StatsRange, StatsSummary, TAG_LIMIT, TagCount,
     WeekdayCount, summarise,

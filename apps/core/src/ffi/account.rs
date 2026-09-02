@@ -121,6 +121,8 @@ impl LeafyPuffCore {
         access_token: String,
     ) -> Result<FfiSyncOutcome, LeafyPuffCoreError> {
         let device_id = self.outbox.device_id().await?;
+        let base_url_for_profile = base_url.clone();
+        let access_token_for_profile = access_token.clone();
         let media = MediaSync::new(base_url.clone(), access_token.clone(), &device_id)?;
         for (id, entry_id) in self.outbox.pending_photos().await? {
             self.upload_photo(&media, &id, &entry_id).await?;
@@ -132,6 +134,8 @@ impl LeafyPuffCore {
         for id in self.outbox.unfetched_photos().await? {
             self.fetch_photo(&media, &id).await?;
         }
+        self.sync_profile(base_url_for_profile, access_token_for_profile)
+            .await?;
         Ok(FfiSyncOutcome::from(outcome))
     }
 
@@ -176,6 +180,7 @@ impl LeafyPuffCore {
         let original = self.photos.read(&photo_id, PhotoKind::Original)?;
         let square = self.thumbnails.framed_square(&original, framing)?;
         self.photos.write(&photo_id, PhotoKind::Cover, &square)?;
+        self.remember_avatar_framing(&photo_id, framing).await?;
         Ok(())
     }
 

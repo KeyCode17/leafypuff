@@ -20,6 +20,16 @@ pub struct Framing {
     pub width: f64,
 }
 
+impl Default for Framing {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            width: 1.0,
+        }
+    }
+}
+
 impl Framing {
     pub const SMALLEST_WIDTH: f64 = 0.2;
 
