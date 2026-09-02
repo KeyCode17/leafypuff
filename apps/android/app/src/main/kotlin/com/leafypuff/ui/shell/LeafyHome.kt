@@ -43,6 +43,8 @@ fun LeafyHome(
     onChangePin: () -> Unit,
     onSignOut: () -> Unit,
     onEditProfile: () -> Unit,
+    onFramePhoto: (String) -> Unit,
+    coversEpoch: Int,
     avatar: ImageBitmap?,
     onOpenEntry: suspend (Entry) -> OpenedEntry?,
     onStatistics: suspend (StatRange) -> StatsSummary?,
@@ -68,8 +70,8 @@ fun LeafyHome(
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
     var lastSynced by remember { mutableStateOf("Never") }
 
-    LaunchedEffect(entries) {
-        covers = loadCovers(library, entries, covers)
+    LaunchedEffect(entries, coversEpoch) {
+        covers = loadCovers(library, entries, emptyMap())
     }
 
     LaunchedEffect(entries, range) {
@@ -171,6 +173,7 @@ fun LeafyHome(
             existingPhotos = editingPhotos,
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
+            onFramePhoto = onFramePhoto,
             onSave = { draft, photoIds ->
                 val reopened = !draft.fresh
                 val dropped = editingPhotos.map { it.id } - photoIds.toSet()

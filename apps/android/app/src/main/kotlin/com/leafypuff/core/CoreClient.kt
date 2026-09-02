@@ -197,6 +197,15 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.photoTakenOn(bytes)?.let(LocalDate::parse)
     }
 
+    suspend fun framePhoto(photoId: String, x: Double, y: Double, width: Double) =
+        withContext(Dispatchers.IO) {
+            core.framePhoto(photoId, x, y, width)
+        }
+
+    suspend fun originalPhoto(photoId: String): ByteArray = withContext(Dispatchers.IO) {
+        core.originalPhoto(photoId)
+    }
+
     suspend fun coverThumbnail(photoId: String): ByteArray = withContext(Dispatchers.IO) {
         core.coverThumbnail(photoId)
     }

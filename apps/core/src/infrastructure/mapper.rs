@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use sea_orm::Set;
+use sea_orm::{ActiveValue, Set};
 
 use crate::domain::crypto::{FIELD_BODY, FIELD_TITLE};
 use crate::domain::error::{ERR_DATE_UNREADABLE, ERR_TEXT_UNREADABLE, ERR_TIMESTAMP_UNREADABLE};
@@ -157,6 +157,9 @@ pub fn photo_row(entry_id: &str, photo: &PhotoRef) -> photos::ActiveModel {
         path: Set(photo.path.clone()),
         ordinal: Set(photo.ordinal),
         taken_at: Set(photo.taken_at.map(|at| at.to_rfc3339())),
+        crop_x: ActiveValue::NotSet,
+        crop_y: ActiveValue::NotSet,
+        crop_width: ActiveValue::NotSet,
     }
 }
 

@@ -39,6 +39,7 @@ fun EntryComposer(
     library: PhotoLibrary,
     onClose: () -> Unit,
     onSave: (EntryDraft, List<String>) -> Unit,
+    onFramePhoto: (String) -> Unit,
     modifier: Modifier = Modifier,
     existing: EntryDraft? = null,
     existingPhotos: List<EntryPhoto> = emptyList(),
@@ -109,6 +110,7 @@ fun EntryComposer(
             onAddPhoto = addPhoto,
             photos = photos,
             onRemovePhoto = { id -> photos = photos.filterNot { it.id == id } },
+            onFramePhoto = onFramePhoto,
             stickerPack = stickerPack,
             modifier = Modifier.statusBarsPadding(),
         )

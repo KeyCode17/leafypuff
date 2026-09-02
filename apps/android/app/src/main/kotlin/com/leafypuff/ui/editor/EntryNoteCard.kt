@@ -40,6 +40,7 @@ fun EntryNoteCard(
     tags: List<String>,
     photos: List<EntryPhoto>,
     onRemovePhoto: ((String) -> Unit)?,
+    onFramePhoto: ((String) -> Unit)?,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onRemoveTag: (Int) -> Unit,
@@ -78,6 +79,9 @@ fun EntryNoteCard(
                 photo = photo,
                 isCover = index == 0,
                 onRemove = onRemovePhoto?.let { remove -> { remove(photo.id) } },
+                onFrame = onFramePhoto
+                    ?.takeIf { index == 0 }
+                    ?.let { frame -> { frame(photo.id) } },
             )
         }
 

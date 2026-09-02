@@ -134,6 +134,39 @@ impl SyncOutbox {
         Ok(waiting.into_iter().map(|photo| photo.id).collect())
     }
 
+    pub async fn frame_photo(
+        &self,
+        id: &str,
+        framing: crate::domain::crop::Framing,
+    ) -> Result<(), CoreError> {
+        let held = framing.clamped();
+        photos::Entity::update_many()
+            .col_expr(photos::Column::CropX, held.x.into())
+            .col_expr(photos::Column::CropY, held.y.into())
+            .col_expr(photos::Column::CropWidth, held.width.into())
+            .filter(photos::Column::Id.eq(id.to_owned()))
+            .exec(&self.connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn framing_of(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::domain::crop::Framing>, CoreError> {
+        let row = photos::Entity::find_by_id(id.to_owned())
+            .one(&self.connection)
+            .await?;
+        Ok(row.and_then(
+            |photo| match (photo.crop_x, photo.crop_y, photo.crop_width) {
+                (Some(x), Some(y), Some(width)) => {
+                    Some(crate::domain::crop::Framing { x, y, width })
+                }
+                _ => None,
+            },
+        ))
+    }
+
     pub async fn forget_photo(&self, id: &str) -> Result<(), CoreError> {
         photos::Entity::delete_many()
             .filter(photos::Column::Id.eq(id.to_owned()))
@@ -234,11 +267,20 @@ impl SyncOutbox {
                 entry_id: ActiveValue::Set(photo.entry_id.clone()),
                 path: ActiveValue::Set(photo.path.clone()),
                 ordinal: ActiveValue::Set(photo.ordinal),
+                crop_x: ActiveValue::Set(photo.framing.map(|held| held.x)),
+                crop_y: ActiveValue::Set(photo.framing.map(|held| held.y)),
+                crop_width: ActiveValue::Set(photo.framing.map(|held| held.width)),
                 taken_at: ActiveValue::Set(None),
             })
             .on_conflict(
                 OnConflict::column(photos::Column::Id)
-                    .update_columns([photos::Column::EntryId, photos::Column::Ordinal])
+                    .update_columns([
+                        photos::Column::EntryId,
+                        photos::Column::Ordinal,
+                        photos::Column::CropX,
+                        photos::Column::CropY,
+                        photos::Column::CropWidth,
+                    ])
                     .to_owned(),
             )
             .exec(&self.connection)
@@ -268,6 +310,7 @@ pub struct InboundPhoto {
     pub id: String,
     pub entry_id: String,
     pub path: String,
+    pub framing: Option<crate::domain::crop::Framing>,
     pub ordinal: i32,
 }
 
@@ -297,6 +340,15 @@ pub(super) fn sticker_placements(placed: &[stickers::Model]) -> Result<String, C
     Ok(refs)
 }
 
+fn framing_json(photo: &photos::Model) -> String {
+    match (photo.crop_x, photo.crop_y, photo.crop_width) {
+        (Some(x), Some(y), Some(width)) => {
+            format!(",\"crop_x\":{x},\"crop_y\":{y},\"crop_width\":{width}")
+        }
+        _ => String::new(),
+    }
+}
+
 pub(super) fn photo_refs(carried: &[photos::Model]) -> Result<String, CoreError> {
     let mut refs = String::from("[");
     for (position, photo) in carried.iter().enumerate() {
@@ -310,8 +362,10 @@ pub(super) fn photo_refs(carried: &[photos::Model]) -> Result<String, CoreError>
             refs.push(',');
         }
         refs.push_str(&format!(
-            "{{\"id\":\"{}\",\"ordinal\":{}}}",
-            photo.id, photo.ordinal
+            "{{\"id\":\"{}\",\"ordinal\":{}{}}}",
+            photo.id,
+            photo.ordinal,
+            framing_json(photo)
         ));
     }
     refs.push(']');
