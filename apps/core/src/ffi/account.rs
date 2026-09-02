@@ -81,12 +81,13 @@ impl LeafyPuffCore {
         base_url: String,
         access_token: String,
     ) -> Result<FfiSyncOutcome, LeafyPuffCoreError> {
-        let media = MediaSync::new(base_url.clone(), access_token.clone())?;
-        for id in self.outbox.pending_photo_ids().await? {
-            self.upload_photo(&media, &id).await?;
+        let device_id = self.outbox.device_id().await?;
+        let media = MediaSync::new(base_url.clone(), access_token.clone(), &device_id)?;
+        for (id, entry_id) in self.outbox.pending_photos().await? {
+            self.upload_photo(&media, &id, &entry_id).await?;
         }
 
-        let client = SyncClient::new(base_url, access_token)?;
+        let client = SyncClient::new(base_url, access_token, &device_id)?;
         let outcome = client.exchange(&self.outbox).await?;
 
         for id in self.outbox.unfetched_photos().await? {
@@ -101,13 +102,18 @@ impl LeafyPuffCore {
 }
 
 impl LeafyPuffCore {
-    async fn upload_photo(&self, media: &MediaSync, id: &str) -> Result<(), LeafyPuffCoreError> {
+    async fn upload_photo(
+        &self,
+        media: &MediaSync,
+        id: &str,
+        entry_id: &str,
+    ) -> Result<(), LeafyPuffCoreError> {
         for kind in [PhotoKind::Original, PhotoKind::Cover] {
             if !self.photos.holds(id, kind) {
                 continue;
             }
             let sealed = self.photos.read_sealed(id, kind)?;
-            media.upload(id, kind, sealed).await?;
+            media.upload(id, entry_id, kind, sealed).await?;
         }
         Ok(())
     }

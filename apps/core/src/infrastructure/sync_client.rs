@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use chrono::{DateTime, Utc};
 use data_encoding::BASE64;
 use reqwest::Client;
@@ -7,14 +5,12 @@ use sea_orm::ActiveValue;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use super::http_client;
 use super::http_error::reached;
 use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 
 use super::entity::entries;
 use super::sync_outbox::{Carried, InboundPhoto, InboundSticker, SyncOutbox};
-
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const PULL_PATH: &str = "/v1/sync/pull";
 const PUSH_PATH: &str = "/v1/sync/push";
@@ -29,14 +25,9 @@ pub struct SyncClient {
 }
 
 impl SyncClient {
-    pub fn new(base_url: String, access_token: String) -> Result<Self, CoreError> {
-        let client = Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(REQUEST_TIMEOUT)
-            .build()
-            .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
+    pub fn new(base_url: String, access_token: String, device_id: &str) -> Result<Self, CoreError> {
         Ok(Self {
-            client,
+            client: http_client::for_device(device_id, ERR_UNREACHABLE)?,
             base_url,
             access_token,
         })

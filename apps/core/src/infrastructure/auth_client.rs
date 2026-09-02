@@ -1,13 +1,9 @@
-use std::time::Duration;
-
 use reqwest::Client;
 use serde_json::{Value, json};
 
+use super::http_client;
 use super::http_error::reached;
 use crate::domain::{Challenge, CoreError, Rejection, Session};
-
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const REGISTER_PATH: &str = "/v1/auth/register";
 const SIGN_IN_PATH: &str = "/v1/auth/sign-in";
@@ -26,12 +22,10 @@ pub struct AuthClient {
 
 impl AuthClient {
     pub fn new(base_url: String) -> Result<Self, CoreError> {
-        let client = Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(REQUEST_TIMEOUT)
-            .build()
-            .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
-        Ok(Self { client, base_url })
+        Ok(Self {
+            client: http_client::plain(ERR_UNREACHABLE)?,
+            base_url,
+        })
     }
 
     pub async fn register(

@@ -1,16 +1,14 @@
-use std::time::Duration;
-
 use reqwest::{Client, StatusCode};
 
+use super::http_client;
 use super::http_error::reached;
 use crate::domain::{CoreError, PhotoKind};
-
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 const MEDIA_PATH: &str = "/v1/media";
 const VARIANT_ORIGINAL: &str = "original";
 const VARIANT_DERIVATIVE: &str = "derivative";
+
+const ENTRY_QUERY: &str = "entry_id";
 
 const ERR_UNREACHABLE: &str = "The media service could not be reached";
 
@@ -21,14 +19,9 @@ pub struct MediaSync {
 }
 
 impl MediaSync {
-    pub fn new(base_url: String, access_token: String) -> Result<Self, CoreError> {
-        let client = Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(REQUEST_TIMEOUT)
-            .build()
-            .map_err(|_| CoreError::Storage(ERR_UNREACHABLE.to_owned()))?;
+    pub fn new(base_url: String, access_token: String, device_id: &str) -> Result<Self, CoreError> {
         Ok(Self {
-            client,
+            client: http_client::for_device(device_id, ERR_UNREACHABLE)?,
             base_url,
             access_token,
         })
@@ -37,12 +30,14 @@ impl MediaSync {
     pub async fn upload(
         &self,
         photo_id: &str,
+        entry_id: &str,
         kind: PhotoKind,
         sealed: Vec<u8>,
     ) -> Result<(), CoreError> {
         let response = self
             .client
             .put(self.url(photo_id, kind))
+            .query(&[(ENTRY_QUERY, entry_id)])
             .bearer_auth(&self.access_token)
             .body(sealed)
             .send()
