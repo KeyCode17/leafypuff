@@ -19,6 +19,24 @@ pub struct RemoteProfile {
     pub updated_at_ms: i64,
 }
 
+impl RemoteProfile {
+    pub const fn empty() -> Self {
+        Self {
+            sealed_profile: None,
+            avatar_photo_id: None,
+            updated_at_ms: 0,
+        }
+    }
+
+    fn borrowed(&self) -> Self {
+        Self {
+            sealed_profile: self.sealed_profile.clone(),
+            avatar_photo_id: self.avatar_photo_id.clone(),
+            updated_at_ms: self.updated_at_ms,
+        }
+    }
+}
+
 pub struct ProfileSync {
     client: Client,
     base_url: String,
@@ -42,6 +60,9 @@ impl ProfileSync {
             .send()
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(RemoteProfile::empty());
+        }
         if !response.status().is_success() {
             return Err(unreachable(response.status()));
         }
@@ -68,6 +89,9 @@ impl ProfileSync {
             .send()
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(wanted.borrowed());
+        }
         if !response.status().is_success() {
             return Err(unreachable(response.status()));
         }
@@ -87,7 +111,7 @@ impl ProfileSync {
             .send()
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
-        if response.status().is_success() {
+        if response.status().is_success() || response.status() == StatusCode::NOT_FOUND {
             return Ok(());
         }
         Err(unreachable(response.status()))
