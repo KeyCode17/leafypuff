@@ -40,6 +40,15 @@ fun AuthGate(
     var cooldown by remember { mutableIntStateOf(0) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
 
+    LaunchedEffect(signedIn) {
+        if (signedIn) {
+            state = AuthFormState()
+            pending = false
+            cooldown = 0
+            toast = null
+        }
+    }
+
     if (signedIn) {
         content()
         return
