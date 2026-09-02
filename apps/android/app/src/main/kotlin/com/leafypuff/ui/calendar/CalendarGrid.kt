@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Entry
 import kotlinx.datetime.DateTimeUnit
@@ -24,9 +25,9 @@ data class CalendarDay(
     val entries: List<Entry>,
     val isToday: Boolean,
     val isSelected: Boolean,
-    val photoAvailable: Boolean,
+    val cover: ImageBitmap?,
 ) {
-    val showsPhoto: Boolean get() = photoAvailable && !isSelected
+    val showsPhoto: Boolean get() = cover != null && !isSelected
 
     val showsDot: Boolean get() = entries.isNotEmpty() && !isSelected && !showsPhoto
 
@@ -42,10 +43,11 @@ fun CalendarGrid(
     entriesByDate: Map<LocalDate, List<Entry>>,
     today: LocalDate,
     selected: LocalDate,
+    covers: Map<String, ImageBitmap>,
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val weeks = monthCells(visibleMonth, entriesByDate, today, selected)
+    val weeks = monthCells(visibleMonth, entriesByDate, today, selected, covers)
         .chunked(DaysInWeek)
 
     Column(
@@ -78,6 +80,7 @@ private fun monthCells(
     entriesByDate: Map<LocalDate, List<Entry>>,
     today: LocalDate,
     selected: LocalDate,
+    covers: Map<String, ImageBitmap>,
 ): List<CalendarDay?> {
     val first = LocalDate(visibleMonth.year, visibleMonth.monthNumber, 1)
     val lead = (first.dayOfWeek.ordinal + 1) % DaysInWeek
@@ -94,7 +97,7 @@ private fun monthCells(
                 entries = dayEntries,
                 isToday = date == today,
                 isSelected = date == selected,
-                photoAvailable = dayEntries.any { it.coverPhotoId != null },
+                cover = dayEntries.firstNotNullOfOrNull { covers[it.id] },
             ),
         )
     }
