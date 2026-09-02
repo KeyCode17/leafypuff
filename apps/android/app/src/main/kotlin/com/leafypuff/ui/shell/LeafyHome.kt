@@ -43,7 +43,7 @@ fun LeafyHome(
     onStatistics: suspend (StatRange) -> StatsSummary?,
     onExport: suspend () -> String?,
     onSync: suspend () -> Boolean,
-    onSave: (EntryDraft, List<String>, () -> Unit) -> Unit,
+    onSave: (EntryDraft, List<String>, () -> Unit, (String) -> Unit) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
     val colors = LocalLeafyColors.current
@@ -162,13 +162,18 @@ fun LeafyHome(
             onClose = { composing = false },
             onSave = { draft, photoIds ->
                 val reopened = draft.id != null
-                onSave(draft, photoIds) {
-                    composing = false
-                    selected = draft.date
-                    current = Destination.Diary
-                    toast = saveToast(reopened)
-                    scope.launch { if (onSync()) lastSynced = syncLabel(true) }
-                }
+                onSave(
+                    draft,
+                    photoIds,
+                    {
+                        composing = false
+                        selected = draft.date
+                        current = Destination.Diary
+                        toast = saveToast(reopened)
+                        scope.launch { if (onSync()) lastSynced = syncLabel(true) }
+                    },
+                    { problem -> toast = plainToast(problem) },
+                )
             },
             modifier = Modifier.fillMaxSize(),
         )
