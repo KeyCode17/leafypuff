@@ -24,10 +24,14 @@ private const val RibWidth = 1.4f
 private const val PetalRadius = 6f
 private const val FlowerCenterRadius = 5.4f
 
-private val Body = svgPath("M18 20l14 14c-4.6 5.6-11 8.8-14.6 6.6C13.2 38 14 30 18 20z")
-private val LeafDeep = svgPath("M20.6 18.4c-2.4-4-1.6-8.4 1-9.4 2.4-1 5 1.6 5.4 5.6")
-private val LeafPale = svgPath("M24.4 16.8c1.4-3.6 5-5.6 7.4-4.2 2.2 1.4 2 5-.8 7.8")
-private val Ribs = listOf(svgPath("M21 26l4.6 4.6"), svgPath("M19.4 32l4 4"))
+private val Body = svgPath("M24 17L33 25L26.6 43C25.8 45 22.2 45 21.4 43L15 25Z")
+private val LeafDeep = svgPath("M24 18C20.8 12 21.2 6 24 3C26.8 6 27.2 12 24 18Z")
+private val LeafPale =
+    svgPath(
+        "M23 18C17.6 15 13.6 10.4 14.6 7.6C17.8 7 22 12 24 17.6Z" +
+            "M25 18C30.4 15 34.4 10.4 33.4 7.6C30.2 7 26 12 24 17.6Z",
+    )
+private val Ribs = listOf(svgPath("M19.4 27L28.6 30"), svgPath("M21.2 34L27 36"))
 private val HeartOutline = svgPath(
     "M24 40C16 34.6 8 28.6 8 21.2 8 15.6 12.2 12 16.8 12c3 0 5.6 1.6 7.2 4 1.6-2.4 4.2-4 " +
         "7.2-4C35.8 12 40 15.6 40 21.2 40 28.6 32 34.6 24 40z",
@@ -55,7 +59,19 @@ internal fun DrawScope.drawStickerShape(sticker: StickerId) {
         StickerId.Flower -> drawFlower()
         StickerId.Moon -> fill(MoonOutline, MoonFill)
         StickerId.BunSit, StickerId.BunSleep -> Unit
-        StickerId.MoodHappy, StickerId.MoodCalm, StickerId.MoodGrateful, StickerId.MoodExcited, StickerId.MoodOkay, StickerId.MoodTired, StickerId.MoodAnxious, StickerId.MoodSad, StickerId.MoodAngry, StickerId.MoodSick, StickerId.MoodLonely, StickerId.MoodLoved -> Unit
+        StickerId.MoodHappy,
+        StickerId.MoodCalm,
+        StickerId.MoodGrateful,
+        StickerId.MoodExcited,
+        StickerId.MoodOkay,
+        StickerId.MoodTired,
+        StickerId.MoodAnxious,
+        StickerId.MoodSad,
+        StickerId.MoodAngry,
+        StickerId.MoodSick,
+        StickerId.MoodLonely,
+        StickerId.MoodLoved,
+        -> Unit
     }
 }
 

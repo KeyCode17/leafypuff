@@ -52,6 +52,7 @@ import com.leafypuff.ui.crop.CropScreen
 import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.ui.profile.ProfileStep
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoCover
 import com.leafypuff.ui.photo.PhotoPlacement
 import com.leafypuff.ui.photo.NoPhotoLibrary
 import com.leafypuff.ui.settings.TextSize
@@ -97,6 +98,8 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
     var framingPending by remember { mutableStateOf(false) }
     var coversEpoch by remember { mutableIntStateOf(0) }
     var framings by remember { mutableStateOf(mapOf<String, PhotoFraming>()) }
+    var refreshedCover by remember { mutableStateOf<PhotoCover?>(null) }
+    var vaultEpoch by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(databasePath) {
         store = EntryStore.open(databasePath)
@@ -165,16 +168,19 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                 onOpened = {
                     scope.launch {
                         entries = listed()
+                        vaultEpoch += 1
                         if (syncing?.run() == SyncOutcome.SignedOut) {
                             forgetSession()
                             return@launch
                         }
                         entries = listed()
+                        vaultEpoch += 1
                     }
                 },
             ) {
                 LockGate(
                     enabled = preferences.lockEnabled,
+                    biometricEnabled = preferences.biometricEnabled,
                     unlocked = pinAccepted,
                     onUnlocked = { pinAccepted = true },
                 ) {
@@ -194,9 +200,15 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 settings.save(without)
                             }
                         },
+                        onToggleBiometric = { wanted ->
+                            val marked = preferences.copy(biometricEnabled = wanted)
+                            preferences = marked
+                            settings.save(marked)
+                        },
                         onChangePin = { pinSetup = PinSetupMode.Change },
                         avatar = avatar,
                         coversEpoch = coversEpoch,
+                        refreshedCover = refreshedCover,
                         onFramePhoto = { id ->
                             framing = PhotoFraming()
                             framingImage = null
@@ -319,7 +331,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             }
         }
 
-        LaunchedEffect(preferences.avatarPhotoId, store) {
+        LaunchedEffect(preferences.avatarPhotoId, store, vaultEpoch) {
             avatar = preferences.avatarPhotoId?.let { library.thumbnail(it) }
         }
 
@@ -328,48 +340,6 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             indication = null,
             onClick = { },
         )
-
-        val rounding = avatarFraming
-        if (rounding != null) {
-            BackHandler { avatarFraming = null }
-            LaunchedEffect(rounding) {
-                framingImage = runCatching { store?.client?.originalPhoto(rounding) }
-                    .getOrNull()
-                    ?.let { bytes ->
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                    }
-            }
-            CropScreen(
-                photo = framingImage,
-                framing = framing,
-                pending = framingPending,
-                title = "Frame your photo",
-                blurb = "Drag to move it, pinch to change how much it holds.",
-                ratio = PhotoFraming.SquareTallness,
-                round = true,
-                onFramingChange = { framing = it },
-                onSubmit = {
-                    if (!framingPending) {
-                        framingPending = true
-                        scope.launch {
-                            runCatching {
-                                store?.client?.frameAvatar(
-                                    rounding,
-                                    framing.x,
-                                    framing.y,
-                                    framing.width,
-                                )
-                            }
-                            avatar = library.thumbnail(rounding)
-                            framingPending = false
-                            avatarFraming = null
-                        }
-                    }
-                },
-                onBack = { avatarFraming = null },
-                modifier = sealedOff,
-            )
-        }
 
         val framed = framingPhoto
         if (framed != null) {
@@ -407,6 +377,9 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 )
                             }
                             framings = framings + (framed to framing)
+                            library.thumbnail(framed)?.let { fresh ->
+                                refreshedCover = PhotoCover(framed, fresh)
+                            }
                             framingPending = false
                             framingPhoto = null
                             coversEpoch += 1
@@ -468,6 +441,48 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             )
         }
 
+        val rounding = avatarFraming
+        if (rounding != null) {
+            BackHandler { avatarFraming = null }
+            LaunchedEffect(rounding) {
+                framingImage = runCatching { store?.client?.originalPhoto(rounding) }
+                    .getOrNull()
+                    ?.let { bytes ->
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                    }
+            }
+            CropScreen(
+                photo = framingImage,
+                framing = framing,
+                pending = framingPending,
+                title = "Frame your photo",
+                blurb = "Drag to move it, pinch to change how much it holds.",
+                ratio = PhotoFraming.SquareTallness,
+                round = true,
+                onFramingChange = { framing = it },
+                onSubmit = {
+                    if (!framingPending) {
+                        framingPending = true
+                        scope.launch {
+                            runCatching {
+                                store?.client?.frameAvatar(
+                                    rounding,
+                                    framing.x,
+                                    framing.y,
+                                    framing.width,
+                                )
+                            }
+                            avatar = library.thumbnail(rounding)
+                            framingPending = false
+                            avatarFraming = null
+                        }
+                    }
+                },
+                onBack = { avatarFraming = null },
+                modifier = sealedOff,
+            )
+        }
+
         val setup = pinSetup
         if (setup != null) {
             BackHandler { pinSetup = null }
@@ -502,7 +517,10 @@ private suspend fun submitProfile(
     }
     return when (state.step) {
         ProfileStep.Details -> {
-            onNameChange(state.name.trim())
+            val chosen = state.name.trim()
+            if (chosen.isNotBlank()) {
+                onNameChange(chosen)
+            }
             if (state.email.trim().equals(session.email(), ignoreCase = true)) {
                 null
             } else {

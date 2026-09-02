@@ -10,6 +10,7 @@ data class AppPreferences(
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime = LocalTime(21, 0),
     val lockEnabled: Boolean = false,
+    val biometricEnabled: Boolean = true,
     val stickerPack: StickerPack = StickerPack.Mixed,
     val textSize: TextSize = TextSize.Medium,
     val avatarPhotoId: String? = null,

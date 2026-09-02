@@ -39,10 +39,13 @@ internal fun SettingsToggleCard(
     reminderEnabled: Boolean,
     reminderTime: LocalTime,
     lockEnabled: Boolean,
+    biometricEnabled: Boolean,
+    biometricAvailable: Boolean,
     onToggleDark: (Boolean) -> Unit,
     onToggleReminder: (Boolean) -> Unit,
     onReminderTimeClick: () -> Unit,
     onToggleLock: (Boolean) -> Unit,
+    onToggleBiometric: (Boolean) -> Unit,
     onChangePin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -65,7 +68,7 @@ internal fun SettingsToggleCard(
         }
         SettingsDivider()
         ToggleRow(
-            label = "PIN / Biometric lock",
+            label = "PIN lock",
             subLabel = if (lockEnabled) "Ask when opening leafyPuff" else "Off",
             checked = lockEnabled,
             onToggle = onToggleLock,
@@ -73,6 +76,14 @@ internal fun SettingsToggleCard(
         if (lockEnabled) {
             ChangePinRow(onClick = onChangePin)
         }
+        SettingsDivider()
+        ToggleRow(
+            label = "Biometric lock",
+            subLabel = biometricSubLabel(lockEnabled, biometricAvailable, biometricEnabled),
+            checked = lockEnabled && biometricAvailable && biometricEnabled,
+            enabled = lockEnabled && biometricAvailable,
+            onToggle = onToggleBiometric,
+        )
     }
 }
 
@@ -110,28 +121,40 @@ private fun ChangePinRow(onClick: () -> Unit) {
     }
 }
 
+internal fun biometricSubLabel(
+    lockEnabled: Boolean,
+    available: Boolean,
+    enabled: Boolean,
+): String = when {
+    !lockEnabled -> "Turn on the PIN lock first"
+    !available -> "No fingerprint or face saved on this phone"
+    enabled -> "Use your fingerprint or face instead of the PIN"
+    else -> "Off"
+}
+
 @Composable
 private fun ToggleRow(
     label: String,
     subLabel: String?,
     checked: Boolean,
     onToggle: (Boolean) -> Unit,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onToggle(!checked) }
+            .clickable(enabled = enabled) { onToggle(!checked) }
             .padding(vertical = CardRowPaddingV),
         horizontalArrangement = Arrangement.spacedBy(CardContentGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RowLabel(label = label, subLabel = subLabel)
-        SettingsSwitch(checked = checked)
+        RowLabel(label = label, subLabel = subLabel, dimmed = !enabled)
+        SettingsSwitch(checked = checked, enabled = enabled)
     }
 }
 
 @Composable
-private fun RowScope.RowLabel(label: String, subLabel: String?) {
+private fun RowScope.RowLabel(label: String, subLabel: String?, dimmed: Boolean = false) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
 
@@ -142,7 +165,7 @@ private fun RowScope.RowLabel(label: String, subLabel: String?) {
         Text(
             text = label,
             style = typography.body.copy(fontWeight = FontWeight.W500),
-            color = colors.ink,
+            color = if (dimmed) colors.ink3 else colors.ink,
         )
         if (subLabel != null) {
             Text(

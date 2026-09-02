@@ -25,6 +25,7 @@ import com.leafypuff.ui.editor.EntryComposer
 import com.leafypuff.ui.editor.EntryDraft
 import com.leafypuff.ui.editor.OpenedEntry
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.PhotoCover
 import com.leafypuff.ui.photo.PhotoLibrary
 import com.leafypuff.ui.stats.StatRange
 import com.leafypuff.ui.stats.StatsSummary
@@ -40,10 +41,12 @@ fun LeafyHome(
     versionName: String,
     onPreferencesChange: (AppPreferences) -> Unit,
     onToggleLock: (Boolean) -> Unit,
+    onToggleBiometric: (Boolean) -> Unit,
     onChangePin: () -> Unit,
     onSignOut: () -> Unit,
     onEditProfile: () -> Unit,
     onFramePhoto: (String) -> Unit,
+    refreshedCover: PhotoCover?,
     coversEpoch: Int,
     avatar: ImageBitmap?,
     onOpenEntry: suspend (Entry) -> OpenedEntry?,
@@ -111,6 +114,7 @@ fun LeafyHome(
                 preferences = preferences,
                 versionName = versionName,
                 onToggleLock = onToggleLock,
+                onToggleBiometric = onToggleBiometric,
                 onChangePin = onChangePin,
                 onSignOut = onSignOut,
                 avatar = avatar,
@@ -174,6 +178,7 @@ fun LeafyHome(
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
             onFramePhoto = onFramePhoto,
+            refreshedCover = refreshedCover,
             onSave = { draft, kept ->
                 val reopened = !draft.fresh
                 val dropped = editingPhotos.map { it.id } - kept.map { it.id }.toSet()

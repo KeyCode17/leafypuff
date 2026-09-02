@@ -23,6 +23,7 @@ import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.photo.EntryPhoto
+import com.leafypuff.ui.photo.flowing
 
 private val CardPadding = 18.dp
 private val CardGap = 12.dp
@@ -76,7 +77,7 @@ fun EntryNoteCard(
             modifier = Modifier.defaultMinSize(minHeight = BodyMinHeight),
         )
 
-        photos.filter { it.place == null }.forEachIndexed { index, photo ->
+        photos.flowing().forEachIndexed { index, photo ->
             NotePhoto(
                 photo = photo,
                 isCover = index == 0,
