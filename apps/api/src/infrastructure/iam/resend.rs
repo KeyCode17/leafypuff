@@ -9,17 +9,17 @@ use crate::domain::iam::{EmailSender, IamError, OtpPurpose};
 
 use super::mail_body;
 
-const RESEND_ENDPOINT: &str = "https://api.resend.com/emails";
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct ResendEmailSender {
     client: Client,
     api_key: String,
     from: String,
+    endpoint: String,
 }
 
 impl ResendEmailSender {
-    pub fn new(api_key: String, from: String) -> Result<Self, IamError> {
+    pub fn new(api_key: String, from: String, endpoint: String) -> Result<Self, IamError> {
         let client = Client::builder()
             .timeout(REQUEST_TIMEOUT)
             .build()
@@ -28,6 +28,7 @@ impl ResendEmailSender {
             client,
             api_key,
             from,
+            endpoint,
         })
     }
 }
@@ -44,7 +45,7 @@ impl ResendEmailSender {
 
         let response = self
             .client
-            .post(RESEND_ENDPOINT)
+            .post(&self.endpoint)
             .bearer_auth(&self.api_key)
             .json(&payload)
             .send()

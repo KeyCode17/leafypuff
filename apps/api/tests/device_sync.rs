@@ -89,8 +89,12 @@ async fn server() -> Option<(String, DatabaseConnection, Uuid, String)> {
             verifier: issuer as Arc<dyn TokenVerifier>,
             generator: Arc::new(Blake3Otp::new([0_u8; 32])),
             mail: Arc::new(
-                ResendEmailSender::new("re_unused".to_owned(), "unused".to_owned())
-                    .expect("the mailer builds"),
+                ResendEmailSender::new(
+                    "re_unused".to_owned(),
+                    "unused".to_owned(),
+                    "http://127.0.0.1:1/unused".to_owned(),
+                )
+                .expect("the mailer builds"),
             ),
             clock: Arc::new(SystemClock),
         },

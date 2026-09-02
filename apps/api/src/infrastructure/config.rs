@@ -2,6 +2,8 @@ use data_encoding::HEXLOWER;
 
 const MINIMUM_SIGNING_SECRET_BYTES: usize = 32;
 const PEPPER_BYTES: usize = 32;
+const DEFAULT_MAIL_ENDPOINT: &str = "https://api.resend.com/emails";
+const SCHEME_SEPARATOR: &str = "://";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
@@ -21,6 +23,16 @@ fn sender(raw: &str) -> Result<String, ConfigError> {
     ))
 }
 
+fn endpoint(raw: String) -> Result<String, ConfigError> {
+    if raw.contains(SCHEME_SEPARATOR) {
+        return Ok(raw);
+    }
+    Err(ConfigError::Invalid(
+        "MAIL_ENDPOINT".to_owned(),
+        "carries no scheme".to_owned(),
+    ))
+}
+
 #[derive(Clone)]
 pub struct Config {
     pub database_url: String,
@@ -31,6 +43,7 @@ pub struct Config {
     pub resend_api_key: String,
     pub jwt_signing_secret: String,
     pub mail_from: String,
+    pub mail_endpoint: String,
     pub otp_pepper: [u8; PEPPER_BYTES],
     pub port: u16,
 }
@@ -52,6 +65,9 @@ impl Config {
             resend_api_key: required("RESEND_API_KEY")?,
             jwt_signing_secret: signing_secret(required("JWT_SIGNING_SECRET")?)?,
             mail_from: sender(&required("MAIL_FROM")?)?,
+            mail_endpoint: endpoint(
+                source("MAIL_ENDPOINT").unwrap_or_else(|| DEFAULT_MAIL_ENDPOINT.to_owned()),
+            )?,
             otp_pepper: pepper(&required("OTP_PEPPER")?)?,
             port,
         })

@@ -47,8 +47,12 @@ async fn main() {
         verifier: issuer as Arc<dyn TokenVerifier>,
         generator: Arc::new(Blake3Otp::new(config.otp_pepper)),
         mail: Arc::new(
-            ResendEmailSender::new(config.resend_api_key.clone(), config.mail_from.clone())
-                .expect("the mail sender must build"),
+            ResendEmailSender::new(
+                config.resend_api_key.clone(),
+                config.mail_from.clone(),
+                config.mail_endpoint.clone(),
+            )
+            .expect("the mail sender must build"),
         ),
         clock: Arc::new(SystemClock),
     };
