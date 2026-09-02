@@ -34,6 +34,7 @@ internal fun SettingsActionCard(
     onSync: () -> Unit,
     onExport: () -> Unit,
     onDeleteAll: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -53,6 +54,17 @@ internal fun SettingsActionCard(
         ActionRow(onClick = onExport) {
             RowTitle(text = "Export my diary", color = colors.ink)
             TrailingLabel(text = "$entryCount entries")
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = colors.ink3,
+                modifier = Modifier.size(TrailingGlyphSize),
+            )
+        }
+        SettingsDivider()
+        ActionRow(onClick = onSignOut) {
+            RowTitle(text = "Log out", color = colors.ink)
+            TrailingLabel(text = "Keeps this diary on the device")
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,

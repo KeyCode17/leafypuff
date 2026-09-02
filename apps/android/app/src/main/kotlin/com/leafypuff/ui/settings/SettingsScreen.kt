@@ -38,6 +38,7 @@ fun SettingsScreen(
     onSync: () -> Unit,
     onExport: () -> Unit,
     onDeleteAll: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var timePopupOpen by remember { mutableStateOf(false) }
@@ -87,6 +88,7 @@ fun SettingsScreen(
             onSync = onSync,
             onExport = onExport,
             onDeleteAll = onDeleteAll,
+            onSignOut = onSignOut,
         )
     }
 

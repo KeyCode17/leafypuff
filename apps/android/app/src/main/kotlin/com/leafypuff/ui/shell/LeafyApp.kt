@@ -153,6 +153,10 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             }
                         },
                         onChangePin = { pinSetup = PinSetupMode.Change },
+                        onSignOut = {
+                            pinAccepted = false
+                            forgetSession()
+                        },
                         onPreferencesChange = {
                             preferences = it
                             settings.save(it)

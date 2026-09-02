@@ -41,6 +41,7 @@ fun LeafyHome(
     onPreferencesChange: (AppPreferences) -> Unit,
     onToggleLock: (Boolean) -> Unit,
     onChangePin: () -> Unit,
+    onSignOut: () -> Unit,
     onOpenEntry: suspend (Entry) -> OpenedEntry?,
     onStatistics: suspend (StatRange) -> StatsSummary?,
     onExport: suspend () -> String?,
@@ -107,6 +108,7 @@ fun LeafyHome(
                 versionName = versionName,
                 onToggleLock = onToggleLock,
                 onChangePin = onChangePin,
+                onSignOut = onSignOut,
                 onSelectDay = { selected = it },
                 onMonthChange = { visibleMonth = it },
                 onToday = {
