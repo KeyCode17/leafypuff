@@ -41,6 +41,8 @@ fun EntryNoteCard(
     photos: List<EntryPhoto>,
     onRemovePhoto: ((String) -> Unit)?,
     onFramePhoto: ((String) -> Unit)?,
+    onMakeCover: ((String) -> Unit)?,
+    onPlaceFreely: ((String) -> Unit)?,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onRemoveTag: (Int) -> Unit,
@@ -74,14 +76,16 @@ fun EntryNoteCard(
             modifier = Modifier.defaultMinSize(minHeight = BodyMinHeight),
         )
 
-        photos.forEachIndexed { index, photo ->
+        photos.filter { it.place == null }.forEachIndexed { index, photo ->
             NotePhoto(
                 photo = photo,
                 isCover = index == 0,
                 onRemove = onRemovePhoto?.let { remove -> { remove(photo.id) } },
-                onFrame = onFramePhoto
-                    ?.takeIf { index == 0 }
-                    ?.let { frame -> { frame(photo.id) } },
+                onFrame = onFramePhoto?.let { frame -> { frame(photo.id) } },
+                onMakeCover = onMakeCover
+                    ?.takeIf { index > 0 }
+                    ?.let { promote -> { promote(photo.id) } },
+                onPlaceFreely = onPlaceFreely?.let { place -> { place(photo.id) } },
             )
         }
 
