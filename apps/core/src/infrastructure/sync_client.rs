@@ -6,7 +6,7 @@ use serde_json::{Value, json};
 use uuid::Uuid;
 
 use super::http_client;
-use super::http_error::reached;
+use super::http_error::{reached, refused};
 use crate::domain::{CoreError, EntryId, OutboundEntry, SyncOutcome};
 
 use super::entity::entries;
@@ -75,10 +75,7 @@ impl SyncClient {
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         if !response.status().is_success() {
-            return Err(CoreError::Storage(format!(
-                "{ERR_REFUSED}: {}",
-                response.status()
-            )));
+            return Err(refused(response.status(), ERR_REFUSED));
         }
         Ok(())
     }
@@ -97,10 +94,7 @@ impl SyncClient {
             .await
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         if !response.status().is_success() {
-            return Err(CoreError::Storage(format!(
-                "{ERR_REFUSED}: {}",
-                response.status()
-            )));
+            return Err(refused(response.status(), ERR_REFUSED));
         }
         let body: Value = response
             .json()

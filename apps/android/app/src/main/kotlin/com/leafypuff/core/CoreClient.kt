@@ -139,6 +139,11 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.resealWithRecoveryCode(baseUrl, accessToken, code, passphrase, updatedAtMs)
     }
 
+    suspend fun refreshSession(baseUrl: String, refreshToken: String): IssuedSession =
+        withContext(Dispatchers.IO) {
+            core.refreshSession(baseUrl, refreshToken).toIssued()
+        }
+
     suspend fun signIn(baseUrl: String, email: String, password: String): MailedChallenge =
         withContext(Dispatchers.IO) {
             core.signIn(baseUrl, email, password).toChallenge()

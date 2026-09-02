@@ -1,7 +1,7 @@
 #![cfg(feature = "sync")]
 #![allow(clippy::expect_used)]
 
-use leafypuff_core::domain::CoreError;
+use leafypuff_core::domain::{CoreError, Rejection};
 use leafypuff_core::infrastructure::{MediaSync, VaultSync};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
@@ -93,5 +93,31 @@ async fn a_refused_vault_read_is_not_reported_as_an_unreadable_answer() {
     assert!(
         matches!(failure, CoreError::Storage(_)),
         "a refusal names the status, it does not blame the shape: {failure:?}"
+    );
+}
+
+#[tokio::test]
+async fn an_expired_session_is_named_as_one_rather_than_a_storage_failure() {
+    let (base_url, _captured) = recording_server(
+        "401 Unauthorized",
+        r#"{"success":false,"data":null,"error":{"code":"UNAUTHENTICATED"}}"#,
+    )
+    .await;
+
+    let failure = VaultSync::new(base_url, "stale".to_owned(), DEVICE)
+        .expect("the client builds")
+        .pull()
+        .await
+        .expect_err("a stale token must fail");
+
+    assert!(
+        matches!(
+            failure,
+            CoreError::Rejected {
+                rejection: Rejection::InvalidCredentials,
+                ..
+            }
+        ),
+        "the app has to know to renew, not to report a broken server: {failure:?}"
     );
 }
