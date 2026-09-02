@@ -74,32 +74,24 @@ private fun PlacedStickerBox(
     val width by rememberUpdatedState(layerWidth)
     val height by rememberUpdatedState(layerHeight)
 
-    Box(
-        modifier = Modifier
-            .offset(
-                (sticker.x * layerWidth).dp - HandleInset,
-                (sticker.y * layerHeight).dp - HandleInset,
-            )
-            .size(sticker.size.dp + HandleInset * 2)
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = { onSelect(current.key) })
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { onSelect(current.key) },
-                    onDrag = { change, drag ->
-                        change.consume()
-                        onChange(
-                            current.movedBy(
-                                deltaX = drag.x.toDp().value,
-                                deltaY = drag.y.toDp().value,
-                                layerWidth = width,
-                                layerHeight = height,
-                            ),
-                        )
-                    },
-                )
-            },
+    PlacedFrame(
+        x = sticker.x,
+        y = sticker.y,
+        size = sticker.size,
+        rotation = sticker.rotation,
+        selected = selected,
+        layerWidth = layerWidth,
+        layerHeight = layerHeight,
+        onSelect = { onSelect(current.key) },
+        onMove = { deltaX, deltaY ->
+            onChange(current.movedBy(deltaX, deltaY, width, height))
+        },
+        onRotate = { onChange(current.rotatedTo(it)) },
+        onResize = { onChange(current.resizedTo(it)) },
+        onRemove = {
+            onRemove(current.key)
+            onSelect(null)
+        },
     ) {
         StickerArt(
             sticker = sticker.sticker,
@@ -108,31 +100,5 @@ private fun PlacedStickerBox(
                 .size(sticker.size.dp)
                 .graphicsLayer { rotationZ = sticker.rotation },
         )
-
-        if (selected) {
-            SelectionOutline(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(sticker.size.dp + OutlineInset * 2),
-            )
-            RemoveHandle(
-                onRemove = {
-                    onRemove(current.key)
-                    onSelect(null)
-                },
-                modifier = Modifier.align(Alignment.TopStart),
-            )
-            RotateHandle(
-                stickerSize = sticker.size,
-                rotation = sticker.rotation,
-                onRotate = { onChange(current.rotatedTo(it)) },
-                modifier = Modifier.align(Alignment.TopEnd),
-            )
-            ResizeHandle(
-                stickerSize = sticker.size,
-                onResize = { onChange(current.resizedTo(it)) },
-                modifier = Modifier.align(Alignment.BottomEnd),
-            )
-        }
     }
 }
