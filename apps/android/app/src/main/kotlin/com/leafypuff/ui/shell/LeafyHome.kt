@@ -161,7 +161,7 @@ fun LeafyHome(
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
             onSave = { draft, photoIds ->
-                val reopened = draft.id != null
+                val reopened = !draft.fresh
                 onSave(
                     draft,
                     photoIds,

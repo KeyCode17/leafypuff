@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.statusBarsPadding
+import java.util.UUID
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -175,7 +177,8 @@ private fun MetaPopupHost(
 }
 
 private fun blankDraft(today: LocalDate): EntryDraft = EntryDraft(
-    id = null,
+    id = UUID.randomUUID().toString(),
+    fresh = true,
     date = today,
     mood = Mood.Happy,
     title = "",

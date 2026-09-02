@@ -76,6 +76,18 @@ impl LeafyPuffCore {
         ))
     }
 
+    pub async fn refresh_session(
+        &self,
+        base_url: String,
+        refresh_token: String,
+    ) -> Result<FfiSession, LeafyPuffCoreError> {
+        let device_id = self.outbox.device_id().await?;
+        let client = AuthClient::new(base_url)?;
+        Ok(FfiSession::from(
+            client.refresh(refresh_token, device_id).await?,
+        ))
+    }
+
     pub async fn sync_now(
         &self,
         base_url: String,

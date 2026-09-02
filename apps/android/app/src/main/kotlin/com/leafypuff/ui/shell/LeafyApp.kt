@@ -16,6 +16,8 @@ import com.leafypuff.data.EntryStore
 import com.leafypuff.data.PinLock
 import com.leafypuff.data.PreferenceStore
 import com.leafypuff.data.SessionStore
+import com.leafypuff.data.SyncOutcome
+import com.leafypuff.data.SyncRunner
 import com.leafypuff.data.VaultAccess
 import com.leafypuff.domain.Entry
 import com.leafypuff.notify.NotificationPermission
@@ -77,6 +79,15 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
         store?.let { CorePhotoLibrary(it.client) } ?: NoPhotoLibrary
     }
     val vault = remember(store) { store?.let { VaultAccess(it.client, deviceKey) } }
+    val syncing = remember(store) { store?.let { SyncRunner(it, session, apiBaseUrl) } }
+
+    val forgetSession = {
+        scope.launch { vault?.signOut() }
+        session.clear()
+        credentials = null
+        signedIn = false
+        entries = emptyList()
+    }
 
     LeafyTheme(
         darkOverride = preferences.darkMode,
@@ -95,28 +106,19 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     settings.save(named)
                 }
             },
-            onPasswordReset = {
-                scope.launch { vault?.signOut() }
-                session.clear()
-                credentials = null
-                signedIn = false
-            },
+            onPasswordReset = { forgetSession() },
         ) {
             VaultGate(
                 access = vault,
                 signedIn = credentials,
                 apiBaseUrl = apiBaseUrl,
-                onSignedOut = {
-                    scope.launch { vault?.signOut() }
-                    session.clear()
-                    credentials = null
-                    signedIn = false
-                    entries = emptyList()
-                },
+                onSignedOut = { forgetSession() },
                 onOpened = {
                     scope.launch {
                         entries = store?.list().orEmpty()
-                        store?.sync(apiBaseUrl, session.accessToken())
+                        if (syncing?.run() == SyncOutcome.SignedOut) {
+                            forgetSession()
+                        }
                         entries = store?.list().orEmpty()
                     }
                 },
@@ -153,7 +155,17 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                         },
                         onStatistics = { picked -> store?.statistics(picked, today) },
                         onExport = { store?.export(exportPath(context, today)) },
-                        onSync = { store?.sync(apiBaseUrl, session.accessToken()) != null },
+                        onSync = {
+                            when (syncing?.run()) {
+                                SyncOutcome.Moved -> true
+                                SyncOutcome.SignedOut -> {
+                                    forgetSession()
+                                    false
+                                }
+
+                                else -> false
+                            }
+                        },
                         onSave = { draft, photoIds, onDone, onProblem ->
                             scope.launch {
                                 runCatching { store?.save(draft, photoIds) }.fold(

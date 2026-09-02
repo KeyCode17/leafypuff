@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::{Value, json};
 
 use super::http_client;
-use super::http_error::reached;
+use super::http_error::{reached, refused};
 use crate::domain::CoreError;
 use crate::domain::crypto::{KeyVault, WrappedKey};
 
@@ -95,10 +95,7 @@ impl VaultSync {
             .map_err(|error| reached(&error, ERR_UNREACHABLE))?;
         let status = response.status();
         if !status.is_success() {
-            return Err(CoreError::Storage(format!(
-                "{ERR_UNREACHABLE}: {}",
-                status.as_u16()
-            )));
+            return Err(refused(status, ERR_UNREACHABLE));
         }
         response
             .json()
@@ -111,8 +108,7 @@ async fn refuse_unless_ok(response: reqwest::Response) -> Result<(), CoreError> 
     if response.status().is_success() {
         return Ok(());
     }
-    let status = response.status().as_u16();
-    Err(CoreError::Storage(format!("{ERR_UNREACHABLE}: {status}")))
+    Err(refused(response.status(), ERR_UNREACHABLE))
 }
 
 fn row<'a>(rows: &'a [Value], kind: &str) -> Option<&'a Value> {

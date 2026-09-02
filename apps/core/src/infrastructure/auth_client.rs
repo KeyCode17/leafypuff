@@ -9,6 +9,7 @@ const REGISTER_PATH: &str = "/v1/auth/register";
 const SIGN_IN_PATH: &str = "/v1/auth/sign-in";
 const VERIFY_SIGN_IN_PATH: &str = "/v1/auth/sign-in/verify";
 const VERIFY_EMAIL_PATH: &str = "/v1/auth/verify-email";
+const REFRESH_PATH: &str = "/v1/auth/refresh";
 const FORGOT_PASSWORD_PATH: &str = "/v1/auth/password/forgot";
 const RESET_PASSWORD_PATH: &str = "/v1/auth/password/reset";
 
@@ -94,6 +95,20 @@ impl AuthClient {
             .post(
                 VERIFY_SIGN_IN_PATH,
                 &json!({ "email": email, "code": code, "device_id": device_id }),
+            )
+            .await?;
+        session(&body)
+    }
+
+    pub async fn refresh(
+        &self,
+        refresh_token: String,
+        device_id: String,
+    ) -> Result<Session, CoreError> {
+        let body = self
+            .post(
+                REFRESH_PATH,
+                &json!({ "refresh_token": refresh_token, "device_id": device_id }),
             )
             .await?;
         session(&body)

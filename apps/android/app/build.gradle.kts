@@ -61,8 +61,8 @@ android {
         applicationId = "com.leafypuff"
         minSdk = 23
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.22.2"
+        versionCode = 34
+        versionName = "0.22.3"
 
         // The deployed API. A build field rather than a constant in source so a debug build
         // can be pointed at a local api without editing Kotlin.
@@ -106,6 +106,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.datetime)
     implementation(libs.jna) { artifact { type = "aar" } }

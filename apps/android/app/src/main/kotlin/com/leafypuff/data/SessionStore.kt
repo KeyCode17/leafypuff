@@ -12,6 +12,15 @@ class SessionStore(private val context: Context) {
 
     fun accessToken(): String? = preferences().getString(AccessTokenKey, null)
 
+    fun refreshToken(): String? = preferences().getString(RefreshTokenKey, null)
+
+    fun renew(accessToken: String, refreshToken: String) {
+        preferences().edit()
+            .putString(AccessTokenKey, accessToken)
+            .putString(RefreshTokenKey, refreshToken)
+            .apply()
+    }
+
     fun email(): String = preferences().getString(EmailKey, "").orEmpty()
 
     fun start(email: String, accessToken: String, refreshToken: String) {

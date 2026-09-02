@@ -16,4 +16,5 @@ data class EntryDraft(
     val weather: String?,
     val location: String?,
     val stickers: List<PlacedSticker> = emptyList(),
+    val fresh: Boolean = false,
 )

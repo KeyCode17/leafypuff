@@ -34,3 +34,15 @@ class EntryDraftIdTest {
         assertEquals(held, draft(held).toCoreDraft(emptyList()).id)
     }
 }
+
+class EntryDraftStabilityTest {
+    @Test
+    fun aDraftCarriesTheSameIdThroughEveryMappingSoASecondSaveOverwritesTheFirst() {
+        val held = draft(UUID.randomUUID().toString())
+
+        assertEquals(
+            held.toCoreDraft(emptyList()).id,
+            held.toCoreDraft(emptyList()).id,
+        )
+    }
+}

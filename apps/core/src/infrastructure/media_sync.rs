@@ -1,7 +1,7 @@
 use reqwest::{Client, StatusCode};
 
 use super::http_client;
-use super::http_error::reached;
+use super::http_error::{reached, refused};
 use crate::domain::{CoreError, PhotoKind};
 
 const MEDIA_PATH: &str = "/v1/media";
@@ -87,5 +87,5 @@ const fn variant(kind: PhotoKind) -> &'static str {
 }
 
 fn unreachable(status: StatusCode) -> CoreError {
-    CoreError::Storage(format!("{ERR_UNREACHABLE}: {}", status.as_u16()))
+    refused(status, ERR_UNREACHABLE)
 }

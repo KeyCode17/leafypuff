@@ -61,7 +61,7 @@ fun EntryEditor(
                 .padding(bottom = ScrollBottomPadding),
         ) {
             EntryEditorHeader(
-                title = if (draft.id == null) "New Entry" else "Edit Entry",
+                title = if (draft.fresh) "New Entry" else "Edit Entry",
                 onClose = onClose,
                 onSave = onSave,
             )
