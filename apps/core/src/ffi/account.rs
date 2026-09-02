@@ -165,6 +165,50 @@ impl LeafyPuffCore {
         Ok(())
     }
 
+    pub async fn frame_avatar(
+        &self,
+        photo_id: String,
+        x: f64,
+        y: f64,
+        width: f64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        let framing = Framing { x, y, width }.clamped();
+        let original = self.photos.read(&photo_id, PhotoKind::Original)?;
+        let square = self.thumbnails.framed_square(&original, framing)?;
+        self.photos.write(&photo_id, PhotoKind::Cover, &square)?;
+        Ok(())
+    }
+
+    pub async fn place_photo(
+        &self,
+        photo_id: String,
+        x: f64,
+        y: f64,
+        size: f64,
+        rotation: f64,
+    ) -> Result<(), LeafyPuffCoreError> {
+        self.outbox
+            .place_photo(&photo_id, x, y, size, rotation)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn photo_placement(&self, photo_id: String) -> Result<Vec<f64>, LeafyPuffCoreError> {
+        Ok(self
+            .outbox
+            .placement_of(&photo_id)
+            .await?
+            .map_or_else(Vec::new, |held| vec![held[0], held[1], held[2], held[3]]))
+    }
+
+    pub async fn photo_framing(&self, photo_id: String) -> Result<Vec<f64>, LeafyPuffCoreError> {
+        Ok(self
+            .outbox
+            .framing_of(&photo_id)
+            .await?
+            .map_or_else(Vec::new, |held| vec![held.x, held.y, held.width]))
+    }
+
     pub async fn original_photo(&self, photo_id: String) -> Result<Vec<u8>, LeafyPuffCoreError> {
         Ok(self.photos.read(&photo_id, PhotoKind::Original)?)
     }

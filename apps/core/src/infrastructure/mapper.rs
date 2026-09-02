@@ -160,6 +160,10 @@ pub fn photo_row(entry_id: &str, photo: &PhotoRef) -> photos::ActiveModel {
         crop_x: ActiveValue::NotSet,
         crop_y: ActiveValue::NotSet,
         crop_width: ActiveValue::NotSet,
+        place_x: ActiveValue::NotSet,
+        place_y: ActiveValue::NotSet,
+        place_size: ActiveValue::NotSet,
+        place_rotation: ActiveValue::NotSet,
     }
 }
 

@@ -202,6 +202,29 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
             core.framePhoto(photoId, x, y, width)
         }
 
+    suspend fun frameAvatar(photoId: String, x: Double, y: Double, width: Double) =
+        withContext(Dispatchers.IO) {
+            core.frameAvatar(photoId, x, y, width)
+        }
+
+    suspend fun placePhoto(
+        photoId: String,
+        x: Double,
+        y: Double,
+        size: Double,
+        rotation: Double,
+    ) = withContext(Dispatchers.IO) {
+        core.placePhoto(photoId, x, y, size, rotation)
+    }
+
+    suspend fun photoPlacement(photoId: String): List<Double> = withContext(Dispatchers.IO) {
+        core.photoPlacement(photoId)
+    }
+
+    suspend fun photoFraming(photoId: String): List<Double> = withContext(Dispatchers.IO) {
+        core.photoFraming(photoId)
+    }
+
     suspend fun originalPhoto(photoId: String): ByteArray = withContext(Dispatchers.IO) {
         core.originalPhoto(photoId)
     }

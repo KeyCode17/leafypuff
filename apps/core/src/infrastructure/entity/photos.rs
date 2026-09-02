@@ -12,6 +12,10 @@ pub struct Model {
     pub crop_x: Option<f64>,
     pub crop_y: Option<f64>,
     pub crop_width: Option<f64>,
+    pub place_x: Option<f64>,
+    pub place_y: Option<f64>,
+    pub place_size: Option<f64>,
+    pub place_rotation: Option<f64>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

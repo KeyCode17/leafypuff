@@ -37,6 +37,10 @@ async fn entities_round_trip_against_the_migrated_schema() {
     .expect("an entry row inserts");
 
     photos::ActiveModel {
+        place_x: Set(None),
+        place_y: Set(None),
+        place_size: Set(None),
+        place_rotation: Set(None),
         crop_x: Set(None),
         crop_y: Set(None),
         crop_width: Set(None),

@@ -34,9 +34,25 @@ impl Framing {
 }
 
 pub fn framed_cover(width: u32, height: u32, framing: Framing) -> Result<CropBox, CoreError> {
+    framed_to(
+        width,
+        height,
+        framing,
+        COVER_ASPECT_WIDTH,
+        COVER_ASPECT_HEIGHT,
+    )
+}
+
+pub fn framed_to(
+    width: u32,
+    height: u32,
+    framing: Framing,
+    aspect_width: u32,
+    aspect_height: u32,
+) -> Result<CropBox, CoreError> {
     let held = framing.clamped();
-    let across = ((f64::from(width) * held.width).round() as u32).max(COVER_ASPECT_WIDTH);
-    let down = across * COVER_ASPECT_HEIGHT / COVER_ASPECT_WIDTH;
+    let across = ((f64::from(width) * held.width).round() as u32).max(aspect_width);
+    let down = across * aspect_height / aspect_width;
     if across > width || down > height {
         return top_anchored_cover(width, height);
     }
