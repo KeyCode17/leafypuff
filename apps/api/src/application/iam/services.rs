@@ -9,8 +9,8 @@ use super::consume_challenge::ConsumeChallenge;
 use super::issue_challenge::IssueChallenge;
 use super::mint_session::MintSession;
 use super::{
-    CompleteSignIn, ConfirmEmailChange, RefreshSession, RegisterAccount, ResetPassword,
-    StartEmailChange, StartPasswordReset, StartSignIn, VerifyEmail,
+    CompleteSignIn, ConfirmEmailChange, ReadProfile, RefreshSession, RegisterAccount,
+    ResetPassword, SaveProfile, StartEmailChange, StartPasswordReset, StartSignIn, VerifyEmail,
 };
 
 #[derive(Clone)]
@@ -27,6 +27,14 @@ pub struct IamServices {
 }
 
 impl IamServices {
+    pub fn read_profile(&self) -> ReadProfile {
+        ReadProfile::new(Arc::clone(&self.accounts))
+    }
+
+    pub fn save_profile(&self) -> SaveProfile {
+        SaveProfile::new(Arc::clone(&self.accounts))
+    }
+
     pub fn register(&self) -> RegisterAccount {
         RegisterAccount::new(
             Arc::clone(&self.accounts),

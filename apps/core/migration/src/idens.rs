@@ -45,3 +45,15 @@ pub enum Tags {
     EntryId,
     Tag,
 }
+
+#[derive(DeriveIden)]
+pub enum Profile {
+    Table,
+    Id,
+    DisplayName,
+    AvatarPhotoId,
+    AvatarX,
+    AvatarY,
+    AvatarWidth,
+    UpdatedAtMs,
+}

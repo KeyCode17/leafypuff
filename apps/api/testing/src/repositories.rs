@@ -3,14 +3,15 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use leafypuff_api::domain::iam::{
-    Account, AccountRepository, IamError, OtpCode, OtpPurpose, OtpRepository, RefreshToken,
-    RefreshTokenRepository,
+    Account, AccountRepository, IamError, OtpCode, OtpPurpose, OtpRepository, Profile,
+    RefreshToken, RefreshTokenRepository,
 };
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
 pub struct InMemoryAccounts {
     rows: Arc<Mutex<Vec<Account>>>,
+    profiles: Arc<Mutex<Vec<(Uuid, Profile)>>>,
 }
 
 impl InMemoryAccounts {
@@ -27,6 +28,30 @@ impl InMemoryCredentials {
 
 #[async_trait]
 impl AccountRepository for InMemoryAccounts {
+    async fn profile(&self, id: Uuid) -> Result<Profile, IamError> {
+        let held = self.profiles.lock().expect("the profile lock holds");
+        Ok(held
+            .iter()
+            .find(|(account_id, _)| *account_id == id)
+            .map(|(_, profile)| profile.clone())
+            .unwrap_or_default())
+    }
+
+    async fn save_profile(&self, id: Uuid, profile: Profile) -> Result<Profile, IamError> {
+        let mut held = self.profiles.lock().expect("the profile lock holds");
+        let stored = held
+            .iter()
+            .find(|(account_id, _)| *account_id == id)
+            .map(|(_, kept)| kept.clone())
+            .unwrap_or_default();
+        if !profile.supersedes(&stored) {
+            return Ok(stored);
+        }
+        held.retain(|(account_id, _)| *account_id != id);
+        held.push((id, profile.clone()));
+        Ok(profile)
+    }
+
     async fn by_email(&self, email: &str) -> Result<Option<Account>, IamError> {
         let rows = self.rows.lock().expect("the account lock holds");
         Ok(rows

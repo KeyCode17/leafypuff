@@ -4,6 +4,8 @@ pub mod entries;
 pub mod enums;
 pub mod error;
 pub mod photos;
+#[cfg(all(feature = "sqlite", feature = "sync"))]
+pub mod profile;
 pub mod records;
 pub mod stats_records;
 pub mod vault;
@@ -17,6 +19,7 @@ use crate::domain::crypto::{
     KeyVault, RecoveryCode, hash_pin as crypto_hash_pin, verify_pin as crypto_verify_pin,
 };
 use crate::domain::error::ERR_DATE_UNREADABLE;
+use crate::infrastructure::profile_store::ProfileStore;
 use crate::infrastructure::{
     FilePhotoStore, ImageThumbnailer, KamadakExifReader, SqliteDeviceSlotStore,
     SqliteEntryRepository, SqliteVaultStore, SyncOutbox, SystemClock, VaultSealer, db,
@@ -53,6 +56,7 @@ pub struct LeafyPuffCore {
     vault: SqliteVaultStore,
     device_slot: SqliteDeviceSlotStore,
     outbox: SyncOutbox,
+    profile: ProfileStore,
     sealer: VaultSealer,
     clock: SystemClock,
     photos: FilePhotoStore<VaultSealer>,
@@ -71,7 +75,8 @@ impl LeafyPuffCore {
             repository: SqliteEntryRepository::new(connection.clone(), sealer.clone()),
             vault: SqliteVaultStore::new(connection.clone()),
             device_slot: SqliteDeviceSlotStore::new(connection.clone()),
-            outbox: SyncOutbox::new(connection),
+            outbox: SyncOutbox::new(connection.clone()),
+            profile: ProfileStore::new(connection),
             sealer: sealer.clone(),
             clock: SystemClock,
             photos: FilePhotoStore::beside(&db_path, sealer),

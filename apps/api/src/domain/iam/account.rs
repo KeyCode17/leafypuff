@@ -17,6 +17,19 @@ impl Account {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Profile {
+    pub sealed_profile: Option<String>,
+    pub avatar_photo_id: Option<Uuid>,
+    pub updated_at_ms: i64,
+}
+
+impl Profile {
+    pub const fn supersedes(&self, stored: &Self) -> bool {
+        self.updated_at_ms >= stored.updated_at_ms
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RefreshToken {
     pub id: Uuid,

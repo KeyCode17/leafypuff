@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use sea_orm::DbErr;
 
 use crate::domain::iam::error::ERR_UNKNOWN_OTP_PURPOSE;
-use crate::domain::iam::{Account, IamError, OtpCode, OtpPurpose, RefreshToken};
+use crate::domain::iam::{Account, IamError, OtpCode, OtpPurpose, Profile, RefreshToken};
 
 use super::entity::{accounts, otp_codes, refresh_tokens};
 
@@ -27,6 +27,14 @@ pub fn account(row: accounts::Model) -> Account {
         display_name: row.display_name,
         email_verified_at: row.email_verified_at.map(utc),
         pending_email: row.pending_email,
+    }
+}
+
+pub fn profile(row: accounts::Model) -> Profile {
+    Profile {
+        sealed_profile: row.sealed_profile,
+        avatar_photo_id: row.avatar_photo_id,
+        updated_at_ms: row.profile_updated_at_ms,
     }
 }
 

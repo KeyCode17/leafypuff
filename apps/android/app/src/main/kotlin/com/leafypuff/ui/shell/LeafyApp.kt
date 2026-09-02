@@ -113,12 +113,19 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
 
     var avatarFraming by remember { mutableStateOf<String?>(null) }
 
+    val rememberProfile: (String, String?) -> Unit = { chosen, worn ->
+        scope.launch {
+            runCatching { store?.client?.saveProfile(chosen.ifBlank { null }, worn) }
+        }
+    }
+
     val pickAvatar = rememberPhotoPicker { bytes ->
         scope.launch {
             val imported = library.import(bytes) ?: return@launch
             val worn = preferences.copy(avatarPhotoId = imported.id)
             preferences = worn
             settings.save(worn)
+            rememberProfile(worn.name, worn.avatarPhotoId)
             avatar = imported.cover
             framing = PhotoFraming()
             framingImage = null
@@ -225,8 +232,12 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                             forgetSession()
                         },
                         onPreferencesChange = {
+                            val renamed = it.name != preferences.name
                             preferences = it
                             settings.save(it)
+                            if (renamed) {
+                                rememberProfile(it.name, it.avatarPhotoId)
+                            }
                             reminders.apply(it.reminderEnabled, it.reminderTime)
                             if (it.reminderEnabled && needsNotificationConsent(context)) {
                                 askToNotify.launch(NotificationPermission)
@@ -331,6 +342,28 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
             }
         }
 
+        LaunchedEffect(vaultEpoch, store) {
+            if (vaultEpoch == 0) {
+                return@LaunchedEffect
+            }
+            val held = runCatching { store?.client?.profile() }.getOrNull()
+                ?: return@LaunchedEffect
+            if (held.updatedAtMs == 0L) {
+                if (preferences.name.isNotBlank() || preferences.avatarPhotoId != null) {
+                    rememberProfile(preferences.name, preferences.avatarPhotoId)
+                }
+                return@LaunchedEffect
+            }
+            val adopted = preferences.copy(
+                name = held.displayName.orEmpty(),
+                avatarPhotoId = held.avatarPhotoId,
+            )
+            if (adopted != preferences) {
+                preferences = adopted
+                settings.save(adopted)
+            }
+        }
+
         LaunchedEffect(preferences.avatarPhotoId, store, vaultEpoch) {
             avatar = preferences.avatarPhotoId?.let { library.thumbnail(it) }
         }
@@ -409,6 +442,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                     val bare = preferences.copy(avatarPhotoId = null)
                     preferences = bare
                     settings.save(bare)
+                    rememberProfile(bare.name, null)
                     avatar = null
                     if (held != null) {
                         scope.launch {
@@ -431,6 +465,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                     val named = preferences.copy(name = chosen)
                                     preferences = named
                                     settings.save(named)
+                                    rememberProfile(chosen, named.avatarPhotoId)
                                 },
                             )
                         }
