@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +28,8 @@ fun SettingsScreen(
     state: SettingsState,
     versionName: String,
     onNameChange: (String) -> Unit,
+    avatar: ImageBitmap?,
+    onEditProfile: () -> Unit,
     onToggleDark: (Boolean) -> Unit,
     onToggleReminder: (Boolean) -> Unit,
     onReminderTimeChange: (LocalTime) -> Unit,
@@ -59,7 +62,9 @@ fun SettingsScreen(
         SettingsProfileCard(
             name = state.name,
             writingSince = state.writingSince,
+            avatar = avatar,
             onNameChange = onNameChange,
+            onEditProfile = onEditProfile,
             modifier = Modifier.padding(bottom = CardSpacing),
         )
         SettingsToggleCard(

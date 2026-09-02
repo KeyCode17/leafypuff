@@ -1,6 +1,11 @@
 package com.leafypuff.ui.settings
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +46,9 @@ internal fun formatWritingSince(date: LocalDate): String = "Writing since ${form
 internal fun SettingsProfileCard(
     name: String,
     writingSince: LocalDate?,
+    avatar: ImageBitmap?,
     onNameChange: (String) -> Unit,
+    onEditProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -59,14 +66,25 @@ internal fun SettingsProfileCard(
                     .background(colors.soft2),
                 contentAlignment = Alignment.Center,
             ) {
-                BunnyFace(mood = Mood.Calm, modifier = Modifier.size(AvatarBunnySize))
+                if (avatar == null) {
+                    BunnyFace(mood = Mood.Calm, modifier = Modifier.size(AvatarBunnySize))
+                } else {
+                    Image(
+                        bitmap = avatar,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
             NameBlock(name = name, writingSince = writingSince, onNameChange = onNameChange)
             Icon(
                 imageVector = Icons.Filled.Edit,
-                contentDescription = "Edit your name",
+                contentDescription = "Edit your profile",
                 tint = colors.ink3,
-                modifier = Modifier.size(EditGlyphSize),
+                modifier = Modifier
+                    .clickable(onClick = onEditProfile)
+                    .size(EditGlyphSize),
             )
         }
     }

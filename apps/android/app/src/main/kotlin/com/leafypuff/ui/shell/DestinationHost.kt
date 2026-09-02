@@ -38,6 +38,8 @@ fun DestinationHost(
     onToggleLock: (Boolean) -> Unit,
     onChangePin: () -> Unit,
     onSignOut: () -> Unit,
+    avatar: ImageBitmap?,
+    onEditProfile: () -> Unit,
     onDeleteAll: () -> Unit,
 ) {
     when (destination) {
@@ -69,6 +71,8 @@ fun DestinationHost(
             state = settingsState(preferences, entries),
             versionName = versionName,
             onNameChange = { onPreferencesChange(preferences.copy(name = it)) },
+            avatar = avatar,
+            onEditProfile = onEditProfile,
             onToggleDark = { onPreferencesChange(preferences.copy(darkMode = it)) },
             onToggleReminder = { onPreferencesChange(preferences.copy(reminderEnabled = it)) },
             onReminderTimeChange = { onPreferencesChange(preferences.copy(reminderTime = it)) },
