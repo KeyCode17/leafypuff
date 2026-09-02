@@ -42,6 +42,7 @@ fn account(email: String) -> Account {
         password_hash: "$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA".to_owned(),
         display_name: Some("Daffa".to_owned()),
         email_verified_at: None,
+        pending_email: None,
     }
 }
 

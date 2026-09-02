@@ -26,6 +26,7 @@ pub fn account(row: accounts::Model) -> Account {
         password_hash: row.password_hash,
         display_name: row.display_name,
         email_verified_at: row.email_verified_at.map(utc),
+        pending_email: row.pending_email,
     }
 }
 

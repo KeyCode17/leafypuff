@@ -3,15 +3,19 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
+use crate::application::iam::{ConfirmEmailChangeInput, StartEmailChangeInput};
 use crate::domain::iam::IamError;
 use crate::http::envelope::Envelope;
 use crate::http::error::ApiError;
 use crate::http::state::AppState;
 use crate::http::validated::Validated;
 
+use crate::http::auth::Authenticated;
+
 use super::dto::{
-    ChallengeResponse, CompleteSignInRequest, ForgotPasswordRequest, RefreshRequest,
-    RegisterRequest, ResetPasswordRequest, SessionResponse, SignInRequest, VerifyEmailRequest,
+    AddressResponse, ChallengeResponse, ChangeEmailRequest, CompleteSignInRequest,
+    ConfirmEmailRequest, ForgotPasswordRequest, RefreshRequest, RegisterRequest,
+    ResetPasswordRequest, SessionResponse, SignInRequest, VerifyEmailRequest,
 };
 
 const MESSAGE_REGISTERED: &str = "Check your inbox for a verification code";
@@ -21,6 +25,8 @@ const MESSAGE_SIGNED_IN: &str = "Signed in";
 const MESSAGE_REFRESHED: &str = "Session refreshed";
 const MESSAGE_RESET_SENT: &str = "Check your inbox for a reset code";
 const MESSAGE_PASSWORD_CHANGED: &str = "Password changed";
+const MESSAGE_ADDRESS_SENT: &str = "Check the new inbox for a confirmation code";
+const MESSAGE_ADDRESS_CHANGED: &str = "Address changed";
 
 pub async fn register(
     State(state): State<AppState>,
@@ -80,6 +86,43 @@ pub async fn reset_password(
         Ok(()) => (
             StatusCode::OK,
             Json(Envelope::ok(MESSAGE_PASSWORD_CHANGED, ())),
+        )
+            .into_response(),
+        Err(error) => ApiError::from(error).into_response(),
+    }
+}
+
+pub async fn change_email(
+    State(state): State<AppState>,
+    caller: Authenticated,
+    Validated(body): Validated<ChangeEmailRequest>,
+) -> Response {
+    let input = StartEmailChangeInput {
+        account_id: caller.account_id,
+        email: body.email,
+    };
+    match state.iam.start_email_change().execute(input).await {
+        Ok(()) => challenge(MESSAGE_ADDRESS_SENT),
+        Err(error) => ApiError::from(error).into_response(),
+    }
+}
+
+pub async fn confirm_email(
+    State(state): State<AppState>,
+    caller: Authenticated,
+    Validated(body): Validated<ConfirmEmailRequest>,
+) -> Response {
+    let input = ConfirmEmailChangeInput {
+        account_id: caller.account_id,
+        code: body.code,
+    };
+    match state.iam.confirm_email_change().execute(input).await {
+        Ok(email) => (
+            StatusCode::OK,
+            Json(Envelope::ok(
+                MESSAGE_ADDRESS_CHANGED,
+                AddressResponse { email },
+            )),
         )
             .into_response(),
         Err(error) => ApiError::from(error).into_response(),

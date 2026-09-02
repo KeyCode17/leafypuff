@@ -43,6 +43,7 @@ async fn world() -> Option<(SyncServices, Uuid, DatabaseConnection)> {
             password_hash: "$argon2id$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA".to_owned(),
             display_name: None,
             email_verified_at: None,
+            pending_email: None,
         })
         .await
         .expect("the owning account must land");

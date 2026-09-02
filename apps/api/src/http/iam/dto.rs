@@ -59,6 +59,23 @@ pub struct ResetPasswordRequest {
     pub password: String,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChangeEmailRequest {
+    pub email: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConfirmEmailRequest {
+    pub code: String,
+}
+
+#[derive(Serialize)]
+pub struct AddressResponse {
+    pub email: String,
+}
+
 #[derive(Serialize)]
 pub struct ChallengeResponse {
     pub expires_in: i64,
