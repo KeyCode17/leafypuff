@@ -13,6 +13,9 @@ private val AcceptOrReject = ToastPrompt(accept = "Accept", reject = "Reject")
 
 fun plainToast(text: String): ToastRequest = ToastRequest(text)
 
+fun photoRefusedToast(): ToastRequest =
+    plainToast("That photo could not be added. JPEG, PNG and WebP work; HEIC does not yet.")
+
 private val DeleteOrKeep = ToastPrompt(accept = "Delete", reject = "Keep")
 
 fun deleteEntryToast(): ToastRequest =
