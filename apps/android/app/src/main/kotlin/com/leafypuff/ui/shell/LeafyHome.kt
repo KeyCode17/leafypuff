@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +76,7 @@ fun LeafyHome(
     val scope = rememberCoroutineScope()
 
     var current by remember { mutableStateOf(Destination.Diary) }
+    val pager = rememberPagerState(pageCount = { Destination.entries.size })
     var composing by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<EntryDraft?>(null) }
     var editingPhotos by remember { mutableStateOf(emptyList<EntryPhoto>()) }
@@ -87,6 +90,16 @@ fun LeafyHome(
     var pendingDelete by remember { mutableStateOf<String?>(null) }
     var confirmingSignOut by remember { mutableStateOf(false) }
     var lastSynced by remember { mutableStateOf("Never") }
+
+    LaunchedEffect(current) {
+        if (pager.targetPage != current.ordinal) {
+            pager.animateScrollToPage(current.ordinal)
+        }
+    }
+
+    LaunchedEffect(pager.settledPage) {
+        current = Destination.entries[pager.settledPage]
+    }
 
     LaunchedEffect(entries, coversEpoch) {
         covers = loadCovers(library, entries, emptyMap())
@@ -117,53 +130,59 @@ fun LeafyHome(
                 .fillMaxSize()
                 .statusBarsPadding(),
         ) {
-            DestinationHost(
-                destination = current,
-                entries = entries,
-                today = today,
-                selected = selected,
-                visibleMonth = visibleMonth,
-                covers = covers,
-                statistics = statistics,
-                range = range,
-                preferences = preferences,
-                versionName = versionName,
-                onToggleLock = onToggleLock,
-                onToggleBiometric = onToggleBiometric,
-                onChangePin = onChangePin,
-                onSignOut = { confirmingSignOut = true },
-                avatar = avatar,
-                onEditProfile = onEditProfile,
-                onSelectDay = { selected = it },
-                onMonthChange = { visibleMonth = it },
-                onToday = {
-                    selected = today
-                    visibleMonth = today
-                },
-                onCompose = {
-                    editing = null
-                    editingPhotos = emptyList()
-                    composing = true
-                },
-                onOpenEntry = { opening = it },
-                onRangeChange = { range = it },
-                lastSynced = lastSynced,
-                onSync = {
-                    scope.launch {
-                        val moved = onSync()
-                        lastSynced = syncLabel(moved)
-                        toast = plainToast(syncMessage(moved))
-                    }
-                },
-                onExport = {
-                    scope.launch {
-                        val written = onExport()
-                        toast = plainToast(exportMessage(written))
-                    }
-                },
-                onPreferencesChange = onPreferencesChange,
-                onDeleteAll = onDeleteAll,
-            )
+            HorizontalPager(
+                state = pager,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 0,
+            ) { page ->
+                DestinationHost(
+                    destination = Destination.entries[page],
+                    entries = entries,
+                    today = today,
+                    selected = selected,
+                    visibleMonth = visibleMonth,
+                    covers = covers,
+                    statistics = statistics,
+                    range = range,
+                    preferences = preferences,
+                    versionName = versionName,
+                    onToggleLock = onToggleLock,
+                    onToggleBiometric = onToggleBiometric,
+                    onChangePin = onChangePin,
+                    onSignOut = { confirmingSignOut = true },
+                    avatar = avatar,
+                    onEditProfile = onEditProfile,
+                    onSelectDay = { selected = it },
+                    onMonthChange = { visibleMonth = it },
+                    onToday = {
+                        selected = today
+                        visibleMonth = today
+                    },
+                    onCompose = {
+                        editing = null
+                        editingPhotos = emptyList()
+                        composing = true
+                    },
+                    onOpenEntry = { opening = it },
+                    onRangeChange = { range = it },
+                    lastSynced = lastSynced,
+                    onSync = {
+                        scope.launch {
+                            val moved = onSync()
+                            lastSynced = syncLabel(moved)
+                            toast = plainToast(syncMessage(moved))
+                        }
+                    },
+                    onExport = {
+                        scope.launch {
+                            val written = onExport()
+                            toast = plainToast(exportMessage(written))
+                        }
+                    },
+                    onPreferencesChange = onPreferencesChange,
+                    onDeleteAll = onDeleteAll,
+                )
+            }
 
             BottomNav(
                 current = current,
