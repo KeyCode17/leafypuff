@@ -17,11 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.ImageBitmap
 import com.leafypuff.domain.Entry
-import com.leafypuff.domain.Mood
+import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
-import com.leafypuff.ui.common.BunnyFace
+import com.leafypuff.ui.common.AppMark
 import com.leafypuff.ui.common.formatMonthYear
+
+private val HomeMarkSize = 44.dp
 
 @Composable
 fun DiaryScreen(
@@ -54,7 +56,7 @@ fun DiaryScreen(
                         color = colors.ink3,
                     )
                 }
-                BunnyFace(mood = Mood.Happy, modifier = Modifier.size(44.dp))
+                AppMark(size = HomeMarkSize, shape = LeafyShapes.homeMark, elevation = 0.dp)
             }
         }
 
