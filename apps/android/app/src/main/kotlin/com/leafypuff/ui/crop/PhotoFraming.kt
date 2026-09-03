@@ -40,6 +40,7 @@ data class PhotoFraming(
     companion object {
         const val SmallestWidth = 0.2
         const val CoverTallness = 2.0 / 3.0
+        const val CoverAspect = 3f / 2f
         const val SquareTallness = 1.0
     }
 }
