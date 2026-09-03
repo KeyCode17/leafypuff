@@ -20,6 +20,8 @@ pub trait EntryRepository {
 
     fn on_date(&self, date: NaiveDate) -> impl Future<Output = Result<Vec<Entry>, CoreError>>;
 
+    fn delete(&self, id: EntryId) -> impl Future<Output = Result<(), CoreError>>;
+
     fn delete_all(&self) -> impl Future<Output = Result<(), CoreError>>;
 }
 
@@ -46,6 +48,10 @@ impl<R: EntryRepository> EntryRepository for &R {
 
     fn on_date(&self, date: NaiveDate) -> impl Future<Output = Result<Vec<Entry>, CoreError>> {
         (*self).on_date(date)
+    }
+
+    fn delete(&self, id: EntryId) -> impl Future<Output = Result<(), CoreError>> {
+        (*self).delete(id)
     }
 
     fn delete_all(&self) -> impl Future<Output = Result<(), CoreError>> {

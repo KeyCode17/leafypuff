@@ -59,6 +59,10 @@ class CoreClient private constructor(private val core: LeafyPuffCore) {
         core.listEntries(limit).map { it.toDraft() }
     }
 
+    suspend fun deleteEntry(id: String) = withContext(Dispatchers.IO) {
+        core.deleteEntry(id)
+    }
+
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
         core.deleteAllEntries()
     }

@@ -147,6 +147,7 @@ pub fn entry_row(
         created_at: Set(entry.created_at.to_rfc3339()),
         updated_at: Set(entry.updated_at.to_rfc3339()),
         synced_at: Set(None),
+        deleted_at: Set(None),
     })
 }
 

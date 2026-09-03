@@ -15,6 +15,7 @@ pub enum Entries {
     Location,
     CreatedAt,
     UpdatedAt,
+    DeletedAt,
 }
 
 #[derive(DeriveIden)]

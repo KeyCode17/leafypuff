@@ -19,6 +19,7 @@ import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
+import com.leafypuff.ui.common.deleteEntryToast
 import com.leafypuff.ui.common.plainToast
 import com.leafypuff.ui.common.saveToast
 import com.leafypuff.ui.editor.EntryComposer
@@ -57,6 +58,7 @@ fun LeafyHome(
     onExport: suspend () -> String?,
     onSync: suspend () -> Boolean,
     onSave: (EntryDraft, List<EntryPhoto>, () -> Unit, (String) -> Unit) -> Unit,
+    onDelete: (String, () -> Unit) -> Unit,
     onForgetPhotos: (List<String>) -> Unit,
     onDeleteAll: () -> Unit,
 ) {
@@ -74,6 +76,7 @@ fun LeafyHome(
     var range by remember { mutableStateOf(StatRange.SevenDays) }
     var statistics by remember { mutableStateOf(StatsSummary()) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
+    var pendingDelete by remember { mutableStateOf<String?>(null) }
     var lastSynced by remember { mutableStateOf("Never") }
 
     LaunchedEffect(entries, coversEpoch) {
@@ -165,12 +168,7 @@ fun LeafyHome(
             )
         }
 
-        ToastOverlay(
-            visible = toast != null,
-            request = toast,
-            onAccept = { toast = null },
-            onDismiss = { toast = null },
-        )
+
 
         EntryComposer(
             open = composing,
@@ -180,6 +178,10 @@ fun LeafyHome(
             existingPhotos = editingPhotos,
             stickerPack = preferences.stickerPack,
             onClose = { composing = false },
+            onDelete = { id ->
+                pendingDelete = id
+                toast = deleteEntryToast()
+            },
             onFramePhoto = onFramePhoto,
             onCropPlaced = onCropPlaced,
             refreshedCover = refreshedCover,
@@ -202,6 +204,25 @@ fun LeafyHome(
                 )
             },
             modifier = Modifier.fillMaxSize(),
+        )
+
+        ToastOverlay(
+            visible = toast != null,
+            request = toast,
+            onAccept = {
+                toast = null
+                val doomed = pendingDelete
+                pendingDelete = null
+                if (doomed != null) {
+                    onDelete(doomed) {
+                        composing = false
+                        current = Destination.Diary
+                        toast = plainToast("Entry deleted.")
+                        scope.launch { if (onSync()) lastSynced = syncLabel(true) }
+                    }
+                }
+            },
+            onDismiss = { toast = null },
         )
     }
 }

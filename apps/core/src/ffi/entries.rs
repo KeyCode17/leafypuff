@@ -47,6 +47,11 @@ impl LeafyPuffCore {
         Ok(found.into_iter().map(FfiEntry::from).collect())
     }
 
+    pub async fn delete_entry(&self, id: String) -> Result<(), LeafyPuffCoreError> {
+        self.repository.delete(EntryId::parse(&id)?).await?;
+        Ok(())
+    }
+
     pub async fn delete_all_entries(&self) -> Result<(), LeafyPuffCoreError> {
         self.repository.delete_all().await?;
         Ok(())

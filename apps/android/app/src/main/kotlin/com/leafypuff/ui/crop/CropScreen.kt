@@ -31,6 +31,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import kotlin.math.ln
+import kotlin.math.pow
 import kotlin.math.abs
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
@@ -159,8 +161,7 @@ private val RatioShapes = listOf(
     "16:9" to 9.0 / 16.0,
     "9:16" to 16.0 / 9.0,
 )
-private const val TallestRatio = 2.0
-private const val WidestRatio = 0.5
+private const val FarthestRatio = 3.0
 private const val RatioSnap = 0.02
 private val ChipGap = 8.dp
 private val ChipPaddingH = 12.dp
@@ -196,14 +197,38 @@ private fun RatioPicker(ratio: Double, onRatioChange: (Double) -> Unit) {
             }
         }
         Slider(
-            value = ratio.toFloat(),
-            onValueChange = { onRatioChange(it.toDouble()) },
-            valueRange = WidestRatio.toFloat()..TallestRatio.toFloat(),
+            value = ratioToSlide(ratio),
+            onValueChange = { onRatioChange(slideToRatio(it)) },
+            valueRange = -1f..1f,
             colors = SliderDefaults.colors(
                 thumbColor = colors.accentDeep,
                 activeTrackColor = colors.accent,
                 inactiveTrackColor = colors.soft2,
             ),
         )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(text = "Landscape", style = typography.chipLabel, color = colors.ink3)
+            Text(text = shapeLabel(ratio), style = typography.chipLabel, color = colors.ink)
+            Text(text = "Portrait", style = typography.chipLabel, color = colors.ink3)
+        }
+    }
+}
+
+private fun ratioToSlide(ratio: Double): Float =
+    (ln(ratio) / ln(FarthestRatio)).toFloat().coerceIn(-1f, 1f)
+
+private fun slideToRatio(slide: Float): Double = FarthestRatio.pow(slide.toDouble())
+
+private fun shapeLabel(ratio: Double): String {
+    val named = RatioShapes.firstOrNull { (_, shape) -> abs(shape - ratio) < RatioSnap }
+    if (named != null) {
+        return named.first
+    }
+    return when {
+        ratio < 1.0 -> "%.2f:1".format(1.0 / ratio)
+        else -> "1:%.2f".format(ratio)
     }
 }

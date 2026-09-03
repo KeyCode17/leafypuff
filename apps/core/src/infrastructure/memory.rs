@@ -83,6 +83,15 @@ impl EntryRepository for InMemoryEntryRepository {
             .collect())
     }
 
+    async fn delete(&self, id: EntryId) -> Result<(), CoreError> {
+        let mut held = self
+            .entries
+            .lock()
+            .map_err(|_| CoreError::Storage(ERR_STORE_LOCK_POISONED.to_owned()))?;
+        held.retain(|entry| entry.id != id);
+        Ok(())
+    }
+
     async fn delete_all(&self) -> Result<(), CoreError> {
         let mut held = self
             .entries

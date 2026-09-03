@@ -33,6 +33,10 @@ class EntryStore(internal val client: CoreClient) {
         accessToken?.let { client.forgetPhoto(baseUrl, it, photoId) }
     }
 
+    suspend fun delete(id: String) {
+        client.deleteEntry(id)
+    }
+
     suspend fun deleteAll() {
         client.deleteAll()
     }

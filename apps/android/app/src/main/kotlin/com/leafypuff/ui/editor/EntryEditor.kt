@@ -48,6 +48,7 @@ fun EntryEditor(
     onDraftChange: (EntryDraft) -> Unit,
     onSave: () -> Unit,
     onClose: () -> Unit,
+    onDelete: (() -> Unit)? = null,
     onMoodClick: () -> Unit,
     onDateClick: () -> Unit,
     onWeatherClick: () -> Unit,
@@ -111,6 +112,7 @@ fun EntryEditor(
                 title = if (draft.fresh) "New Entry" else "Edit Entry",
                 onClose = onClose,
                 onSave = onSave,
+                onDelete = onDelete,
             )
 
             EntryMetaBlock(

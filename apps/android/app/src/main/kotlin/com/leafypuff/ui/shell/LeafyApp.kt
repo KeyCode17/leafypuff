@@ -370,6 +370,13 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                                 entries = listed()
                             }
                         },
+                        onDelete = { id, done ->
+                            scope.launch {
+                                runCatching { store?.delete(id) }
+                                entries = listed()
+                                done()
+                            }
+                        },
                     )
                 }
             }

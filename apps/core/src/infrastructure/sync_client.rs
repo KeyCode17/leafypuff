@@ -47,8 +47,11 @@ impl SyncClient {
         let cursor = outbox.cursor().await?;
         let (records, advanced) = self.pull(&device_id, cursor).await?;
         let pulled = u32::try_from(records.len()).unwrap_or(u32::MAX);
-        for (record, carried) in records {
-            outbox.accept(record, &carried).await?;
+        for record in records {
+            match record {
+                Inbound::Live(record, carried) => outbox.accept(*record, &carried).await?,
+                Inbound::Gone(id) => outbox.forget_entry(&id).await?,
+            }
         }
         outbox.advance(advanced).await?;
 
@@ -80,11 +83,7 @@ impl SyncClient {
         Ok(())
     }
 
-    async fn pull(
-        &self,
-        device_id: &str,
-        cursor: i64,
-    ) -> Result<(Vec<(entries::ActiveModel, Carried)>, i64), CoreError> {
+    async fn pull(&self, device_id: &str, cursor: i64) -> Result<(Vec<Inbound>, i64), CoreError> {
         let response = self
             .client
             .get(format!("{}{PULL_PATH}?cursor={cursor}", self.base_url))
@@ -110,7 +109,7 @@ impl SyncClient {
         let accepted = rows
             .iter()
             .map(inbound)
-            .collect::<Result<Vec<(entries::ActiveModel, Carried)>, CoreError>>()?;
+            .collect::<Result<Vec<Inbound>, CoreError>>()?;
         Ok((accepted, advanced))
     }
 }
@@ -167,8 +166,18 @@ fn envelope(ciphertext: &[u8], nonce: &[u8], at_ms: i64, device_id: &str) -> Val
     })
 }
 
-fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
+pub enum Inbound {
+    Live(Box<entries::ActiveModel>, Carried),
+    Gone(String),
+}
+
+fn inbound(row: &Value) -> Result<Inbound, CoreError> {
     let shape = || CoreError::Unreadable(ERR_SHAPE.to_owned());
+    if row["deleted_at_ms"].as_i64().is_some() {
+        return Ok(Inbound::Gone(
+            row["id"].as_str().ok_or_else(shape)?.to_owned(),
+        ));
+    }
     let updated_at_ms = row["title"]["updated_at_ms"].as_i64().ok_or_else(shape)?;
     let updated_at = DateTime::<Utc>::from_timestamp_millis(updated_at_ms)
         .ok_or_else(shape)?
@@ -182,8 +191,8 @@ fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
         entry_id: entry_id.clone(),
     };
 
-    Ok((
-        entries::ActiveModel {
+    Ok(Inbound::Live(
+        Box::new(entries::ActiveModel {
             id: ActiveValue::Set(entry_id),
             date: ActiveValue::Set(row["date"].as_str().ok_or_else(shape)?.to_owned()),
             mood: ActiveValue::Set(row["mood"].as_str().ok_or_else(shape)?.to_owned()),
@@ -197,7 +206,8 @@ fn inbound(row: &Value) -> Result<(entries::ActiveModel, Carried), CoreError> {
             created_at: ActiveValue::Set(updated_at.clone()),
             updated_at: ActiveValue::Set(updated_at.clone()),
             synced_at: ActiveValue::Set(Some(updated_at)),
-        },
+            deleted_at: ActiveValue::Set(None),
+        }),
         carried,
     ))
 }
