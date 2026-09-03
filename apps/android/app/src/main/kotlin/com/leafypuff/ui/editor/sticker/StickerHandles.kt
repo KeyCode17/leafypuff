@@ -20,6 +20,10 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LocalLeafyColors
 
@@ -64,6 +68,7 @@ internal fun RemoveHandle(onRemove: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .size(HandleSize)
             .background(RemoveFill, CircleShape)
+            .semantics { contentDescription = "Remove"; role = Role.Button }
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onRemove() })
             },
@@ -85,6 +90,7 @@ internal fun CropHandle(onCrop: () -> Unit, modifier: Modifier = Modifier) {
             .size(HandleSize)
             .shadow(HandleLift, CircleShape)
             .background(colors.sheet, CircleShape)
+            .semantics { contentDescription = "Crop"; role = Role.Button }
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { onCrop() })
             },
@@ -121,6 +127,7 @@ internal fun RotateHandle(
             .size(HandleSize)
             .shadow(HandleLift, CircleShape)
             .background(colors.sheet, CircleShape)
+            .semantics { contentDescription = "Rotate" }
             .pointerInput(Unit) {
                 var base = 0f
                 var grabbed = 0f
@@ -157,6 +164,7 @@ internal fun ResizeHandle(
             .size(HandleSize)
             .shadow(HandleLift, CircleShape)
             .background(accent, CircleShape)
+            .semantics { contentDescription = "Resize" }
             .pointerInput(Unit) {
                 var base = 0f
                 var travelX = 0f
