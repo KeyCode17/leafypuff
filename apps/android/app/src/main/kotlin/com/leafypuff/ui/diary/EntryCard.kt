@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.domain.Entry
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
@@ -29,7 +30,6 @@ import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 import com.leafypuff.ui.common.formatEntryDate
 
-private val CoverHeight = 158.dp
 private val CoverShape = RoundedCornerShape(18.dp)
 
 @Composable
@@ -89,7 +89,7 @@ private fun CoverPhoto(cover: ImageBitmap) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(CoverHeight)
+            .aspectRatio(PhotoFraming.CoverAspect)
             .clip(CoverShape)
             .background(LocalLeafyColors.current.soft2),
     ) {

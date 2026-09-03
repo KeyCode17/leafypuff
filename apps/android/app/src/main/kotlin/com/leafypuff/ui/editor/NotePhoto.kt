@@ -10,8 +10,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.sp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
+import com.leafypuff.ui.crop.PhotoFraming
 import com.leafypuff.ui.photo.EntryPhoto
 
-private val PhotoHeight = 190.dp
 private val PhotoShape = RoundedCornerShape(16.dp)
 private val RemoveGlyphSize = 18.dp
 private val RemovePadding = 5.dp
@@ -54,7 +54,7 @@ fun NotePhoto(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(PhotoHeight)
+            .aspectRatio(PhotoFraming.CoverAspect)
             .clip(PhotoShape)
             .background(colors.soft2)
             .then(if (onFrame == null) Modifier else Modifier.clickable(onClick = onFrame)),
@@ -63,7 +63,6 @@ fun NotePhoto(
             bitmap = photo.cover,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            alignment = Alignment.TopCenter,
             modifier = Modifier.fillMaxSize(),
         )
 
