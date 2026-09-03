@@ -22,6 +22,7 @@ data class LeafyColors(
 )
 
 val Destructive = Color(0xFFEF4E4E)
+val OnDestructive = Color(0xFFFFFFFF)
 val MarkPlate = Color(0xFFF7FAEF)
 
 val LeafyLightColors = LeafyColors(

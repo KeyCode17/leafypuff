@@ -43,6 +43,11 @@ private const val SignOutBody =
     "Your diary stays on this phone. Log in again whenever you want to keep writing."
 private const val SignOutAccept = "Log out"
 private const val SignOutReject = "Stay"
+private const val DeleteAllTitle = "Delete every entry?"
+private const val DeleteAllBody =
+    "Everything on this phone goes, photos included, and the deletion reaches your other devices."
+private const val DeleteAllAccept = "Delete all"
+private const val DeleteAllReject = "Keep"
 
 @Composable
 fun LeafyHome(
@@ -89,6 +94,7 @@ fun LeafyHome(
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
     var pendingDelete by remember { mutableStateOf<String?>(null) }
     var confirmingSignOut by remember { mutableStateOf(false) }
+    var confirmingDeleteAll by remember { mutableStateOf(false) }
     var lastSynced by remember { mutableStateOf("Never") }
 
     LaunchedEffect(current) {
@@ -180,7 +186,7 @@ fun LeafyHome(
                         }
                     },
                     onPreferencesChange = onPreferencesChange,
-                    onDeleteAll = onDeleteAll,
+                    onDeleteAll = { confirmingDeleteAll = true },
                 )
             }
 
@@ -252,6 +258,22 @@ fun LeafyHome(
             },
             onDismiss = { toast = null },
         )
+
+        if (confirmingDeleteAll) {
+            ConfirmPopup(
+                face = Mood.Anxious,
+                title = DeleteAllTitle,
+                body = DeleteAllBody,
+                accept = DeleteAllAccept,
+                reject = DeleteAllReject,
+                onAccept = {
+                    confirmingDeleteAll = false
+                    onDeleteAll()
+                },
+                onDismiss = { confirmingDeleteAll = false },
+                destructive = true,
+            )
+        }
 
         if (confirmingSignOut) {
             ConfirmPopup(
