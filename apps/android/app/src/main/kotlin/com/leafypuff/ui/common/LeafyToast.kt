@@ -13,6 +13,11 @@ private val AcceptOrReject = ToastPrompt(accept = "Accept", reject = "Reject")
 
 fun plainToast(text: String): ToastRequest = ToastRequest(text)
 
+private val DeleteOrKeep = ToastPrompt(accept = "Delete", reject = "Keep")
+
+fun deleteEntryToast(): ToastRequest =
+    ToastRequest(text = "Delete this entry? Its photos go with it.", prompt = DeleteOrKeep)
+
 fun saveToast(reopened: Boolean): ToastRequest = when {
     reopened -> plainToast("Entry updated.")
     else -> plainToast("Entry saved.")

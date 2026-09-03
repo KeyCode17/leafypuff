@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +31,9 @@ private val HeaderBottomPadding = 20.dp
 private val CloseButtonSize = 36.dp
 private val CloseGlyphSize = 18.dp
 private val HeaderTitleSize = 14.sp
+private val ActionGap = 10.dp
+private val ActionPadding = 6.dp
+private val Destructive = Color(0xFFD9534F)
 
 @Composable
 fun EntryEditorHeader(
@@ -36,6 +41,7 @@ fun EntryEditorHeader(
     onClose: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null,
 ) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
@@ -70,14 +76,31 @@ fun EntryEditorHeader(
             color = colors.ink,
         )
 
-        Text(
-            text = "Save".uppercase(),
-            style = typography.buttonLabel,
-            color = colors.accentDeep,
-            modifier = Modifier
-                .clip(LeafyShapes.pill)
-                .clickable(onClick = onSave)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ActionGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onDelete != null) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete this entry",
+                    tint = Destructive,
+                    modifier = Modifier
+                        .clip(LeafyShapes.pill)
+                        .clickable(onClick = onDelete)
+                        .padding(ActionPadding)
+                        .size(CloseGlyphSize),
+                )
+            }
+            Text(
+                text = "Save".uppercase(),
+                style = typography.buttonLabel,
+                color = colors.accentDeep,
+                modifier = Modifier
+                    .clip(LeafyShapes.pill)
+                    .clickable(onClick = onSave)
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+            )
+        }
     }
 }
