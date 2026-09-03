@@ -1,9 +1,13 @@
 package com.leafypuff.ui.photo
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.exifinterface.media.ExifInterface
 import com.leafypuff.core.CoreClient
+import java.io.ByteArrayInputStream
 
 interface PhotoLibrary {
     suspend fun import(bytes: ByteArray): EntryPhoto?
@@ -45,6 +49,21 @@ class CorePhotoLibrary(private val client: CoreClient) : PhotoLibrary {
             sample *= 2
         }
         val options = BitmapFactory.Options().apply { inSampleSize = sample }
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.asImageBitmap()
+        val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return null
+        return decoded.stoodUp(bytes).asImageBitmap()
     }
+}
+
+private fun Bitmap.stoodUp(encoded: ByteArray): Bitmap {
+    val tag = runCatching { ExifInterface(ByteArrayInputStream(encoded)) }.getOrNull()
+        ?: return this
+    val turn = Matrix()
+    if (tag.isFlipped) {
+        turn.preScale(-1f, 1f)
+    }
+    turn.postRotate(tag.rotationDegrees.toFloat())
+    if (turn.isIdentity) {
+        return this
+    }
+    return Bitmap.createBitmap(this, 0, 0, width, height, turn, true)
 }

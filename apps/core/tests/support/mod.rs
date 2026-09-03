@@ -24,11 +24,11 @@ pub fn banded_jpeg(width: u32, height: u32, top_rows: u32) -> Vec<u8> {
 }
 
 pub fn jpeg_taken_on(stamp: &[u8]) -> Vec<u8> {
-    splice_app1(&solid_jpeg(48, 32), &exif_blob(stamp))
+    splice_app1(&solid_jpeg(48, 32), &exif_blob(taken_on(stamp)))
 }
 
 pub fn jpeg_with_broken_exif(stamp: &[u8]) -> Vec<u8> {
-    let mut blob = exif_blob(stamp);
+    let mut blob = exif_blob(taken_on(stamp));
     for byte in blob.iter_mut().skip(4) {
         *byte ^= 0xA5;
     }
@@ -67,12 +67,24 @@ fn encode(canvas: RgbImage) -> Vec<u8> {
     out.into_inner()
 }
 
-fn exif_blob(stamp: &[u8]) -> Vec<u8> {
+pub fn banded_jpeg_oriented(width: u32, height: u32, top_rows: u32, orientation: u16) -> Vec<u8> {
     let field = Field {
+        tag: Tag::Orientation,
+        ifd_num: In::PRIMARY,
+        value: Value::Short(vec![orientation]),
+    };
+    splice_app1(&banded_jpeg(width, height, top_rows), &exif_blob(field))
+}
+
+fn taken_on(stamp: &[u8]) -> Field {
+    Field {
         tag: Tag::DateTimeOriginal,
         ifd_num: In::PRIMARY,
         value: Value::Ascii(vec![stamp.to_vec()]),
-    };
+    }
+}
+
+fn exif_blob(field: Field) -> Vec<u8> {
     let mut writer = Writer::new();
     writer.push_field(&field);
     let mut blob = Cursor::new(Vec::new());

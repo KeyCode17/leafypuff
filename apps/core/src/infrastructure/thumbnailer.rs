@@ -1,9 +1,9 @@
+use std::fmt::Display;
 use std::io::Cursor;
 
 use image::codecs::jpeg::JpegEncoder;
 use image::imageops::FilterType;
-
-use image::DynamicImage;
+use image::{DynamicImage, ImageDecoder, ImageReader};
 
 use crate::domain::crop::{
     CropBox, Framing, cover_size, framed_cover, framed_to, top_anchored_cover,
@@ -18,25 +18,38 @@ pub struct ImageThumbnailer;
 
 impl ThumbnailMaker for ImageThumbnailer {
     fn cover(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError> {
-        let source = image::load_from_memory(bytes)
-            .map_err(|cause| CoreError::Photo(format!("{ERR_PHOTO_UNDECODABLE}: {cause}")))?;
+        let source = decode(bytes)?;
         let frame = top_anchored_cover(source.width(), source.height())?;
         encode(&source, frame)
     }
 
     fn framed_cover(&self, bytes: &[u8], framing: Framing) -> Result<Vec<u8>, CoreError> {
-        let source = image::load_from_memory(bytes)
-            .map_err(|cause| CoreError::Photo(format!("{ERR_PHOTO_UNDECODABLE}: {cause}")))?;
+        let source = decode(bytes)?;
         let frame = framed_cover(source.width(), source.height(), framing)?;
         encode(&source, frame)
     }
 
     fn framed_square(&self, bytes: &[u8], framing: Framing) -> Result<Vec<u8>, CoreError> {
-        let source = image::load_from_memory(bytes)
-            .map_err(|cause| CoreError::Photo(format!("{ERR_PHOTO_UNDECODABLE}: {cause}")))?;
+        let source = decode(bytes)?;
         let frame = framed_to(source.width(), source.height(), framing, 1, 1)?;
         encode(&source, frame)
     }
+}
+
+fn decode(bytes: &[u8]) -> Result<DynamicImage, CoreError> {
+    let mut decoder = ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()
+        .map_err(undecodable)?
+        .into_decoder()
+        .map_err(undecodable)?;
+    let orientation = decoder.orientation().map_err(undecodable)?;
+    let mut source = DynamicImage::from_decoder(decoder).map_err(undecodable)?;
+    source.apply_orientation(orientation);
+    Ok(source)
+}
+
+fn undecodable(cause: impl Display) -> CoreError {
+    CoreError::Photo(format!("{ERR_PHOTO_UNDECODABLE}: {cause}"))
 }
 
 fn encode(source: &DynamicImage, frame: CropBox) -> Result<Vec<u8>, CoreError> {
