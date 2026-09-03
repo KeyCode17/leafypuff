@@ -3,7 +3,6 @@ package com.leafypuff.ui.calendar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,7 +30,6 @@ private val ScreenGutter = 24.dp
 private val ScrollBottomPadding = 130.dp
 private val SelectedBlockTopPadding = 28.dp
 private val SelectedBlockGap = 14.dp
-private const val GridShare = 0.625f
 
 @Composable
 fun CalendarScreen(
@@ -55,11 +53,7 @@ fun CalendarScreen(
             .fillMaxSize()
             .padding(horizontal = ScreenGutter),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(GridShare),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             CalendarHeader(
                 visibleMonth = visibleMonth,
                 onMonthChange = onMonthChange,
@@ -74,7 +68,6 @@ fun CalendarScreen(
                 selected = selected,
                 covers = covers,
                 onSelect = onSelect,
-                modifier = Modifier.weight(1f),
             )
         }
         SelectedDayList(

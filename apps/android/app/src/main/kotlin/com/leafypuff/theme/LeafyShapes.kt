@@ -15,4 +15,5 @@ object LeafyShapes {
     val chip: Shape = CircleShape
     val pill: Shape = CircleShape
     val lockIconPlate: Shape = RoundedCornerShape(44.dp)
+    val homeMark: Shape = RoundedCornerShape(14.dp)
 }
