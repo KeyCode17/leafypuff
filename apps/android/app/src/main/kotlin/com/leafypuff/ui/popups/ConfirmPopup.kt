@@ -14,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
+import com.leafypuff.theme.Destructive
 import com.leafypuff.theme.LocalLeafyColors
+import com.leafypuff.theme.OnDestructive
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 import com.leafypuff.ui.common.PromptPill
@@ -34,6 +36,7 @@ fun ConfirmPopup(
     reject: String,
     onAccept: () -> Unit,
     onDismiss: () -> Unit,
+    destructive: Boolean = false,
 ) {
     val colors = LocalLeafyColors.current
     val typography = LocalLeafyTypography.current
@@ -75,8 +78,8 @@ fun ConfirmPopup(
                 )
                 PromptPill(
                     label = accept,
-                    fill = colors.accent,
-                    ink = colors.onAccent,
+                    fill = if (destructive) Destructive else colors.accent,
+                    ink = if (destructive) OnDestructive else colors.onAccent,
                     weight = FontWeight.W600,
                     onClick = onAccept,
                     modifier = Modifier.weight(1f),
