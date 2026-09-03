@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -56,19 +56,17 @@ fun CalendarGrid(
     ) {
         weeks.forEach { week ->
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(GridGap),
             ) {
                 week.forEach { day ->
                     if (day == null) {
-                        Spacer(modifier = Modifier.weight(1f).fillMaxHeight())
+                        Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
                     } else {
                         CalendarDayCell(
                             day = day,
                             onSelect = onSelect,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
