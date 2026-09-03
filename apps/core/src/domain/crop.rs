@@ -116,7 +116,8 @@ pub fn top_anchored_cover(width: u32, height: u32) -> Result<CropBox, CoreError>
 
 pub const fn cover_size(frame: CropBox) -> (u32, u32) {
     if frame.width > COVER_MAX_WIDTH {
-        (COVER_MAX_WIDTH, COVER_MAX_HEIGHT)
+        let scaled_height = frame.height as u64 * COVER_MAX_WIDTH as u64 / frame.width as u64;
+        (COVER_MAX_WIDTH, scaled_height as u32)
     } else {
         (frame.width, frame.height)
     }
