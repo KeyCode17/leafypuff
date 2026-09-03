@@ -10,6 +10,7 @@ mod m20260902_060439_photo_framing;
 mod m20260902_093257_photo_placement;
 mod m20260902_143831_profile;
 mod m20260902_222812_placed_crop;
+mod m20260903_071430_entry_deleted_at;
 
 pub use idens::{Entries, Photos, Stickers, Tags};
 
@@ -28,6 +29,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20260902_093257_photo_placement::Migration),
             Box::new(m20260902_143831_profile::Migration),
             Box::new(m20260902_222812_placed_crop::Migration),
+            Box::new(m20260903_071430_entry_deleted_at::Migration),
         ]
     }
 }

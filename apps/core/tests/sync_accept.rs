@@ -38,6 +38,7 @@ fn inbound_entry() -> entries::ActiveModel {
         created_at: ActiveValue::Set(STAMP.to_owned()),
         updated_at: ActiveValue::Set(STAMP.to_owned()),
         synced_at: ActiveValue::Set(Some(STAMP.to_owned())),
+        deleted_at: ActiveValue::Set(None),
     }
 }
 
@@ -135,4 +136,70 @@ async fn a_second_arrival_replaces_the_tags_and_stickers_rather_than_adding_to_t
 
     assert_eq!(stored_tags(&connection).await, vec!["#home"]);
     assert_eq!(stored_stickers(&connection).await, vec!["star-1"]);
+}
+
+#[tokio::test]
+async fn a_deleted_entry_goes_out_as_a_tombstone_and_then_leaves_the_store() {
+    let (_dir, connection, outbox) = outbox().await;
+    outbox
+        .accept(inbound_entry(), &carried(&["quiet"], vec![]))
+        .await
+        .expect("the entry is accepted");
+    entries::Entity::update_many()
+        .col_expr(
+            entries::Column::DeletedAt,
+            "2026-09-02T09:00:00+00:00".into(),
+        )
+        .col_expr(
+            entries::Column::UpdatedAt,
+            "2026-09-02T09:00:00+00:00".into(),
+        )
+        .filter(entries::Column::Id.eq(ENTRY_ID.to_owned()))
+        .exec(&connection)
+        .await
+        .expect("the entry is soft-deleted");
+
+    let pending = outbox.pending().await.expect("the outbox reads");
+    assert_eq!(pending.len(), 1);
+    assert!(
+        pending[0].deleted_at_ms.is_some(),
+        "a soft-deleted entry must go out as a tombstone"
+    );
+
+    outbox
+        .mark_synced(&[pending[0].id])
+        .await
+        .expect("the push is recorded");
+    let left = entries::Entity::find_by_id(ENTRY_ID.to_owned())
+        .one(&connection)
+        .await
+        .expect("the entry reads");
+    assert!(left.is_none(), "a pushed tombstone leaves nothing behind");
+    assert!(stored_tags(&connection).await.is_empty());
+}
+
+#[tokio::test]
+async fn a_tombstone_pulled_from_the_server_forgets_the_entry_and_its_children() {
+    let (_dir, connection, outbox) = outbox().await;
+    outbox
+        .accept(
+            inbound_entry(),
+            &carried(&["quiet", "tea"], vec![sticker("heart-0")]),
+        )
+        .await
+        .expect("the entry is accepted");
+    assert_eq!(stored_tags(&connection).await.len(), 2);
+
+    outbox
+        .forget_entry(ENTRY_ID)
+        .await
+        .expect("the tombstone is applied");
+
+    let left = entries::Entity::find_by_id(ENTRY_ID.to_owned())
+        .one(&connection)
+        .await
+        .expect("the entry reads");
+    assert!(left.is_none());
+    assert!(stored_tags(&connection).await.is_empty());
+    assert!(stored_stickers(&connection).await.is_empty());
 }

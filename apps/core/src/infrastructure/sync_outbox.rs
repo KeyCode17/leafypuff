@@ -1,7 +1,8 @@
 use chrono::Utc;
 use sea_orm::sea_query::{Expr, OnConflict};
 use sea_orm::{
-    ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect,
+    ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
+    QuerySelect, TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -99,7 +100,7 @@ impl SyncOutbox {
                 weather: row.weather,
                 location: row.location,
                 device_updated_at_ms: millis(&row.updated_at)?,
-                deleted_at_ms: None,
+                deleted_at_ms: row.deleted_at.as_deref().map(millis).transpose()?,
                 title_ciphertext: row.title,
                 title_nonce: row.title_nonce.unwrap_or_default(),
                 body_ciphertext: row.body,
@@ -261,14 +262,42 @@ impl SyncOutbox {
             return Ok(());
         }
         let now = Utc::now().to_rfc3339();
+        let named: Vec<String> = ids.iter().map(|id| id.to_text()).collect();
         entries::Entity::update_many()
             .col_expr(entries::Column::SyncedAt, now.into())
-            .filter(
-                entries::Column::Id
-                    .is_in(ids.iter().map(|id| id.to_text()).collect::<Vec<String>>()),
-            )
+            .filter(entries::Column::Id.is_in(named.clone()))
             .exec(&self.connection)
             .await?;
+        let gone = entries::Entity::find()
+            .filter(entries::Column::Id.is_in(named))
+            .filter(entries::Column::DeletedAt.is_not_null())
+            .all(&self.connection)
+            .await?;
+        for row in gone {
+            self.forget_entry(&row.id).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn forget_entry(&self, id: &str) -> Result<(), CoreError> {
+        let transaction = self.connection.begin().await?;
+        tags::Entity::delete_many()
+            .filter(tags::Column::EntryId.eq(id.to_owned()))
+            .exec(&transaction)
+            .await?;
+        stickers::Entity::delete_many()
+            .filter(stickers::Column::EntryId.eq(id.to_owned()))
+            .exec(&transaction)
+            .await?;
+        photos::Entity::delete_many()
+            .filter(photos::Column::EntryId.eq(id.to_owned()))
+            .exec(&transaction)
+            .await?;
+        entries::Entity::delete_many()
+            .filter(entries::Column::Id.eq(id.to_owned()))
+            .exec(&transaction)
+            .await?;
+        transaction.commit().await?;
         Ok(())
     }
 

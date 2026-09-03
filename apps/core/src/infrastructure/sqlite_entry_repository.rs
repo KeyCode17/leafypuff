@@ -98,6 +98,7 @@ impl<S: FieldSealer + Send + Sync> EntryRepository for SqliteEntryRepository<S> 
 
     async fn by_id(&self, id: EntryId) -> Result<Option<Entry>, CoreError> {
         let row = entries::Entity::find_by_id(id.to_text())
+            .filter(entries::Column::DeletedAt.is_null())
             .one(&self.connection)
             .await?;
         match row {
@@ -115,6 +116,7 @@ impl<S: FieldSealer + Send + Sync> EntryRepository for SqliteEntryRepository<S> 
 
     async fn list_desc(&self, limit: u32) -> Result<Vec<Entry>, CoreError> {
         let rows = entries::Entity::find()
+            .filter(entries::Column::DeletedAt.is_null())
             .order_by_desc(entries::Column::Date)
             .order_by_desc(entries::Column::CreatedAt)
             .limit(u64::from(limit))
@@ -125,6 +127,7 @@ impl<S: FieldSealer + Send + Sync> EntryRepository for SqliteEntryRepository<S> 
 
     async fn in_range(&self, from: NaiveDate, to: NaiveDate) -> Result<Vec<Entry>, CoreError> {
         let rows = entries::Entity::find()
+            .filter(entries::Column::DeletedAt.is_null())
             .filter(entries::Column::Date.gte(from.format(ISO_DATE).to_string()))
             .filter(entries::Column::Date.lte(to.format(ISO_DATE).to_string()))
             .order_by_desc(entries::Column::Date)
@@ -136,11 +139,23 @@ impl<S: FieldSealer + Send + Sync> EntryRepository for SqliteEntryRepository<S> 
 
     async fn on_date(&self, date: NaiveDate) -> Result<Vec<Entry>, CoreError> {
         let rows = entries::Entity::find()
+            .filter(entries::Column::DeletedAt.is_null())
             .filter(entries::Column::Date.eq(date.format(ISO_DATE).to_string()))
             .order_by_desc(entries::Column::CreatedAt)
             .all(&self.connection)
             .await?;
         super::sqlite_hydrate::hydrate(&self.connection, rows, &self.sealer).await
+    }
+
+    async fn delete(&self, id: EntryId) -> Result<(), CoreError> {
+        let now = chrono::Utc::now().to_rfc3339();
+        entries::Entity::update_many()
+            .col_expr(entries::Column::DeletedAt, now.clone().into())
+            .col_expr(entries::Column::UpdatedAt, now.into())
+            .filter(entries::Column::Id.eq(id.to_text()))
+            .exec(&self.connection)
+            .await?;
+        Ok(())
     }
 
     async fn delete_all(&self) -> Result<(), CoreError> {
