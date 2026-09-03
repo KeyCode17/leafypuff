@@ -108,6 +108,7 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.kotlinx.datetime)
     implementation(libs.jna) { artifact { type = "aar" } }
     implementation(libs.kotlinx.coroutines.core)

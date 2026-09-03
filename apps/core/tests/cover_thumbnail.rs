@@ -1,6 +1,6 @@
 mod support;
 
-use leafypuff_core::domain::crop::{COVER_MAX_HEIGHT, COVER_MAX_WIDTH};
+use leafypuff_core::domain::crop::{COVER_MAX_HEIGHT, COVER_MAX_WIDTH, Framing};
 use leafypuff_core::domain::{CoreError, ThumbnailMaker};
 use leafypuff_core::infrastructure::ImageThumbnailer;
 
@@ -92,4 +92,66 @@ fn a_payload_that_is_not_an_image_is_a_typed_photo_failure() {
 fn a_truncated_photo_is_a_typed_photo_failure() {
     let refused = ImageThumbnailer.cover(&support::truncated_jpeg());
     assert!(matches!(refused, Err(CoreError::Photo(_))));
+}
+
+const ROTATE_RIGHT_TO_STAND: u16 = 6;
+const ROTATE_LEFT_TO_STAND: u16 = 8;
+
+#[test]
+fn a_photo_tagged_to_be_rotated_is_stood_up_before_the_cover_is_cut() {
+    let source = support::banded_jpeg_oriented(400, 300, 150, ROTATE_RIGHT_TO_STAND);
+    let cover = ImageThumbnailer.cover(&source).expect("a cover is built");
+
+    assert_eq!(support::dimensions(&cover), (300, 200));
+    let drawn = support::decode(&cover);
+    assert!(support::close(
+        *drawn.get_pixel(250, 100),
+        support::TOP_BAND
+    ));
+    assert!(support::close(
+        *drawn.get_pixel(50, 100),
+        support::BOTTOM_BAND
+    ));
+}
+
+#[test]
+fn the_tag_decides_which_way_the_photo_turns() {
+    let source = support::banded_jpeg_oriented(400, 300, 150, ROTATE_LEFT_TO_STAND);
+    let cover = ImageThumbnailer.cover(&source).expect("a cover is built");
+
+    assert_eq!(support::dimensions(&cover), (300, 200));
+    let drawn = support::decode(&cover);
+    assert!(support::close(*drawn.get_pixel(50, 100), support::TOP_BAND));
+    assert!(support::close(
+        *drawn.get_pixel(250, 100),
+        support::BOTTOM_BAND
+    ));
+}
+
+#[test]
+fn a_framed_cover_reads_the_framing_against_the_stood_up_photo() {
+    let source = support::banded_jpeg_oriented(400, 300, 150, ROTATE_RIGHT_TO_STAND);
+    let cover = ImageThumbnailer
+        .framed_cover(&source, Framing::default())
+        .expect("a framed cover is built");
+
+    assert_eq!(support::dimensions(&cover), (300, 200));
+    assert!(support::close(
+        *support::decode(&cover).get_pixel(50, 50),
+        support::BOTTOM_BAND
+    ));
+}
+
+#[test]
+fn a_framed_square_reads_the_framing_against_the_stood_up_photo() {
+    let source = support::banded_jpeg_oriented(400, 300, 150, ROTATE_RIGHT_TO_STAND);
+    let square = ImageThumbnailer
+        .framed_square(&source, Framing::default())
+        .expect("a framed square is built");
+
+    assert_eq!(support::dimensions(&square), (300, 300));
+    assert!(support::close(
+        *support::decode(&square).get_pixel(50, 50),
+        support::BOTTOM_BAND
+    ));
 }

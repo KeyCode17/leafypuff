@@ -15,10 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import android.graphics.BitmapFactory
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import com.leafypuff.core.CoreClient
 import com.leafypuff.core.LeafyPuffCoreException
 import com.leafypuff.data.DeviceKey
@@ -426,11 +424,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
                 if (held != null) {
                     framing = held
                 }
-                framingImage = runCatching { store?.client?.originalPhoto(framed) }
-                    .getOrNull()
-                    ?.let { bytes ->
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                    }
+                framingImage = library.original(framed)
             }
             CropScreen(
                 photo = framingImage,
@@ -569,11 +563,7 @@ fun LeafyApp(databasePath: String, versionName: String, apiBaseUrl: String) {
         if (rounding != null) {
             BackHandler { avatarFraming = null }
             LaunchedEffect(rounding) {
-                framingImage = runCatching { store?.client?.originalPhoto(rounding) }
-                    .getOrNull()
-                    ?.let { bytes ->
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                    }
+                framingImage = library.original(rounding)
             }
             CropScreen(
                 photo = framingImage,
