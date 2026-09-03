@@ -30,8 +30,10 @@ import com.leafypuff.ui.photo.PhotoLibrary
 import com.leafypuff.ui.photo.rememberPhotoPicker
 import com.leafypuff.ui.popups.DatePopup
 import com.leafypuff.ui.popups.LocationOptions
+import com.leafypuff.ui.popups.LocationTitle
 import com.leafypuff.ui.popups.OptionPopup
 import com.leafypuff.ui.popups.WeatherOptions
+import com.leafypuff.ui.popups.WeatherTitle
 import com.leafypuff.ui.settings.StickerPack
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -243,7 +245,7 @@ private fun MetaPopupHost(
         )
 
         MetaPopup.Weather -> OptionPopup(
-            title = "Weather",
+            title = WeatherTitle,
             options = WeatherOptions,
             selected = draft.weather,
             onSelect = {
@@ -254,7 +256,7 @@ private fun MetaPopupHost(
         )
 
         MetaPopup.Location -> OptionPopup(
-            title = "Location",
+            title = LocationTitle,
             options = LocationOptions,
             selected = draft.location,
             onSelect = {

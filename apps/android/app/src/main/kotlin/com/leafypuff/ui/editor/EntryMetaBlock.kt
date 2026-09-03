@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.leafypuff.domain.Mood
@@ -27,6 +28,11 @@ import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
 import com.leafypuff.ui.common.formatEntryDate
+import com.leafypuff.ui.popups.LocationOptions
+import com.leafypuff.ui.popups.LocationTitle
+import com.leafypuff.ui.popups.WeatherOptions
+import com.leafypuff.ui.popups.WeatherTitle
+import com.leafypuff.ui.popups.glyphOf
 import kotlinx.datetime.LocalDate
 
 private val BlockGap = 12.dp
@@ -36,6 +42,7 @@ private val CalendarGlyphSize = 16.dp
 private val ChevronSize = 14.dp
 private val ChipGap = 8.dp
 private val BunnySize = 24.dp
+private val ChipGlyphSize = 16.dp
 private val MoodChipPadding = PaddingValues(start = 6.dp, top = 5.dp, end = 12.dp, bottom = 5.dp)
 private val OptionChipPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
 
@@ -62,8 +69,16 @@ fun EntryMetaBlock(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             MoodChip(mood = mood, onMoodClick = onMoodClick)
-            OptionChip(label = weather ?: "Weather", onClick = onWeatherClick)
-            OptionChip(label = location ?: "Location", onClick = onLocationClick)
+            OptionChip(
+                label = weather ?: WeatherTitle,
+                glyph = WeatherOptions.glyphOf(weather),
+                onClick = onWeatherClick,
+            )
+            OptionChip(
+                label = location ?: LocationTitle,
+                glyph = LocationOptions.glyphOf(location),
+                onClick = onLocationClick,
+            )
         }
     }
 }
@@ -122,18 +137,31 @@ private fun MoodChip(mood: Mood, onMoodClick: () -> Unit) {
 }
 
 @Composable
-private fun OptionChip(label: String, onClick: () -> Unit) {
+private fun OptionChip(label: String, glyph: ImageVector?, onClick: () -> Unit) {
     val colors = LocalLeafyColors.current
 
-    Text(
-        text = label,
-        style = LocalLeafyTypography.current.chipLabel,
-        color = colors.ink2,
+    Row(
         modifier = Modifier
             .clip(LeafyShapes.chip)
             .background(colors.surface)
             .border(LeafyStroke.hairline, colors.line, LeafyShapes.chip)
             .clickable(onClick = onClick)
             .padding(OptionChipPadding),
-    )
+        horizontalArrangement = Arrangement.spacedBy(GlyphGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (glyph != null) {
+            Icon(
+                imageVector = glyph,
+                contentDescription = null,
+                tint = colors.ink2,
+                modifier = Modifier.size(ChipGlyphSize),
+            )
+        }
+        Text(
+            text = label,
+            style = LocalLeafyTypography.current.chipLabel,
+            color = colors.ink2,
+        )
+    }
 }

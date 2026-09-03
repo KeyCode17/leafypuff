@@ -7,14 +7,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.Umbrella
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.leafypuff.core.Location
+import com.leafypuff.core.Weather
+import com.leafypuff.data.label
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
@@ -25,18 +38,40 @@ private val TitlePaddingBottom = 8.dp
 private val RowPaddingH = 12.dp
 private val RowPaddingV = 11.dp
 private val RowGap = 10.dp
+private val GlyphSize = 18.dp
 private val CheckSize = 16.dp
 
 const val WeatherTitle = "Weather"
-const val LocationTitle = "Where were you?"
+const val LocationTitle = "Location"
 
-val WeatherOptions = listOf("Sunny", "Cloudy", "Rainy", "Windy")
-val LocationOptions = listOf("Home", "Cafe", "Office", "Park", "On the road")
+data class PopupOption(val label: String, val glyph: ImageVector)
+
+val WeatherOptions: List<PopupOption> = Weather.entries.map { PopupOption(it.label(), it.glyph()) }
+val LocationOptions: List<PopupOption> =
+    Location.entries.map { PopupOption(it.label(), it.glyph()) }
+
+fun List<PopupOption>.glyphOf(label: String?): ImageVector? =
+    firstOrNull { it.label == label }?.glyph
+
+private fun Weather.glyph(): ImageVector = when (this) {
+    Weather.SUNNY -> Icons.Filled.WbSunny
+    Weather.CLOUDY -> Icons.Filled.Cloud
+    Weather.RAINY -> Icons.Filled.Umbrella
+    Weather.WINDY -> Icons.Filled.Air
+}
+
+private fun Location.glyph(): ImageVector = when (this) {
+    Location.HOME -> Icons.Filled.Home
+    Location.CAFE -> Icons.Filled.LocalCafe
+    Location.OFFICE -> Icons.Filled.Work
+    Location.PARK -> Icons.Filled.Park
+    Location.ON_THE_ROAD -> Icons.Filled.DirectionsCar
+}
 
 @Composable
 fun OptionPopup(
     title: String,
-    options: List<String>,
+    options: List<PopupOption>,
     selected: String?,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -57,16 +92,16 @@ fun OptionPopup(
         )
         options.forEach { option ->
             OptionRow(
-                label = option,
-                checked = option == selected,
-                onClick = { onSelect(option) },
+                option = option,
+                checked = option.label == selected,
+                onClick = { onSelect(option.label) },
             )
         }
     }
 }
 
 @Composable
-private fun OptionRow(label: String, checked: Boolean, onClick: () -> Unit) {
+private fun OptionRow(option: PopupOption, checked: Boolean, onClick: () -> Unit) {
     val colors = LocalLeafyColors.current
 
     Row(
@@ -78,8 +113,14 @@ private fun OptionRow(label: String, checked: Boolean, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(RowGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(
+            imageVector = option.glyph,
+            contentDescription = null,
+            tint = if (checked) colors.accentDeep else colors.ink2,
+            modifier = Modifier.size(GlyphSize),
+        )
         Text(
-            text = label,
+            text = option.label,
             style = LocalLeafyTypography.current.body,
             color = colors.ink,
             modifier = Modifier.weight(1f),
