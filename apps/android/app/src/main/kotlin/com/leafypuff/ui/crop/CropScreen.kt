@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -23,25 +25,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import kotlin.math.ln
-import kotlin.math.pow
-import kotlin.math.abs
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.auth.PrimaryCta
+import kotlin.math.abs
+import kotlin.math.ln
+import kotlin.math.pow
 
 private val TopPadding = 68.dp
 private val SidePadding = 24.dp
 private val BlockGap = 18.dp
+private val PreviewMaxHeight = 380.dp
 
 @Composable
 fun CropScreen(
@@ -65,6 +67,11 @@ fun CropScreen(
     val tallness = photo?.let { it.width.toDouble() / it.height.toDouble() } ?: 1.0
     val held by rememberUpdatedState(framing)
     val report by rememberUpdatedState(onFramingChange)
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        focusManager.clearFocus()
+    }
 
     LaunchedEffect(tallness, ratio) {
         val fitted = held.fitted(tallness, ratio)
@@ -96,7 +103,6 @@ fun CropScreen(
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
                 .heightIn(max = PreviewMaxHeight)
                 .aspectRatio((1.0 / ratio).toFloat())
                 .clip(if (round) CircleShape else LeafyShapes.card)
@@ -150,8 +156,6 @@ fun CropScreen(
         )
     }
 }
-
-private val PreviewMaxHeight = 380.dp
 
 private val RatioShapes = listOf(
     "1:1" to 1.0,
