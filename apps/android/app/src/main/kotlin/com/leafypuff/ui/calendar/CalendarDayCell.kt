@@ -49,13 +49,22 @@ fun CalendarDayCell(
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    Box(
+        modifier = modifier.clickable { onSelect(day.date) },
+        contentAlignment = Alignment.Center,
+    ) {
+        DayDisc(day)
+    }
+}
+
+@Composable
+private fun DayDisc(day: CalendarDay) {
     val colors = LocalLeafyColors.current
     val accent = colors.accent
 
     Box(
-        modifier = modifier
+        modifier = Modifier
             .aspectRatio(1f)
-            .clickable { onSelect(day.date) }
             .drawBehind { if (day.isToday) drawTodayRing(accent) },
         contentAlignment = Alignment.Center,
     ) {

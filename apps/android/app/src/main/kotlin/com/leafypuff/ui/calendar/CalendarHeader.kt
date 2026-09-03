@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +41,7 @@ private val NavGap = 10.dp
 private val NavButtonSize = 32.dp
 private val NavGlyphSize = 16.dp
 private val MonthLabelMinWidth = 132.dp
+private const val JumpLabel = "Jump to a month"
 private val PillPaddingH = 14.dp
 private val PillPaddingV = 8.dp
 private val TodayLabelSize = 12.sp
@@ -52,6 +55,7 @@ fun CalendarHeader(
     visibleMonth: LocalDate,
     onMonthChange: (LocalDate) -> Unit,
     onToday: () -> Unit,
+    onJump: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
@@ -76,7 +80,12 @@ fun CalendarHeader(
                 text = formatMonthYear(visibleMonth),
                 style = LocalLeafyTypography.current.monthLabel,
                 color = colors.ink,
-                modifier = Modifier.widthIn(min = MonthLabelMinWidth),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .widthIn(min = MonthLabelMinWidth)
+                    .clip(LeafyShapes.pill)
+                    .clickable(onClick = onJump)
+                    .semantics { contentDescription = JumpLabel },
             )
             NavButton(
                 glyph = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -112,7 +121,7 @@ fun WeekdayRow(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun NavButton(glyph: ImageVector, label: String, onClick: () -> Unit) {
+internal fun NavButton(glyph: ImageVector, label: String, onClick: () -> Unit) {
     val colors = LocalLeafyColors.current
 
     Box(
