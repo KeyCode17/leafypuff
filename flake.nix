@@ -16,7 +16,7 @@
       {
         packages.leafypuff-api = pkgs.rustPlatform.buildRustPackage {
           pname = "leafypuff-api";
-          version = "0.36.1";
+          version = "0.37.0";
           src = ./.;
           cargoLock.lockFile = ./Cargo.lock;
           # The workspace also holds the Android-facing core crate; only the API is deployable.
@@ -31,7 +31,7 @@
         # cargoLock pins the rust one.
         packages.leafypuff-web = pkgs.stdenv.mkDerivation (final: {
           pname = "leafypuff-web";
-          version = "0.36.1";
+          version = "0.37.0";
           src = ./apps/web;
 
           nativeBuildInputs = [
