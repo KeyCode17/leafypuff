@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LeafyStroke
 import com.leafypuff.theme.LocalLeafyColors
@@ -25,6 +27,7 @@ import com.leafypuff.theme.LocalLeafyTypography
 
 enum class EditorTool { Sticker, Hashtag }
 
+private const val AddPhotoLabel = "Add a photo"
 private val ToolbarHeight = 78.dp
 private val ToolbarPaddingX = 20.dp
 private val ToolbarPaddingTop = 14.dp
@@ -63,7 +66,12 @@ fun EntryToolbar(
             verticalAlignment = Alignment.Top,
         ) {
             ToolSlot(onClick = onAddPhoto) {
-                CameraGlyph(tint = colors.ink2, modifier = Modifier.size(CameraSize))
+                CameraGlyph(
+                    tint = colors.ink2,
+                    modifier = Modifier
+                        .size(CameraSize)
+                        .semantics { contentDescription = AddPhotoLabel },
+                )
             }
 
             ToolSlot(onClick = { onToggleTool(EditorTool.Sticker) }) {
