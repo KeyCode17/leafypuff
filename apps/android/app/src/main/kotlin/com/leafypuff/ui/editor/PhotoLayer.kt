@@ -77,12 +77,8 @@ fun PhotoLayer(
                     height = placed.height,
                     layerWidth = layerWidth,
                     layerHeight = layerHeight,
-                    onSelect = {
-                        when (photo.id) {
-                            selectedId -> onCrop(photo.id)
-                            else -> onSelect(photo.id)
-                        }
-                    },
+                    onSelect = { onSelect(photo.id) },
+                    onCrop = { onCrop(photo.id) },
                     onMove = { deltaX, deltaY ->
                         onChange(
                             photo.id,
