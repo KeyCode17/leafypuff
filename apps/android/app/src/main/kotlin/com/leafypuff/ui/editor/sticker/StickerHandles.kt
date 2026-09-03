@@ -34,6 +34,7 @@ private val OutlineWidth = 1.5.dp
 private val DashOn = 4.dp
 private val DashOff = 3.dp
 private val CrossArm = 3.6.dp
+private val CropArm = 3.2.dp
 private val CrossWidth = 1.8.dp
 
 @Composable
@@ -73,6 +74,35 @@ internal fun RemoveHandle(onRemove: () -> Unit, modifier: Modifier = Modifier) {
             drawCross(center, arm, CrossWidth.toPx())
         }
     }
+}
+
+@Composable
+internal fun CropHandle(onCrop: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = LocalLeafyColors.current
+
+    Box(
+        modifier = modifier
+            .size(HandleSize)
+            .shadow(HandleLift, CircleShape)
+            .background(colors.sheet, CircleShape)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onCrop() })
+            },
+    ) {
+        Canvas(Modifier.size(HandleSize)) {
+            drawCropGlyph(colors.accentDeep)
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawCropGlyph(color: Color) {
+    val arm = CropArm.toPx()
+    val stroke = CrossWidth.toPx()
+    val c = Offset(size.width / 2f, size.height / 2f)
+    drawLine(color, Offset(c.x - arm, c.y - arm * 1.6f), Offset(c.x - arm, c.y + arm), stroke)
+    drawLine(color, Offset(c.x - arm, c.y + arm), Offset(c.x + arm * 1.6f, c.y + arm), stroke)
+    drawLine(color, Offset(c.x - arm * 1.6f, c.y - arm), Offset(c.x + arm, c.y - arm), stroke)
+    drawLine(color, Offset(c.x + arm, c.y - arm), Offset(c.x + arm, c.y + arm * 1.6f), stroke)
 }
 
 @Composable

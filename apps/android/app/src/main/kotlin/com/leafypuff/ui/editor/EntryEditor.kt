@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +71,12 @@ fun EntryEditor(
     var selectedPhoto by remember { mutableStateOf<String?>(null) }
     var picked by remember { mutableStateOf<Rect?>(null) }
     var rootOrigin by remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(draft.id) {
+        selectedSticker = null
+        selectedPhoto = null
+        picked = null
+    }
 
     Box(
         modifier = modifier
@@ -137,6 +144,7 @@ fun EntryEditor(
                 )
 
                 PhotoLayer(
+                    modifier = Modifier.matchParentSize(),
                     photos = photos,
                     originals = originals,
                     selectedId = selectedPhoto,

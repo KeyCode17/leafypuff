@@ -34,6 +34,7 @@ internal fun PlacedFrame(
     onResize: (Float) -> Unit,
     onRemove: () -> Unit,
     onBounds: (Rect) -> Unit,
+    onCrop: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val select by rememberUpdatedState(onSelect)
@@ -76,6 +77,9 @@ internal fun PlacedFrame(
                 onResize = onResize,
                 modifier = Modifier.align(Alignment.BottomEnd),
             )
+            if (onCrop != null) {
+                CropHandle(onCrop = onCrop, modifier = Modifier.align(Alignment.BottomStart))
+            }
         }
     }
 }
