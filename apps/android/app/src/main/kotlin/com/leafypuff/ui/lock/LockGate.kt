@@ -33,6 +33,14 @@ fun LockGate(
     var wrong by remember { mutableStateOf(false) }
     var digits by remember { mutableStateOf("") }
     var settling by remember { mutableStateOf(false) }
+    val biometric = biometricEnabled && biometricReady(context)
+    val askBiometric = { unlockWithBiometric(context, onProblem = { }, onUnlocked = onUnlocked) }
+
+    LaunchedEffect(biometric) {
+        if (biometric) {
+            askBiometric()
+        }
+    }
 
     LaunchedEffect(digits) {
         if (digits.length < PinLength) {
@@ -61,13 +69,7 @@ fun LockGate(
             }
         },
         onBackspace = { digits = digits.dropLast(1) },
-        onBiometric = when {
-            biometricEnabled && biometricReady(context) -> {
-                { unlockWithBiometric(context, onProblem = { wrong = true }) { onUnlocked() } }
-            }
-
-            else -> null
-        },
+        onBiometric = if (biometric) askBiometric else null,
         onCancel = null,
         modifier = modifier,
     )
