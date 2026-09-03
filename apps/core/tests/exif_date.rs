@@ -66,3 +66,24 @@ fn an_unparseable_stamp_reports_nothing() {
 
     assert_eq!(read, None);
 }
+
+#[test]
+fn a_photo_with_only_a_digitised_stamp_reports_that_day() {
+    let read = KamadakExifReader
+        .taken_on(&support::jpeg_digitised_on(b"2026:08:21 18:02:10"))
+        .expect("the exif block reads");
+
+    assert_eq!(read, NaiveDate::from_ymd_opt(2026, 8, 21));
+}
+
+#[test]
+fn the_day_it_was_taken_wins_over_the_day_it_was_digitised() {
+    let read = KamadakExifReader
+        .taken_on(&support::jpeg_taken_and_digitised(
+            b"2026:07:04 09:12:33",
+            b"2026:08:21 18:02:10",
+        ))
+        .expect("the exif block reads");
+
+    assert_eq!(read, NaiveDate::from_ymd_opt(2026, 7, 4));
+}

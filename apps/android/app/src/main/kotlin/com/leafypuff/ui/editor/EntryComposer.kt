@@ -20,6 +20,7 @@ import com.leafypuff.domain.Mood
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
 import com.leafypuff.ui.common.exifPromptToast
+import com.leafypuff.ui.common.photoRefusedToast
 import com.leafypuff.ui.mood.MoodPickerOverlay
 import com.leafypuff.ui.photo.EntryPhoto
 import com.leafypuff.ui.photo.PhotoCropped
@@ -112,7 +113,11 @@ fun EntryComposer(
 
     val addPhoto = rememberPhotoPicker { bytes ->
         scope.launch {
-            val picked = library.import(bytes) ?: return@launch
+            val picked = library.import(bytes)
+            if (picked == null) {
+                toast = photoRefusedToast()
+                return@launch
+            }
             photos = photos + picked
             val day = picked.takenOn
             if (day != null) {

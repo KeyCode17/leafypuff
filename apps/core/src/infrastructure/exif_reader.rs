@@ -20,23 +20,22 @@ impl ExifReader for KamadakExifReader {
             Err(_) => return Ok(None),
         };
 
-        let Some(field) = block.get_field(Tag::DateTimeOriginal, In::PRIMARY) else {
-            return Ok(None);
-        };
-        let Value::Ascii(ref parts) = field.value else {
-            return Ok(None);
-        };
-        let Some(first) = parts.first() else {
-            return Ok(None);
-        };
-        let Ok(stamp) = exif::DateTime::from_ascii(first) else {
-            return Ok(None);
-        };
-
-        Ok(NaiveDate::from_ymd_opt(
-            i32::from(stamp.year),
-            u32::from(stamp.month),
-            u32::from(stamp.day),
-        ))
+        Ok(DAY_TAGS
+            .iter()
+            .find_map(|tag| day_of(block.get_field(*tag, In::PRIMARY)?)))
     }
+}
+
+const DAY_TAGS: [Tag; 2] = [Tag::DateTimeOriginal, Tag::DateTimeDigitized];
+
+fn day_of(field: &exif::Field) -> Option<NaiveDate> {
+    let Value::Ascii(ref parts) = field.value else {
+        return None;
+    };
+    let stamp = exif::DateTime::from_ascii(parts.first()?).ok()?;
+    NaiveDate::from_ymd_opt(
+        i32::from(stamp.year),
+        u32::from(stamp.month),
+        u32::from(stamp.day),
+    )
 }

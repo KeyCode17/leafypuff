@@ -24,11 +24,31 @@ pub fn banded_jpeg(width: u32, height: u32, top_rows: u32) -> Vec<u8> {
 }
 
 pub fn jpeg_taken_on(stamp: &[u8]) -> Vec<u8> {
-    splice_app1(&solid_jpeg(48, 32), &exif_blob(taken_on(stamp)))
+    splice_app1(
+        &solid_jpeg(48, 32),
+        &exif_blob(&[stamped(Tag::DateTimeOriginal, stamp)]),
+    )
+}
+
+pub fn jpeg_digitised_on(stamp: &[u8]) -> Vec<u8> {
+    splice_app1(
+        &solid_jpeg(48, 32),
+        &exif_blob(&[stamped(Tag::DateTimeDigitized, stamp)]),
+    )
+}
+
+pub fn jpeg_taken_and_digitised(taken: &[u8], digitised: &[u8]) -> Vec<u8> {
+    splice_app1(
+        &solid_jpeg(48, 32),
+        &exif_blob(&[
+            stamped(Tag::DateTimeOriginal, taken),
+            stamped(Tag::DateTimeDigitized, digitised),
+        ]),
+    )
 }
 
 pub fn jpeg_with_broken_exif(stamp: &[u8]) -> Vec<u8> {
-    let mut blob = exif_blob(taken_on(stamp));
+    let mut blob = exif_blob(&[stamped(Tag::DateTimeOriginal, stamp)]);
     for byte in blob.iter_mut().skip(4) {
         *byte ^= 0xA5;
     }
@@ -73,20 +93,22 @@ pub fn banded_jpeg_oriented(width: u32, height: u32, top_rows: u32, orientation:
         ifd_num: In::PRIMARY,
         value: Value::Short(vec![orientation]),
     };
-    splice_app1(&banded_jpeg(width, height, top_rows), &exif_blob(field))
+    splice_app1(&banded_jpeg(width, height, top_rows), &exif_blob(&[field]))
 }
 
-fn taken_on(stamp: &[u8]) -> Field {
+fn stamped(tag: Tag, stamp: &[u8]) -> Field {
     Field {
-        tag: Tag::DateTimeOriginal,
+        tag,
         ifd_num: In::PRIMARY,
         value: Value::Ascii(vec![stamp.to_vec()]),
     }
 }
 
-fn exif_blob(field: Field) -> Vec<u8> {
+fn exif_blob(fields: &[Field]) -> Vec<u8> {
     let mut writer = Writer::new();
-    writer.push_field(&field);
+    for field in fields {
+        writer.push_field(field);
+    }
     let mut blob = Cursor::new(Vec::new());
     writer.write(&mut blob, false).expect("an exif blob writes");
     blob.into_inner()
