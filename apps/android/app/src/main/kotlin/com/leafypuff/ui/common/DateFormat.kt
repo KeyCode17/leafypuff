@@ -21,3 +21,5 @@ fun formatEntryDate(date: LocalDate): String =
     "${DayNames[date.dayOfWeek.ordinal]}, ${formatShortDate(date)}"
 
 fun formatMonthYear(date: LocalDate): String = "${FullMonths[date.monthNumber - 1]} ${date.year}"
+
+fun formatShortMonth(month: Int): String = ShortMonths[month - 1]
