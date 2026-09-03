@@ -16,9 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import com.leafypuff.data.AppPreferences
 import com.leafypuff.domain.Entry
+import com.leafypuff.domain.Mood
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.ui.common.ToastOverlay
 import com.leafypuff.ui.common.ToastRequest
+import com.leafypuff.ui.popups.ConfirmPopup
 import com.leafypuff.ui.common.deleteEntryToast
 import com.leafypuff.ui.common.plainToast
 import com.leafypuff.ui.common.saveToast
@@ -33,6 +35,12 @@ import com.leafypuff.ui.stats.StatRange
 import com.leafypuff.ui.stats.StatsSummary
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+
+private const val SignOutTitle = "Log out?"
+private const val SignOutBody =
+    "Your diary stays on this phone. Log in again whenever you want to keep writing."
+private const val SignOutAccept = "Log out"
+private const val SignOutReject = "Stay"
 
 @Composable
 fun LeafyHome(
@@ -77,6 +85,7 @@ fun LeafyHome(
     var statistics by remember { mutableStateOf(StatsSummary()) }
     var toast by remember { mutableStateOf<ToastRequest?>(null) }
     var pendingDelete by remember { mutableStateOf<String?>(null) }
+    var confirmingSignOut by remember { mutableStateOf(false) }
     var lastSynced by remember { mutableStateOf("Never") }
 
     LaunchedEffect(entries, coversEpoch) {
@@ -122,7 +131,7 @@ fun LeafyHome(
                 onToggleLock = onToggleLock,
                 onToggleBiometric = onToggleBiometric,
                 onChangePin = onChangePin,
-                onSignOut = onSignOut,
+                onSignOut = { confirmingSignOut = true },
                 avatar = avatar,
                 onEditProfile = onEditProfile,
                 onSelectDay = { selected = it },
@@ -224,6 +233,21 @@ fun LeafyHome(
             },
             onDismiss = { toast = null },
         )
+
+        if (confirmingSignOut) {
+            ConfirmPopup(
+                face = Mood.Sad,
+                title = SignOutTitle,
+                body = SignOutBody,
+                accept = SignOutAccept,
+                reject = SignOutReject,
+                onAccept = {
+                    confirmingSignOut = false
+                    onSignOut()
+                },
+                onDismiss = { confirmingSignOut = false },
+            )
+        }
     }
 }
 
