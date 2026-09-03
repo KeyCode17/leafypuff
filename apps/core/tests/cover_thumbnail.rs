@@ -155,3 +155,24 @@ fn a_framed_square_reads_the_framing_against_the_stood_up_photo() {
         support::BOTTOM_BAND
     ));
 }
+
+#[test]
+fn a_large_square_frame_comes_down_as_a_square() {
+    let source = support::banded_jpeg(2400, 2400, 1200);
+    let square = ImageThumbnailer
+        .framed_square(&source, Framing::default())
+        .expect("a framed square is built");
+
+    let (width, height) = support::dimensions(&square);
+    assert_eq!(width, height);
+    assert!(width <= COVER_MAX_WIDTH);
+    let drawn = support::decode(&square);
+    assert!(support::close(
+        *drawn.get_pixel(width / 2, height / 4),
+        support::TOP_BAND
+    ));
+    assert!(support::close(
+        *drawn.get_pixel(width / 2, height * 3 / 4),
+        support::BOTTOM_BAND
+    ));
+}
