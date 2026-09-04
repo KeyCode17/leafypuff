@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -46,6 +47,7 @@ internal fun RecoveryUnlockScreen(
         modifier = modifier
             .fillMaxSize()
             .background(colors.bg)
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(start = SidePadding, top = TopPadding, end = SidePadding),
         verticalArrangement = Arrangement.spacedBy(BlockGap),
