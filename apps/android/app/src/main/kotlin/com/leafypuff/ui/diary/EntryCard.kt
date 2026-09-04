@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.leafypuff.ui.crop.PhotoFraming
@@ -28,9 +30,13 @@ import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
 import com.leafypuff.theme.LocalLeafyTypography
 import com.leafypuff.ui.common.BunnyFace
+import com.leafypuff.data.label
 import com.leafypuff.ui.common.formatEntryDate
+import com.leafypuff.ui.popups.glyph
 
 private val CoverShape = RoundedCornerShape(18.dp)
+private val MetaGap = 8.dp
+private val MetaGlyphSize = 15.dp
 
 @Composable
 fun EntryCard(
@@ -60,11 +66,18 @@ fun EntryCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = formatEntryDate(entry.date).uppercase(),
-                style = typography.metaLabel,
-                color = colors.ink3,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(MetaGap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = formatEntryDate(entry.date).uppercase(),
+                    style = typography.metaLabel,
+                    color = colors.ink3,
+                )
+                entry.weather?.let { MetaGlyph(glyph = it.glyph(), label = it.label()) }
+                entry.location?.let { MetaGlyph(glyph = it.glyph(), label = it.label()) }
+            }
             MoodChip(entry)
         }
 
@@ -82,6 +95,16 @@ fun EntryCard(
             entry.tags.forEach { tag -> TagChip(tag) }
         }
     }
+}
+
+@Composable
+private fun MetaGlyph(glyph: ImageVector, label: String) {
+    Icon(
+        imageVector = glyph,
+        contentDescription = label,
+        tint = LocalLeafyColors.current.ink3,
+        modifier = Modifier.size(MetaGlyphSize),
+    )
 }
 
 @Composable

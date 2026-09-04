@@ -53,14 +53,14 @@ val LocationOptions: List<PopupOption> =
 fun List<PopupOption>.glyphOf(label: String?): ImageVector? =
     firstOrNull { it.label == label }?.glyph
 
-private fun Weather.glyph(): ImageVector = when (this) {
+internal fun Weather.glyph(): ImageVector = when (this) {
     Weather.SUNNY -> Icons.Filled.WbSunny
     Weather.CLOUDY -> Icons.Filled.Cloud
     Weather.RAINY -> Icons.Filled.Umbrella
     Weather.WINDY -> Icons.Filled.Air
 }
 
-private fun Location.glyph(): ImageVector = when (this) {
+internal fun Location.glyph(): ImageVector = when (this) {
     Location.HOME -> Icons.Filled.Home
     Location.CAFE -> Icons.Filled.LocalCafe
     Location.OFFICE -> Icons.Filled.Work

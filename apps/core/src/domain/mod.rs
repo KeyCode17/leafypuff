@@ -23,8 +23,8 @@ pub use ports::{
 };
 pub use profile::Profile;
 pub use stats::{
-    GroupCount, MoodCount, SPREAD_LIMIT, StatsRange, StatsSummary, TAG_LIMIT, TagCount,
-    WeekdayCount, summarise,
+    GroupCount, MoodCount, PlaceCount, SPREAD_LIMIT, StatsRange, StatsSummary, TAG_LIMIT, TagCount,
+    WeatherCount, WeekdayCount, summarise,
 };
 pub use sticker::{PlacedSticker, STICKER_MAX_SIZE, STICKER_MIN_SIZE, Sticker};
 pub use sync::{OutboundEntry, SyncOutcome};

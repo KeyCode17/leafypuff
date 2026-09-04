@@ -15,6 +15,8 @@ fun CoreDraft.toEntry(): Entry = Entry(
     body = body,
     tags = tags,
     coverPhotoId = photos.minByOrNull { it.ordinal }?.id,
+    weather = weather,
+    location = location,
 )
 
 fun CoreDraft.toUiDraft(): UiDraft = UiDraft(

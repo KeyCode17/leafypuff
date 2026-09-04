@@ -3,16 +3,20 @@ package com.leafypuff.data
 import com.leafypuff.core.FfiGroupCount
 import com.leafypuff.core.FfiMoodCount
 import com.leafypuff.core.FfiMoodGroup
+import com.leafypuff.core.FfiPlaceCount
 import com.leafypuff.core.FfiStats
 import com.leafypuff.core.FfiStatsRange
 import com.leafypuff.core.FfiTagCount
+import com.leafypuff.core.FfiWeatherCount
 import com.leafypuff.core.FfiWeekdayCount
 import com.leafypuff.domain.MoodGroup
 import com.leafypuff.ui.stats.GroupCount
 import com.leafypuff.ui.stats.MoodCount
+import com.leafypuff.ui.stats.PlaceCount
 import com.leafypuff.ui.stats.StatRange
 import com.leafypuff.ui.stats.StatsSummary
 import com.leafypuff.ui.stats.TagCount
+import com.leafypuff.ui.stats.WeatherCount
 import com.leafypuff.ui.stats.WeekdayCount
 
 fun StatRange.toCore(): FfiStatsRange = when (this) {
@@ -28,6 +32,8 @@ fun FfiStats.toSummary(): StatsSummary = StatsSummary(
     moodBalance = moodBalance.map { it.toUi() },
     weekdays = weekdays.map { it.toUi() },
     tags = tags.map { it.toUi() },
+    weather = weather.map { it.toUi() },
+    places = places.map { it.toUi() },
 )
 
 private fun FfiMoodCount.toUi(): MoodCount = MoodCount(mood.toDomain(), count.toInt())
@@ -37,6 +43,10 @@ private fun FfiGroupCount.toUi(): GroupCount = GroupCount(group.toDomain(), coun
 private fun FfiWeekdayCount.toUi(): WeekdayCount = WeekdayCount(label, count.toInt())
 
 private fun FfiTagCount.toUi(): TagCount = TagCount(tag, count.toInt())
+
+private fun FfiWeatherCount.toUi(): WeatherCount = WeatherCount(weather, count.toInt())
+
+private fun FfiPlaceCount.toUi(): PlaceCount = PlaceCount(location, count.toInt())
 
 private fun FfiMoodGroup.toDomain(): MoodGroup = when (this) {
     FfiMoodGroup.POSITIVE -> MoodGroup.Positive

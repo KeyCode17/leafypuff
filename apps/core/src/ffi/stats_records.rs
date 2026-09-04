@@ -1,5 +1,6 @@
 use crate::domain::{
-    GroupCount, MoodCount, MoodGroup, StatsRange, StatsSummary, TagCount, WeekdayCount,
+    GroupCount, Location, MoodCount, MoodGroup, PlaceCount, StatsRange, StatsSummary, TagCount,
+    Weather, WeatherCount, WeekdayCount,
 };
 
 #[derive(uniffi::Enum)]
@@ -61,6 +62,18 @@ pub struct FfiTagCount {
 }
 
 #[derive(uniffi::Record)]
+pub struct FfiWeatherCount {
+    pub weather: Weather,
+    pub count: u32,
+}
+
+#[derive(uniffi::Record)]
+pub struct FfiPlaceCount {
+    pub location: Location,
+    pub count: u32,
+}
+
+#[derive(uniffi::Record)]
 pub struct FfiStats {
     pub days_written: u32,
     pub longest_streak: u32,
@@ -68,6 +81,8 @@ pub struct FfiStats {
     pub mood_balance: Vec<FfiGroupCount>,
     pub weekdays: Vec<FfiWeekdayCount>,
     pub tags: Vec<FfiTagCount>,
+    pub weather: Vec<FfiWeatherCount>,
+    pub places: Vec<FfiPlaceCount>,
 }
 
 impl From<StatsSummary> for FfiStats {
@@ -91,6 +106,16 @@ impl From<StatsSummary> for FfiStats {
                 .map(FfiWeekdayCount::from)
                 .collect(),
             tags: summary.tags.into_iter().map(FfiTagCount::from).collect(),
+            weather: summary
+                .weather
+                .into_iter()
+                .map(FfiWeatherCount::from)
+                .collect(),
+            places: summary
+                .places
+                .into_iter()
+                .map(FfiPlaceCount::from)
+                .collect(),
         }
     }
 }
@@ -117,6 +142,24 @@ impl From<WeekdayCount> for FfiWeekdayCount {
     fn from(row: WeekdayCount) -> Self {
         Self {
             label: row.label.to_owned(),
+            count: row.count,
+        }
+    }
+}
+
+impl From<WeatherCount> for FfiWeatherCount {
+    fn from(row: WeatherCount) -> Self {
+        Self {
+            weather: row.weather,
+            count: row.count,
+        }
+    }
+}
+
+impl From<PlaceCount> for FfiPlaceCount {
+    fn from(row: PlaceCount) -> Self {
+        Self {
+            location: row.location,
             count: row.count,
         }
     }
