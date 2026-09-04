@@ -1,5 +1,6 @@
 package com.leafypuff.ui.editor
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,14 +11,25 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.leafypuff.theme.LeafyShapes
 import com.leafypuff.theme.LocalLeafyColors
@@ -106,6 +118,7 @@ fun EntryNoteCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NoteField(
     value: String,
@@ -116,14 +129,41 @@ private fun NoteField(
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalLeafyColors.current
+    val requester = remember { BringIntoViewRequester() }
+    var field by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var focused by remember { mutableStateOf(false) }
+
+    if (field.text != value) {
+        field = TextFieldValue(value, TextRange(value.length))
+    }
+
+    LaunchedEffect(field, focused, layout) {
+        val drawn = layout
+        if (!focused || drawn == null) {
+            return@LaunchedEffect
+        }
+        val laid = drawn.layoutInput.text.length
+        val caret = field.selection.end.coerceIn(0, laid)
+        requester.bringIntoView(drawn.getCursorRect(caret))
+    }
 
     BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
+        value = field,
+        onValueChange = { next ->
+            field = next
+            if (next.text != value) {
+                onValueChange(next.text)
+            }
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(requester)
+            .onFocusChanged { focused = it.isFocused },
         textStyle = textStyle,
         singleLine = singleLine,
         cursorBrush = SolidColor(colors.ink),
+        onTextLayout = { layout = it },
         decorationBox = { inner ->
             Box {
                 if (value.isEmpty()) {

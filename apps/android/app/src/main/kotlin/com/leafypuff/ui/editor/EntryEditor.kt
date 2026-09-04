@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -38,9 +38,10 @@ import com.leafypuff.ui.photo.PhotoPlacement
 import com.leafypuff.ui.settings.StickerPack
 
 private val ScreenGutter = 24.dp
-private val ScrollBottomPadding = 210.dp
+private val ScrollBottomPadding = 28.dp
 
 private val PlacementCanvasHeight = 420.dp
+private val PlacementRoomBelowNote = 180.dp
 
 @Composable
 fun EntryEditor(
@@ -83,6 +84,7 @@ fun EntryEditor(
         modifier = modifier
             .fillMaxSize()
             .background(LocalLeafyColors.current.bg)
+            .imePadding()
             .onGloballyPositioned { rootOrigin = it.positionInWindow() }
             .pointerInput(Unit) {
                 awaitPointerEventScope {
@@ -101,9 +103,11 @@ fun EntryEditor(
                 }
             },
     ) {
+        Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = ScreenGutter)
                 .padding(bottom = ScrollBottomPadding),
@@ -128,6 +132,7 @@ fun EntryEditor(
 
             Box(modifier = Modifier.heightIn(min = PlacementCanvasHeight)) {
                 EntryNoteCard(
+                    modifier = Modifier.padding(bottom = PlacementRoomBelowNote),
                     title = draft.title,
                     body = draft.body,
                     tags = draft.tags,
@@ -182,11 +187,7 @@ fun EntryEditor(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             AnimatedVisibility(
                 visible = tool != null,
                 enter = slideInVertically(
@@ -226,6 +227,7 @@ fun EntryEditor(
                 },
                 onAddPhoto = onAddPhoto,
             )
+        }
         }
     }
 }
