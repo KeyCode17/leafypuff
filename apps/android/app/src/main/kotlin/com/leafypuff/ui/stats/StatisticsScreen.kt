@@ -49,6 +49,8 @@ fun StatisticsScreen(
             StatFigureRow(summary)
             MoodSpreadCard(summary)
             MoodBalanceCard(summary)
+            WeatherCard(summary)
+            PlacesCard(summary)
             WritingDaysCard(summary)
             HashtagsCard(summary)
         }

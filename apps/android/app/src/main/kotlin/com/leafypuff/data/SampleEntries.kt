@@ -1,5 +1,7 @@
 package com.leafypuff.data
 
+import com.leafypuff.core.Location
+import com.leafypuff.core.Weather
 import com.leafypuff.domain.Entry
 import com.leafypuff.domain.Mood
 import kotlinx.datetime.LocalDate
@@ -12,6 +14,8 @@ val SampleEntries: List<Entry> = listOf(
         title = "Quiet morning",
         body = "Tea on the balcony before anyone else was awake. The street was still wet from last night and nothing needed doing yet.",
         tags = listOf("#slowday", "#home"),
+        weather = Weather.RAINY,
+        location = Location.HOME,
     ),
     Entry(
         id = "e2",
@@ -28,6 +32,8 @@ val SampleEntries: List<Entry> = listOf(
         title = "Deploy day",
         body = "Shipped it, then sat staring at the logs for an hour longer than I needed to. Slept badly.",
         tags = listOf("#work"),
+        weather = Weather.CLOUDY,
+        location = Location.OFFICE,
     ),
     Entry(
         id = "e4",

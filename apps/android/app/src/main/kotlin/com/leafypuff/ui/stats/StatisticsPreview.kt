@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.leafypuff.core.Location
+import com.leafypuff.core.Weather
 import com.leafypuff.domain.Mood
 import com.leafypuff.domain.MoodGroup
 import com.leafypuff.theme.LeafyTheme
@@ -30,6 +32,15 @@ private val PreviewSummary = StatsSummary(
     ),
     weekdays = WeekdayLabels.mapIndexed { index, label -> WeekdayCount(label, index % 3) },
     tags = listOf(TagCount("#home", 4), TagCount("#coffee", 2)),
+    weather = listOf(
+        WeatherCount(Weather.SUNNY, 6),
+        WeatherCount(Weather.RAINY, 3),
+        WeatherCount(Weather.CLOUDY, 1),
+    ),
+    places = listOf(
+        PlaceCount(Location.HOME, 7),
+        PlaceCount(Location.CAFE, 2),
+    ),
 )
 
 @Preview(name = "Statistics on light", widthDp = FrameWidth, heightDp = FrameHeight)

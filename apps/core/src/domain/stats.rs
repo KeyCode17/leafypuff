@@ -4,6 +4,7 @@ use chrono::{Datelike, NaiveDate};
 
 use super::entry::Entry;
 use super::mood::{Mood, MoodGroup};
+use super::weather::{Location, Weather};
 
 pub const SPREAD_LIMIT: usize = 6;
 pub const TAG_LIMIT: usize = 6;
@@ -47,6 +48,18 @@ pub struct WeekdayCount {
     pub count: u32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WeatherCount {
+    pub weather: Weather,
+    pub count: u32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlaceCount {
+    pub location: Location,
+    pub count: u32,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TagCount {
     pub tag: String,
@@ -61,6 +74,8 @@ pub struct StatsSummary {
     pub mood_balance: Vec<GroupCount>,
     pub weekdays: Vec<WeekdayCount>,
     pub tags: Vec<TagCount>,
+    pub weather: Vec<WeatherCount>,
+    pub places: Vec<PlaceCount>,
 }
 
 pub fn summarise(entries: &[Entry], range: StatsRange, today: NaiveDate) -> StatsSummary {
@@ -83,6 +98,8 @@ pub fn summarise(entries: &[Entry], range: StatsRange, today: NaiveDate) -> Stat
         mood_balance: mood_balance(&in_range),
         weekdays: weekday_counts(&in_range),
         tags: top_tags(&in_range),
+        weather: weather_counts(&in_range),
+        places: place_counts(&in_range),
     }
 }
 
@@ -150,6 +167,38 @@ fn weekday_counts(entries: &[&Entry]) -> Vec<WeekdayCount> {
         .zip(counts)
         .map(|(label, count)| WeekdayCount { label, count })
         .collect()
+}
+
+fn weather_counts(entries: &[&Entry]) -> Vec<WeatherCount> {
+    let mut counts: Vec<WeatherCount> = Weather::ALL
+        .into_iter()
+        .map(|weather| WeatherCount {
+            weather,
+            count: entries
+                .iter()
+                .filter(|entry| entry.weather == Some(weather))
+                .count() as u32,
+        })
+        .filter(|row| row.count > 0)
+        .collect();
+    counts.sort_by_key(|row| Reverse(row.count));
+    counts
+}
+
+fn place_counts(entries: &[&Entry]) -> Vec<PlaceCount> {
+    let mut counts: Vec<PlaceCount> = Location::ALL
+        .into_iter()
+        .map(|location| PlaceCount {
+            location,
+            count: entries
+                .iter()
+                .filter(|entry| entry.location == Some(location))
+                .count() as u32,
+        })
+        .filter(|row| row.count > 0)
+        .collect();
+    counts.sort_by_key(|row| Reverse(row.count));
+    counts
 }
 
 fn top_tags(entries: &[&Entry]) -> Vec<TagCount> {

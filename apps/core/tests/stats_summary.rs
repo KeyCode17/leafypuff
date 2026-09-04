@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use leafypuff_core::domain::{
-    Entry, EntryId, Mood, MoodGroup, SPREAD_LIMIT, StatsRange, StatsSummary, summarise,
+    Entry, EntryId, Location, Mood, MoodGroup, SPREAD_LIMIT, StatsRange, StatsSummary, Weather,
+    summarise,
 };
 
 fn today() -> NaiveDate {
@@ -27,6 +28,14 @@ fn entry(day: u32, mood: Mood, tags: &[&str]) -> Entry {
 
 fn plain(day: u32) -> Entry {
     entry(day, Mood::Calm, &[])
+}
+
+fn outdoors(day: u32, weather: Option<Weather>, location: Option<Location>) -> Entry {
+    Entry {
+        weather,
+        location,
+        ..plain(day)
+    }
 }
 
 fn all_time(entries: &[Entry]) -> StatsSummary {
@@ -80,6 +89,39 @@ fn an_empty_diary_yields_zeroes_and_every_bucket_still_present() {
     assert!(summary.mood_balance.iter().all(|row| row.count == 0));
     assert_eq!(summary.weekdays.len(), 7);
     assert!(summary.weekdays.iter().all(|row| row.count == 0));
+    assert!(summary.weather.is_empty());
+    assert!(summary.places.is_empty());
+}
+
+#[test]
+fn weather_and_places_come_back_ranked_and_leave_out_the_unanswered() {
+    let entries = [
+        outdoors(24, Some(Weather::Rainy), Some(Location::Cafe)),
+        outdoors(25, Some(Weather::Rainy), Some(Location::Home)),
+        outdoors(26, Some(Weather::Sunny), Some(Location::Cafe)),
+        outdoors(27, Some(Weather::Rainy), None),
+        outdoors(28, None, Some(Location::Cafe)),
+        plain(29),
+    ];
+
+    let summary = all_time(&entries);
+
+    assert_eq!(
+        summary
+            .weather
+            .iter()
+            .map(|row| (row.weather, row.count))
+            .collect::<Vec<(Weather, u32)>>(),
+        vec![(Weather::Rainy, 3), (Weather::Sunny, 1)]
+    );
+    assert_eq!(
+        summary
+            .places
+            .iter()
+            .map(|row| (row.location, row.count))
+            .collect::<Vec<(Location, u32)>>(),
+        vec![(Location::Cafe, 3), (Location::Home, 1)]
+    );
 }
 
 #[test]
