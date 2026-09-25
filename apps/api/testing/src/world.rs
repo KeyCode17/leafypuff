@@ -82,6 +82,7 @@ impl Default for World {
             generator: Arc::new(generator.clone()),
             mail: Arc::new(mailer.clone()),
             clock: Arc::new(clock.clone()),
+            registration_open: true,
         };
 
         let entries = InMemoryEntries::default();

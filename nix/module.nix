@@ -53,6 +53,12 @@ in
       default = 8080;
     };
 
+    registrationOpen = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether /iam/register may create an account. Closed, it answers the same way it answers an address that is already taken: accepted, nothing stored, nothing mailed.";
+    };
+
     dnsProvider = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -131,6 +137,7 @@ in
           # header of "leafyPuff <no-reply@example>" reached the service as "leafyPuff" alone and
           # every mail would have been rejected for having no address in it.
           "MAIL_FROM=\"${cfg.mailFrom}\""
+          "REGISTRATION_OPEN=${lib.boolToString cfg.registrationOpen}"
         ];
         User = "leafypuff";
         Group = "leafypuff";

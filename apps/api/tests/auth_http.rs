@@ -50,6 +50,23 @@ fn registration() -> Value {
 }
 
 #[tokio::test]
+async fn a_closed_registration_answers_exactly_as_an_open_one_does() {
+    let open = World::default();
+    open.generator.queue("123456");
+    let (open_status, open_body) = post(router(&open), "/v1/auth/register", registration()).await;
+
+    let mut closed = World::default();
+    closed.services.registration_open = false;
+    let (closed_status, closed_body) =
+        post(router(&closed), "/v1/auth/register", registration()).await;
+
+    assert_eq!(closed_status, open_status);
+    assert_eq!(closed_body, open_body);
+    assert!(closed.accounts.snapshot().is_empty());
+    assert!(closed.mailer.sent().is_empty());
+}
+
+#[tokio::test]
 async fn a_duplicate_registration_is_indistinguishable_from_a_new_one() {
     let world = World::default();
     world.generator.queue("123456");

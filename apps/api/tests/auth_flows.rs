@@ -110,6 +110,40 @@ async fn registering_a_verified_address_mails_the_owner_a_notice_and_no_code() {
 }
 
 #[tokio::test]
+async fn a_closed_registration_answers_a_new_address_and_stores_nothing() {
+    let mut world = World::default();
+    world.services.registration_open = false;
+    world.generator.queue("123456");
+
+    world
+        .register()
+        .execute(registration())
+        .await
+        .expect("a closed registration is answered the same way an open one is");
+
+    assert!(world.accounts.snapshot().is_empty());
+    assert!(world.mailer.sent().is_empty());
+    assert!(world.mailer.notices().is_empty());
+}
+
+#[tokio::test]
+async fn a_closed_registration_answers_a_taken_address_the_same_way() {
+    let mut world = verified_world().await;
+    world.services.registration_open = false;
+    let mailed = world.mailer.sent().len();
+
+    world
+        .register()
+        .execute(registration())
+        .await
+        .expect("a taken address is answered like any other");
+
+    assert_eq!(world.accounts.snapshot().len(), 1);
+    assert_eq!(world.mailer.sent().len(), mailed);
+    assert!(world.mailer.notices().is_empty());
+}
+
+#[tokio::test]
 async fn the_attempt_ceiling_closes_the_challenge() {
     let world = World::default();
     world.generator.queue("123456");

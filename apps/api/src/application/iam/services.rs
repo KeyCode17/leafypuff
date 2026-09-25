@@ -24,6 +24,7 @@ pub struct IamServices {
     pub generator: Arc<dyn OtpGenerator>,
     pub mail: Arc<dyn EmailSender>,
     pub clock: Arc<dyn Clock>,
+    pub registration_open: bool,
 }
 
 impl IamServices {
@@ -41,6 +42,7 @@ impl IamServices {
             Arc::clone(&self.hasher),
             Arc::clone(&self.mail),
             self.issue_challenge(),
+            self.registration_open,
         )
     }
 
