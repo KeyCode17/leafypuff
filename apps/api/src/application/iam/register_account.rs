@@ -19,6 +19,7 @@ pub struct RegisterAccount {
     hasher: Arc<dyn PasswordHasher>,
     mail: Arc<dyn EmailSender>,
     challenge: IssueChallenge,
+    open: bool,
 }
 
 impl RegisterAccount {
@@ -27,16 +28,22 @@ impl RegisterAccount {
         hasher: Arc<dyn PasswordHasher>,
         mail: Arc<dyn EmailSender>,
         challenge: IssueChallenge,
+        open: bool,
     ) -> Self {
         Self {
             accounts,
             hasher,
             mail,
             challenge,
+            open,
         }
     }
 
     pub async fn execute(&self, input: RegisterInput) -> Result<(), IamError> {
+        if !self.open {
+            return Ok(());
+        }
+
         let address = email::normalise(&input.email);
         let attempt = self
             .accounts

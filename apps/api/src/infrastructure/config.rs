@@ -23,6 +23,15 @@ fn sender(raw: &str) -> Result<String, ConfigError> {
     ))
 }
 
+fn registration(raw: Option<String>) -> Result<bool, ConfigError> {
+    match raw {
+        None => Ok(true),
+        Some(value) => value
+            .parse()
+            .map_err(|_| ConfigError::Invalid("REGISTRATION_OPEN".to_owned(), value.clone())),
+    }
+}
+
 fn endpoint(raw: String) -> Result<String, ConfigError> {
     if raw.contains(SCHEME_SEPARATOR) {
         return Ok(raw);
@@ -46,6 +55,7 @@ pub struct Config {
     pub mail_endpoint: String,
     pub otp_pepper: [u8; PEPPER_BYTES],
     pub port: u16,
+    pub registration_open: bool,
 }
 
 impl Config {
@@ -70,6 +80,7 @@ impl Config {
             )?,
             otp_pepper: pepper(&required("OTP_PEPPER")?)?,
             port,
+            registration_open: registration(source("REGISTRATION_OPEN"))?,
         })
     }
 }

@@ -96,6 +96,7 @@ async fn harness() -> Option<Harness> {
             .expect("the mailer builds"),
         ),
         clock: Arc::new(SystemClock),
+        registration_open: true,
     };
     let sync = SyncServices {
         entries: Arc::new(PgEntryStore::new(connection.clone())),

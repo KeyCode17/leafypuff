@@ -98,6 +98,7 @@ async fn server() -> Option<(String, DatabaseConnection, Uuid, String)> {
                 .expect("the mailer builds"),
             ),
             clock: Arc::new(SystemClock),
+            registration_open: true,
         },
         sync: SyncServices {
             entries: Arc::new(PgEntryStore::new(connection.clone())),

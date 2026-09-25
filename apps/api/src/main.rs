@@ -55,6 +55,7 @@ async fn main() {
             .expect("the mail sender must build"),
         ),
         clock: Arc::new(SystemClock),
+        registration_open: config.registration_open,
     };
 
     let sync = SyncServices {
