@@ -46,6 +46,16 @@ impl ObjectStore for InMemoryObjects {
 #[derive(Clone, Default)]
 pub struct InMemoryMedia {
     rows: Arc<Mutex<Vec<MediaObject>>>,
+    tombstoned: Arc<Mutex<std::collections::HashSet<Uuid>>>,
+}
+
+impl InMemoryMedia {
+    pub fn tombstone(&self, entry_id: Uuid) {
+        self.tombstoned
+            .lock()
+            .expect("the tombstone lock holds")
+            .insert(entry_id);
+    }
 }
 
 #[async_trait]
@@ -70,5 +80,21 @@ impl MediaRepository for InMemoryMedia {
         let mut rows = self.rows.lock().expect("the media lock holds");
         rows.retain(|row| row.account_id != account_id || row.photo_id != photo_id);
         Ok(())
+    }
+
+    async fn orphaned_photos(&self, limit: u64) -> Result<Vec<(Uuid, Uuid)>, MediaError> {
+        let rows = self.rows.lock().expect("the media lock holds");
+        let tombstoned = self.tombstoned.lock().expect("the tombstone lock holds");
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::new();
+        for row in rows.iter() {
+            if tombstoned.contains(&row.entry_id) && seen.insert((row.account_id, row.photo_id)) {
+                out.push((row.account_id, row.photo_id));
+                if out.len() as u64 >= limit {
+                    break;
+                }
+            }
+        }
+        Ok(out)
     }
 }

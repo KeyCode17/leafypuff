@@ -17,4 +17,5 @@ pub trait MediaRepository: Send + Sync {
     async fn record(&self, object: MediaObject) -> Result<(), MediaError>;
     async fn find(&self, account_id: Uuid, photo_id: Uuid) -> Result<Vec<MediaObject>, MediaError>;
     async fn forget(&self, account_id: Uuid, photo_id: Uuid) -> Result<(), MediaError>;
+    async fn orphaned_photos(&self, limit: u64) -> Result<Vec<(Uuid, Uuid)>, MediaError>;
 }
