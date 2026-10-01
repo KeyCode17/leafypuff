@@ -77,6 +77,8 @@ pub trait ThumbnailMaker {
     fn framed_cover(&self, bytes: &[u8], framing: Framing) -> Result<Vec<u8>, CoreError>;
 
     fn framed_square(&self, bytes: &[u8], framing: Framing) -> Result<Vec<u8>, CoreError>;
+
+    fn original(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError>;
 }
 
 pub trait PhotoStore {
