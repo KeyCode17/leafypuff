@@ -109,6 +109,21 @@ async fn main() {
     };
 
     let probe = DependencyProbe::new(config.database_url.clone(), config.s3_endpoint.clone());
+    let sweeper = media.clone();
+    tokio::spawn(async move {
+        let period = std::time::Duration::from_secs(6 * 60 * 60);
+        loop {
+            match sweeper.sweep().execute().await {
+                Ok(count) if count > 0 => {
+                    tracing::info!(forgotten = count, "swept orphaned media objects");
+                }
+                Ok(_) => {}
+                Err(error) => tracing::warn!(%error, "orphaned media sweep failed"),
+            }
+            tokio::time::sleep(period).await;
+        }
+    });
+
     let app = build_router(AppState {
         readiness: probe,
         iam,

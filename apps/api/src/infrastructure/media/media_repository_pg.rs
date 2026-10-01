@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use sea_orm::sea_query::OnConflict;
-use sea_orm::{ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{
+    ActiveValue, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult,
+    QueryFilter, Statement,
+};
 use uuid::Uuid;
 
 use crate::domain::media::error::ERR_UNKNOWN_VARIANT;
@@ -68,6 +71,31 @@ impl MediaRepository for PgMediaRepository {
             .map_err(storage)?;
         Ok(())
     }
+
+    async fn orphaned_photos(&self, limit: u64) -> Result<Vec<(Uuid, Uuid)>, MediaError> {
+        let capped = i64::try_from(limit).unwrap_or(i64::MAX);
+        let rows = OrphanRow::find_by_statement(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            "SELECT DISTINCT m.account_id, m.photo_id FROM media_objects m \
+             LEFT JOIN entries e ON e.id = m.entry_id \
+             WHERE e.id IS NULL OR e.deleted_at IS NOT NULL \
+             LIMIT $1",
+            [capped.into()],
+        ))
+        .all(&self.connection)
+        .await
+        .map_err(storage)?;
+        Ok(rows
+            .into_iter()
+            .map(|row| (row.account_id, row.photo_id))
+            .collect())
+    }
+}
+
+#[derive(FromQueryResult)]
+struct OrphanRow {
+    account_id: Uuid,
+    photo_id: Uuid,
 }
 
 fn storage(error: sea_orm::DbErr) -> MediaError {

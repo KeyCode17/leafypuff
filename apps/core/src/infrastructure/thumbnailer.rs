@@ -12,6 +12,8 @@ use crate::domain::error::{ERR_PHOTO_UNDECODABLE, ERR_PHOTO_UNENCODABLE};
 use crate::domain::{CoreError, ThumbnailMaker};
 
 pub const COVER_QUALITY: u8 = 82;
+pub const ORIGINAL_MAX_EDGE: u32 = 3072;
+pub const ORIGINAL_QUALITY: u8 = 88;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ImageThumbnailer;
@@ -33,6 +35,16 @@ impl ThumbnailMaker for ImageThumbnailer {
         let source = decode(bytes)?;
         let frame = framed_to(source.width(), source.height(), framing, 1, 1)?;
         encode(&source, frame)
+    }
+
+    fn original(&self, bytes: &[u8]) -> Result<Vec<u8>, CoreError> {
+        let source = decode(bytes)?;
+        let bounded = if source.width().max(source.height()) > ORIGINAL_MAX_EDGE {
+            source.resize(ORIGINAL_MAX_EDGE, ORIGINAL_MAX_EDGE, FilterType::Lanczos3)
+        } else {
+            source
+        };
+        encode_jpeg(&bounded, ORIGINAL_QUALITY)
     }
 }
 
@@ -61,9 +73,13 @@ fn encode(source: &DynamicImage, frame: CropBox) -> Result<Vec<u8>, CoreError> {
         cropped.resize_exact(width, height, FilterType::Lanczos3)
     };
 
+    encode_jpeg(&scaled, COVER_QUALITY)
+}
+
+fn encode_jpeg(source: &DynamicImage, quality: u8) -> Result<Vec<u8>, CoreError> {
     let mut out = Cursor::new(Vec::new());
-    JpegEncoder::new_with_quality(&mut out, COVER_QUALITY)
-        .encode_image(&scaled.to_rgb8())
+    JpegEncoder::new_with_quality(&mut out, quality)
+        .encode_image(&source.to_rgb8())
         .map_err(|cause| CoreError::Photo(format!("{ERR_PHOTO_UNENCODABLE}: {cause}")))?;
     Ok(out.into_inner())
 }

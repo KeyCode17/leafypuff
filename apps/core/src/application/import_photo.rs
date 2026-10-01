@@ -22,10 +22,11 @@ impl<S: PhotoStore, E: ExifReader, T: ThumbnailMaker> ImportPhoto<S, E, T> {
 
     pub fn execute(&self, bytes: &[u8]) -> Result<PhotoRef, CoreError> {
         let cover = self.thumbnails.cover(bytes)?;
+        let original = self.thumbnails.original(bytes)?;
         let taken_on = self.exif.taken_on(bytes)?;
 
         let id = Uuid::new_v4().hyphenated().to_string();
-        let path = self.store.write(&id, PhotoKind::Original, bytes)?;
+        let path = self.store.write(&id, PhotoKind::Original, &original)?;
         self.store.write(&id, PhotoKind::Cover, &cover)?;
 
         Ok(PhotoRef {

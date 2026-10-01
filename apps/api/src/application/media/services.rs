@@ -7,6 +7,7 @@ use super::read_avatar::ReadAvatar;
 use super::read_object::ReadObject;
 use super::store_avatar::StoreAvatar;
 use super::store_object::StoreObject;
+use super::sweep_orphans::SweepOrphanedMedia;
 
 #[derive(Clone)]
 pub struct MediaServices {
@@ -33,5 +34,9 @@ impl MediaServices {
 
     pub fn forget(&self) -> ForgetObject {
         ForgetObject::new(Arc::clone(&self.objects), Arc::clone(&self.media))
+    }
+
+    pub fn sweep(&self) -> SweepOrphanedMedia {
+        SweepOrphanedMedia::new(Arc::clone(&self.objects), Arc::clone(&self.media))
     }
 }

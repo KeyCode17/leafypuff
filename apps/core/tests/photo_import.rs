@@ -32,15 +32,31 @@ fn importing_writes_the_original_and_its_cover() {
     assert!(std::path::Path::new(&imported.path).is_file());
 
     let held = store(&dir);
-    assert_eq!(
-        held.read(&imported.id, PhotoKind::Original)
-            .expect("the original is stored"),
-        bytes
-    );
+    let original = held
+        .read(&imported.id, PhotoKind::Original)
+        .expect("the original is stored");
+    assert_eq!(support::dimensions(&original), (300, 400));
+    assert_ne!(original, bytes);
     let cover = held
         .read(&imported.id, PhotoKind::Cover)
         .expect("the cover is stored");
     assert_eq!(support::dimensions(&cover), (300, 200));
+}
+
+#[test]
+fn a_large_original_is_capped_to_the_long_edge() {
+    let dir = tempfile::tempdir().expect("a temp dir");
+    let bytes = support::solid_jpeg(6000, 4000);
+
+    let imported = importer(&dir).execute(&bytes).expect("the photo imports");
+
+    let original = store(&dir)
+        .read(&imported.id, PhotoKind::Original)
+        .expect("the original is stored");
+    let (width, height) = support::dimensions(&original);
+    assert_eq!(width, 3072);
+    assert_eq!(height, 2048);
+    assert!(original.len() < bytes.len());
 }
 
 #[test]
